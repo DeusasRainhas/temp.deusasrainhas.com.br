@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="pt-BR" data-template="22">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 22 Caderno</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       22 Caderno · dados · N8 / C7 / R7
+       Caderno de papel pautado à esquerda, o app à direita, presos por
+       uma espiral. No desktop o hero fica fixo e as duas colunas rolam
+       sincronizadas em velocidades diferentes (cada uma percorre a
+       própria altura no mesmo trecho de rolagem).
+       - nada de opacity < 1 fora do gsap.matchMedia;
+       - canto inferior direito livre (pílula do switcher): a coroa do N8
+         fica no canto superior esquerdo.
+       ================================================================= */
+
+    :root { --pauta: 32px; --respiro: 120px; }
+    @media (max-width: 767px) { :root { --respiro: 72px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 2px solid var(--petroleo); outline-offset: 2px;
+    }
+    main > section { padding-block: var(--respiro) 0; scroll-margin-top: 24px; }
+    main > section:last-child { padding-bottom: var(--respiro); }
+
+    .prov[data-provisorio]::after, .prov [data-provisorio]::after {
+      content: "*"; font-size: .45em; vertical-align: super; margin-left: .06em; color: var(--terra-clara);
+    }
+    [data-aviso-provisorio]::before { content: "* "; }
+
+    /* ---------- N8: botão coroa no canto que expande em leque ---------- */
+    .coroa-nav { position: fixed; top: 16px; left: 16px; z-index: 80; }
+    .coroa-btn {
+      position: relative; z-index: 2;
+      display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%;
+      background: var(--creme); border: 2px solid var(--terra-escura); cursor: pointer; padding: 0;
+      box-shadow: var(--sh-md); transition: background-color .2s ease;
+    }
+    .coroa-btn img { width: 36px; height: auto; }
+    .coroa-btn:hover { background: var(--mel-veu); }
+    .coroa-btn[aria-expanded="true"] { background: var(--grafite); border-color: var(--grafite); }
+    .coroa-btn .coroa-neg { display: none; }
+    .coroa-btn[aria-expanded="true"] .coroa-cor { display: none; }
+    .coroa-btn[aria-expanded="true"] .coroa-neg { display: block; }
+    .leque { position: absolute; left: 32px; top: 32px; width: 0; height: 0; }
+    .leque[hidden] { display: none; }
+    .leque::before { /* véu em quarto de círculo atrás do leque */
+      content: ""; position: absolute; left: -48px; top: -48px; width: 640px; height: 640px;
+      background: radial-gradient(ellipse at 0 0, rgba(255,251,230,.98) 0 60%, rgba(255,251,230,0) 74%);
+      pointer-events: none;
+    }
+    .leque li {
+      position: absolute; left: 0; top: 0;
+      transform: translate(var(--x), var(--y)) translate(0, -50%);
+      transition: transform .42s cubic-bezier(.2,.8,.2,1), opacity .3s ease;
+      transition-delay: calc(var(--i) * 28ms);
+    }
+    .leque.abrindo li { transform: translate(0, 0) translate(0, -50%) scale(.4); opacity: 0; }
+    .leque a {
+      display: inline-flex; align-items: center; gap: var(--sp-2); white-space: nowrap;
+      padding: 9px 16px; background: var(--branco); border: 2px solid var(--terra-escura);
+      font-family: var(--mono); font-size: var(--fs-eyebrow); font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--terra-escura); text-decoration: none;
+    }
+    .leque a:hover, .leque a:focus-visible { background: var(--mel-veu); }
+    .leque a.dr-btn { font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; text-transform: none; border-color: var(--terra-escura); background: var(--mel); border-radius: 0; }
+    .leque a.dr-btn:hover { background: var(--mel-escuro); }
+    @media (max-width: 767px) {
+      .coroa-nav { top: 12px; left: 12px; }
+      .coroa-btn { width: 56px; height: 56px; }
+      .coroa-btn img { width: 32px; }
+      .leque { left: 28px; top: 28px; }
+      .leque::before { width: 480px; height: 600px; }
+    }
+
+    /* ---------- Hero: caderno | espiral | app ---------- */
+    section[data-secao="hero"] { padding: 0; position: relative; }
+    .bancada {
+      display: grid; grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1fr);
+      background: var(--petroleo-veu);
+    }
+    .fixo .bancada { height: 100vh; min-height: 620px; overflow: hidden; }
+    .fixo .coluna { overflow: hidden; }
+    .coluna { min-width: 0; }
+    .trilha { will-change: transform; }
+
+    /* Papel pautado: margem vermelha e pauta a cada 32px (o texto anda na pauta) */
+    .papel {
+      background-color: var(--creme-papel);
+      background-image:
+        linear-gradient(90deg, transparent 71px, rgba(192,73,47,.38) 71px, rgba(192,73,47,.38) 73px, transparent 73px),
+        repeating-linear-gradient(180deg, transparent 0 calc(var(--pauta) - 1px), rgba(23,107,102,.17) calc(var(--pauta) - 1px) var(--pauta));
+      background-position: 0 0, 0 -8px;
+    }
+    .papel .trilha { padding: 128px 48px 128px 104px; }
+    .papel .dr-eyebrow { line-height: var(--pauta); color: var(--erro); }
+    .papel__marca { width: 64px; height: 64px; margin: 0 0 var(--pauta) -8px; }
+    .papel h1 {
+      font-family: var(--serif); font-style: italic; font-weight: 500; color: var(--terra-escura);
+      font-size: clamp(40px, 4.6vw, 60px); line-height: calc(var(--pauta) * 2); letter-spacing: -.02em; text-wrap: balance;
+    }
+    .papel p, .papel li { font-size: var(--fs-body-lg); line-height: var(--pauta); color: var(--corpo); }
+    .papel .sub { max-width: 34ch; }
+    .rabisco { display: block; width: min(320px, 70%); height: 14px; margin: 2px 0 16px; }
+    .rabisco path { fill: none; stroke: var(--mel-escuro); stroke-width: 3; stroke-linecap: round; }
+    .papel .acoes { margin-top: var(--pauta); min-height: calc(var(--pauta) * 2); align-content: center; }
+    .papel .dr-eyebrow + h1 { margin-top: 0; }
+    .acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+
+    .folha-problema { margin-top: calc(var(--pauta) * 4); }
+    .folha-problema h2 {
+      font-family: var(--serif); font-style: italic; font-weight: 500; color: var(--terra-escura);
+      font-size: 34px; line-height: calc(var(--pauta) * 2);
+    }
+    .circulado { position: relative; display: inline-block; margin-top: var(--pauta); padding: 0 18px; }
+    .circulado .dr-data { font-size: 88px; line-height: calc(var(--pauta) * 3); color: var(--terra-escura); letter-spacing: -.04em; }
+    .circulado svg { position: absolute; inset: -8px -12px; width: calc(100% + 24px); height: calc(100% + 16px); overflow: visible; }
+    .circulado svg path { fill: none; stroke: var(--erro); stroke-width: 2.4; stroke-linecap: round; }
+    .folha-problema .texto-95 { max-width: 30ch; }
+    .anotacoes { margin-top: var(--pauta); }
+    .anotacoes li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-2); }
+    .anotacoes li::before { content: "\2014"; color: var(--terra-clara); }
+    .anotacoes li + li { margin-top: var(--pauta); }
+    .mancha { /* respingo de chuva no papel */
+      position: absolute; width: 180px; height: 150px; border-radius: 48% 52% 44% 56%;
+      background: radial-gradient(ellipse at 40% 40%, rgba(23,107,102,.08), rgba(23,107,102,.03) 60%, transparent 70%);
+      pointer-events: none;
+    }
+    .papel .trilha { position: relative; }
+
+    /* Espiral */
+    .espiral {
+      position: relative; z-index: 3;
+      background:
+        radial-gradient(circle at 20px 16px, var(--grafite-suave) 0 4px, transparent 5px) 0 0 / 40px var(--pauta) repeat-y,
+        linear-gradient(90deg, var(--creme-papel) 0 50%, var(--petroleo-veu) 50%);
+    }
+    .espiral::before {
+      content: ""; position: absolute; inset: 0;
+      background: repeating-linear-gradient(180deg, transparent 0 9px, #9b9486 9px 11px, #d9d3c4 11px 15px, #8a8478 15px 17px, transparent 17px var(--pauta));
+      -webkit-mask: linear-gradient(90deg, transparent 6px, #000 6px 34px, transparent 34px);
+              mask: linear-gradient(90deg, transparent 6px, #000 6px 34px, transparent 34px);
+      border-radius: 20px;
+    }
+
+    /* App */
+    .tela {
+      background-color: var(--petroleo-veu);
+      background-image: radial-gradient(rgba(23,107,102,.14) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .tela .trilha { padding: 112px 48px 128px; display: flex; flex-direction: column; align-items: center; gap: var(--sp-8); }
+    .celular {
+      width: min(300px, 100%); padding: 10px; background: var(--grafite); border-radius: 40px; box-shadow: var(--sh-lg);
+    }
+    .celular img { width: 100%; height: auto; border-radius: 30px; background: var(--creme); }
+    .celular-legenda { margin-top: var(--sp-3); text-align: center; color: var(--petroleo); font-family: var(--mono); font-size: var(--fs-caption); letter-spacing: .04em; max-width: 30ch; margin-inline: auto; }
+    .tela .dr-eyebrow { text-align: center; }
+
+    /* C7: blocos de borda grossa 2px terra, sem raio */
+    .bloco { border: 2px solid var(--terra); border-radius: 0; background: var(--branco); }
+    .indicadores { width: min(420px, 100%); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .indicadores li { padding: var(--sp-5) var(--sp-4); border: 2px solid var(--terra); margin: -1px; background: var(--branco); }
+    .indicadores .dr-data { display: block; font-size: 40px; line-height: 1; color: var(--petroleo); }
+    .indicadores span + span { display: block; margin-top: var(--sp-2); font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+
+    @media (max-width: 899px) {
+      .bancada { grid-template-columns: minmax(0, 1fr); }
+      .espiral { height: 40px; background:
+        radial-gradient(circle at 16px 20px, var(--grafite-suave) 0 4px, transparent 5px) 0 0 / var(--pauta) 40px repeat-x,
+        linear-gradient(180deg, var(--creme-papel) 0 50%, var(--petroleo-veu) 50%); }
+      .espiral::before {
+        background: repeating-linear-gradient(90deg, transparent 0 9px, #9b9486 9px 11px, #d9d3c4 11px 15px, #8a8478 15px 17px, transparent 17px var(--pauta));
+        -webkit-mask: linear-gradient(180deg, transparent 6px, #000 6px 34px, transparent 34px);
+                mask: linear-gradient(180deg, transparent 6px, #000 6px 34px, transparent 34px);
+      }
+      .papel .trilha { padding: 96px 16px 64px 72px; }
+      .papel { background-image:
+        linear-gradient(90deg, transparent 55px, rgba(192,73,47,.38) 55px, rgba(192,73,47,.38) 57px, transparent 57px),
+        repeating-linear-gradient(180deg, transparent 0 calc(var(--pauta) - 1px), rgba(23,107,102,.17) calc(var(--pauta) - 1px) var(--pauta)); }
+      .papel h1 { font-size: 38px; line-height: calc(var(--pauta) * 1.5); }
+      .folha-problema h2 { font-size: 28px; line-height: calc(var(--pauta) * 1.5); }
+      .papel .acoes .dr-btn { padding-inline: var(--sp-4); }
+      .circulado .dr-data { font-size: 72px; }
+      .tela .trilha { padding: 64px 16px 72px; }
+      .mancha { display: none; }
+    }
+
+    /* ---------- Seções seguintes: rolagem contínua, só a tipografia marca a troca ---------- */
+    .cabeca { max-width: 760px; }
+    .cabeca .dr-eyebrow { margin-bottom: var(--sp-4); }
+    .cabeca .dr-h2 { font-size: clamp(32px, 4vw, 52px); line-height: 1.08; text-wrap: balance; }
+    .cabeca--centro { margin-inline: auto; text-align: center; }
+    .cabeca--italico .dr-h2 { font-style: italic; }
+    .cabeca .intro { margin-top: var(--sp-4); max-width: 52ch; }
+    .cabeca--centro .intro { margin-inline: auto; }
+    .cabeca + * { margin-top: var(--sp-7); }
+
+    .grade-blocos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grade-blocos > li { border: 2px solid var(--terra); margin: 0 -2px -2px 0; padding: var(--sp-6) var(--sp-5); background: var(--creme); transition: background-color .2s ease; }
+    .grade-blocos > li:hover { background: var(--mel-veu); }
+    .grade-blocos .dr-icone { color: var(--petroleo); width: 28px; height: 28px; }
+    .grade-blocos .dr-h4 { margin: var(--sp-4) 0 var(--sp-2); }
+    @media (max-width: 899px) { .grade-blocos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 599px) { .grade-blocos { grid-template-columns: minmax(0, 1fr); } }
+
+    .passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+    .passo { display: flex; flex-direction: column; border: 2px solid var(--terra); background: var(--branco); }
+    .passo__corpo { padding: var(--sp-5); }
+    .passo__numero { font-family: var(--serif); font-style: italic; font-size: 56px; line-height: 1; color: var(--petroleo); }
+    .passo .dr-h4 { margin: var(--sp-3) 0 var(--sp-2); }
+    .passo figure { margin-top: auto; border-top: 2px solid var(--terra); background: var(--petroleo-veu); padding: var(--sp-5) var(--sp-5) 0; }
+    .passo img { width: 100%; max-width: 220px; height: 260px; margin-inline: auto; object-fit: cover; object-position: top; border: 6px solid var(--grafite); border-bottom: 0; border-radius: 24px 24px 0 0; }
+    @media (max-width: 899px) { .passos { grid-template-columns: minmax(0, 1fr); } }
+
+    .perfis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 2px solid var(--terra); }
+    .perfil { padding: var(--sp-6) var(--sp-5); }
+    .perfil + .perfil { border-left: 2px solid var(--terra); }
+    .perfil .dr-h3 { font-family: var(--serif); font-weight: 500; font-style: italic; color: var(--terra-escura); margin-bottom: var(--sp-3); }
+    @media (max-width: 899px) {
+      .perfis { grid-template-columns: minmax(0, 1fr); }
+      .perfil + .perfil { border-left: 0; border-top: 2px solid var(--terra); }
+    }
+
+    .tec { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-7); align-items: start; }
+    .tec .cabeca + * { margin-top: 0; }
+    .tec .grade-blocos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tec .grade-blocos > li { background: var(--branco); }
+    @media (max-width: 899px) { .tec { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 599px) { .tec .grade-blocos { grid-template-columns: minmax(0, 1fr); } }
+
+    .origem { font-family: var(--serif); font-size: clamp(22px, 2.4vw, 30px); line-height: 1.4; color: var(--terra-escura); max-width: 34ch; }
+    .pessoas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); margin-top: var(--sp-7); }
+    .pessoa { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: var(--sp-4); align-items: center; border: 2px solid var(--terra); padding: var(--sp-4); background: var(--branco); }
+    .pessoa img { width: 80px; height: 80px; object-fit: cover; border: 2px solid var(--terra); }
+    .pessoa .dr-h4 { font-size: 18px; }
+    .pessoa__cargo { margin-top: 2px; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    .apoios { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin-top: var(--sp-6); }
+    .apoio { display: flex; align-items: center; gap: var(--sp-4); padding: var(--sp-3) var(--sp-5) var(--sp-3) var(--sp-3); border: 2px solid var(--terra); background: var(--branco); }
+    .apoio__logo { display: grid; place-items: center; height: 64px; padding: var(--sp-2) var(--sp-4); }
+    .apoio[data-fundo="escuro"] .apoio__logo { background: var(--grafite); }
+    .apoio__logo img { max-height: 44px; width: auto; max-width: 140px; }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--terra-escura); }
+    @media (max-width: 899px) { .pessoas { grid-template-columns: minmax(0, 1fr); } }
+
+    /* Depoimento: volta ao papel pautado */
+    .bilhete { max-width: 860px; margin-inline: auto; border: 2px solid var(--terra); padding: var(--pauta) var(--sp-7) var(--pauta) 104px; position: relative; }
+    .bilhete .dr-quote { font-size: clamp(22px, 2.6vw, 30px); line-height: calc(var(--pauta) * 1.5); color: var(--terra-escura); }
+    .bilhete blockquote { margin: 0; }
+    .bilhete figcaption { display: flex; align-items: center; gap: var(--sp-4); margin-top: var(--pauta); }
+    .bilhete figcaption img { width: 64px; height: 64px; object-fit: cover; border: 2px solid var(--terra); }
+    .bilhete__nome { font-weight: 700; color: var(--ink); line-height: var(--pauta); }
+    .bilhete__local { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); }
+    @media (max-width: 767px) { .bilhete { padding: var(--pauta) var(--sp-4) var(--pauta) 72px; } }
+
+    .contato-grade { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-7); align-items: start; }
+    .form { display: grid; gap: var(--sp-4); padding: var(--sp-6); border: 2px solid var(--terra); background: var(--branco); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo input, .campo textarea {
+      font: inherit; font-size: var(--fs-body); color: var(--ink);
+      background: var(--creme); border: 0; border-bottom: 2px solid var(--terra); border-radius: 0;
+      padding: var(--sp-3) var(--sp-2); width: 100%;
+    }
+    .campo textarea { min-height: 140px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canais li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-4); align-items: center; padding-block: var(--sp-4); border-bottom: 2px solid var(--terra); }
+    .canais li:first-child { border-top: 2px solid var(--terra); }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-weight: 600; font-size: var(--fs-body-lg); text-underline-offset: 4px; overflow-wrap: anywhere; }
+    .contato-grade .acoes { margin-top: var(--sp-6); }
+    @media (max-width: 899px) { .contato-grade { grid-template-columns: minmax(0, 1fr); } .form { padding: var(--sp-4); } }
+
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 96px; margin-top: 0; }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) {
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N8 · botão coroa no canto que expande em leque) -->
+  <nav data-secao="nav" class="coroa-nav">
+    <!-- aria-label é rótulo de interface (não é cópia do site) -->
+    <button class="coroa-btn" type="button" aria-expanded="false" aria-controls="leque" aria-label="Menu" data-coroa>
+      <img class="coroa-cor" src="../img/logos/coroa-cor.png" alt="" width="129" height="93">
+      <img class="coroa-neg" src="../img/logos/coroa-negativa.png" alt="" width="129" height="93">
+    </button>
+    <ul class="leque" id="leque" hidden>
+      <li style="--i:0"><a href="#problema" data-c="problema.eyebrow"></a></li>
+      <li style="--i:1"><a href="#funcionalidades" data-c="funcionalidades.eyebrow"></a></li>
+      <li style="--i:2"><a href="#como-funciona" data-c="comoFunciona.eyebrow"></a></li>
+      <li style="--i:3"><a href="#para-quem" data-c="paraQuem.eyebrow"></a></li>
+      <li style="--i:4"><a href="#tecnologia" data-c="tecnologia.eyebrow"></a></li>
+      <li style="--i:5"><a href="#equipe" data-c="equipe.eyebrow"></a></li>
+      <li style="--i:6"><a href="#contato" data-c="contato.eyebrow"></a></li>
+      <li style="--i:7"><a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a></li>
+    </ul>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (caderno à esquerda, espiral, app à direita; problema e prova vivem dentro das colunas) -->
+    <section data-secao="hero" id="inicio" data-caderno>
+      <div class="bancada">
+        <div class="coluna papel">
+          <div class="trilha" data-trilha>
+            <img class="papel__marca" src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64">
+            <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+            <h1 data-c="hero.titulo"></h1>
+            <svg class="rabisco" viewBox="0 0 320 14" preserveAspectRatio="none" aria-hidden="true"><path data-traco d="M3 9 C 60 3, 120 12, 180 6 S 280 4, 317 8"/></svg>
+            <p class="sub" data-c="hero.subtitulo"></p>
+            <div class="acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+
+            <!-- SEÇÃO: problema (página seguinte do caderno) -->
+            <section data-secao="problema" id="problema" class="folha-problema">
+              <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+              <h2 data-c="problema.titulo"></h2>
+              <div class="circulado">
+                <span class="dr-data" data-c="problema.estatistica.valor"></span>
+                <svg viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true"><path data-traco d="M108 8 C 40 4, 6 30, 8 62 C 10 100, 70 116, 120 110 C 176 104, 196 76, 190 48 C 184 18, 140 4, 92 10"/></svg>
+              </div>
+              <p class="texto-95" data-c="problema.estatistica.texto"></p>
+              <ul class="anotacoes" data-c-lista="problema.consequencias">
+                <template>
+                  <li data-c="texto"></li>
+                </template>
+              </ul>
+            </section>
+          </div>
+        </div>
+
+        <div class="espiral" aria-hidden="true"></div>
+
+        <div class="coluna tela">
+          <div class="trilha" data-trilha>
+            <figure>
+              <div class="celular"><img data-c-src="comoFunciona.passos[0].imagem" data-c-alt="comoFunciona.passos[0].alt" alt="" width="393" height="869"></div>
+              <figcaption class="celular-legenda" data-c="comoFunciona.passos[0].alt"></figcaption>
+            </figure>
+
+            <!-- SEÇÃO: prova (os números, do lado do app) -->
+            <section data-secao="prova">
+              <ul class="indicadores" data-c-lista="prova.stats">
+                <template>
+                  <li>
+                    <span class="dr-data prov" data-c="valor"></span>
+                    <span data-c="rotulo"></span>
+                  </li>
+                </template>
+              </ul>
+            </section>
+
+            <figure>
+              <div class="celular"><img data-c-src="comoFunciona.passos[1].imagem" data-c-alt="comoFunciona.passos[1].alt" alt="" width="393" height="869"></div>
+              <figcaption class="celular-legenda" data-c="comoFunciona.passos[1].alt"></figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades -->
+    <section data-secao="funcionalidades" id="funcionalidades">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+          <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+        </header>
+        <ul class="grade-blocos" data-c-lista="funcionalidades.itens">
+          <template>
+            <li>
+              <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona -->
+    <section data-secao="como-funciona" id="como-funciona">
+      <div class="dr-container">
+        <header class="cabeca cabeca--centro cabeca--italico">
+          <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+          <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+        </header>
+        <ol class="passos" data-c-lista="comoFunciona.passos">
+          <template>
+            <li class="passo">
+              <div class="passo__corpo">
+                <span class="passo__numero" data-c="numero"></span>
+                <h3 class="dr-h4" data-c="titulo"></h3>
+                <p class="dr-body" data-c="texto"></p>
+              </div>
+              <figure>
+                <img data-c-src="imagem" data-c-alt="alt" alt="">
+              </figure>
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem -->
+    <section data-secao="para-quem" id="para-quem">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+          <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+        </header>
+        <ul class="perfis" data-c-lista="paraQuem.perfis">
+          <template>
+            <li class="perfil">
+              <h3 class="dr-h3" data-c="titulo"></h3>
+              <p class="dr-body-lg" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia -->
+    <section data-secao="tecnologia" id="tecnologia">
+      <div class="dr-container tec">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+          <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+          <p class="dr-body-lg intro" data-c="tecnologia.texto"></p>
+        </header>
+        <ul class="grade-blocos" data-c-lista="tecnologia.pilares">
+          <template>
+            <li>
+              <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe -->
+    <section data-secao="equipe" id="equipe">
+      <div class="dr-container">
+        <header class="cabeca cabeca--italico">
+          <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+          <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+        </header>
+        <p class="origem" data-c="equipe.origem"></p>
+        <ul class="pessoas" data-c-lista="equipe.pessoas">
+          <template>
+            <li class="pessoa">
+              <img data-c-src="foto" data-c-alt="alt" alt="" width="80" height="80">
+              <div>
+                <h3 class="dr-h4" data-c="nome"></h3>
+                <p class="pessoa__cargo" data-c="cargo"></p>
+              </div>
+            </li>
+          </template>
+        </ul>
+        <ul class="apoios" data-c-lista="equipe.apoios">
+          <template>
+            <li class="apoio">
+              <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+              <span class="apoio__nome" data-c="nome"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento (bilhete no papel pautado) -->
+    <section data-secao="depoimento">
+      <div class="dr-container">
+        <figure class="bilhete papel">
+          <blockquote><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+          <figcaption>
+            <img data-c-src="depoimento.foto" alt="" width="64" height="64">
+            <span>
+              <span class="bilhete__nome" data-c="depoimento.nome"></span><br>
+              <span class="bilhete__local" data-c="depoimento.local"></span>
+            </span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" id="contato">
+      <div class="dr-container">
+        <header class="cabeca cabeca--centro">
+          <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+          <h2 class="dr-h2" data-c="contato.titulo"></h2>
+          <p class="dr-body-lg intro" data-c="contato.texto"></p>
+        </header>
+        <div class="contato-grade">
+          <form class="form" method="post" data-form-contato>
+            <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+            <div class="campo">
+              <label for="f-nome" data-c="contato.form.nome"></label>
+              <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+            </div>
+            <div class="campo">
+              <label for="f-email" data-c="contato.form.email"></label>
+              <input id="f-email" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="campo">
+              <label for="f-msg" data-c="contato.form.mensagem"></label>
+              <textarea id="f-msg" name="mensagem" required></textarea>
+            </div>
+            <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+          </form>
+          <div>
+            <ul class="canais">
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <a data-mailto data-c="contato.email"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+              </li>
+            </ul>
+            <div class="acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '../img/icones/sprite-icones.svg#';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+
+      /* N8: leque em espiral a partir da coroa (raio cresce a cada item para não sobrepor). */
+      function ligarLeque() {
+        var btn = document.querySelector('[data-coroa]');
+        var leque = document.getElementById('leque');
+        if (!btn || !leque) return;
+        function posicionar() {
+          var itens = leque.querySelectorAll('li');
+          var estreito = window.innerWidth < 768;
+          var n = itens.length, passo = estreito ? 44 : 48, ra = estreito ? 120 : 176;
+          var rb = 40 + (n - 1) * passo + 48;
+          itens.forEach(function (li, i) {
+            var y = 40 + i * passo;
+            var x = ra * Math.sqrt(1 - (y / rb) * (y / rb)); // quarto de elipse: o leque abre da coroa para baixo
+            li.style.setProperty('--x', Math.round(x) + 'px');
+            li.style.setProperty('--y', Math.round(y) + 'px');
+          });
+        }
+        function setAberto(sim) {
+          btn.setAttribute('aria-expanded', sim ? 'true' : 'false');
+          if (sim) {
+            posicionar();
+            leque.classList.add('abrindo');
+            leque.hidden = false;
+            void leque.offsetWidth;
+            leque.classList.remove('abrindo');
+          } else {
+            leque.hidden = true;
+          }
+        }
+        btn.addEventListener('click', function () { setAberto(leque.hidden); });
+        leque.addEventListener('click', function (e) { if (e.target.closest('a')) setAberto(false); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !leque.hidden) { setAberto(false); btn.focus(); } });
+        document.addEventListener('click', function (e) { if (!leque.hidden && !e.target.closest('.coroa-nav')) setAberto(false); });
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) { if (email) a.setAttribute('href', 'mailto:' + email.v); });
+        document.querySelectorAll('[data-ano]').forEach(function (el) { el.textContent = '© ' + new Date().getFullYear(); });
+        ligarLeque();
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var caderno = document.querySelector('[data-caderno]');
+        var trilhas = caderno.querySelectorAll('[data-trilha]');
+        var mm = gsap.matchMedia();
+
+        mm.add({
+          largo: '(min-width: 900px) and (prefers-reduced-motion: no-preference)',
+          estreito: '(max-width: 899px) and (prefers-reduced-motion: no-preference)'
+        }, function (ctx) {
+          // Traços de caneta (sublinhado e círculo do 95%) se desenham.
+          caderno.querySelectorAll('path[data-traco]').forEach(function (p, i) {
+            var L = p.getTotalLength();
+            gsap.fromTo(p, { strokeDasharray: L, strokeDashoffset: L }, {
+              strokeDashoffset: 0, duration: i === 0 ? 0.9 : 1.2, ease: 'power2.inOut', delay: i === 0 ? 0.3 : 0,
+              scrollTrigger: i === 0 ? null : { trigger: p, start: 'top 80%', once: true }
+            });
+          });
+
+          if (ctx.conditions.largo) {
+            // Hero fixo; cada coluna percorre a própria altura no mesmo trecho de rolagem,
+            // então as duas andam sincronizadas, mas em velocidades diferentes.
+            caderno.classList.add('fixo');
+            var vh = function () { return caderno.querySelector('.bancada').clientHeight; };
+            var curso = function (t) { return Math.max(0, t.scrollHeight - vh()); };
+            var distancia = function () { return Math.max(curso(trilhas[0]), curso(trilhas[1])); };
+            var tl = gsap.timeline({
+              defaults: { ease: 'none' },
+              scrollTrigger: {
+                trigger: caderno, start: 'top top', end: function () { return '+=' + distancia(); },
+                pin: true, scrub: 0.6, invalidateOnRefresh: true, anticipatePin: 1
+              }
+            });
+            tl.to(trilhas[0], { y: function () { return -curso(trilhas[0]); } }, 0)
+              .to(trilhas[1], { y: function () { return -curso(trilhas[1]); } }, 0);
+            ScrollTrigger.refresh();
+          } else {
+            // Telas estreitas: as colunas empilham; os celulares rolam um pouco mais rápido que o papel.
+            gsap.utils.toArray('.tela .celular').forEach(function (c) {
+              gsap.fromTo(c, { y: 40 }, { y: -40, ease: 'none', scrollTrigger: { trigger: c, start: 'top bottom', end: 'bottom top', scrub: true } });
+            });
+          }
+
+          // Blocos C7 entram em sequência.
+          gsap.utils.toArray('.grade-blocos, .passos, .perfis, .pessoas, .apoios').forEach(function (lista) {
+            gsap.from(lista.children, {
+              autoAlpha: 0, y: 18, duration: 0.55, ease: 'power2.out', stagger: 0.07,
+              scrollTrigger: { trigger: lista, start: 'top 85%', once: true }
+            });
+          });
+
+          return function () { caderno.classList.remove('fixo'); gsap.set(trilhas, { clearProps: 'transform' }); };
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

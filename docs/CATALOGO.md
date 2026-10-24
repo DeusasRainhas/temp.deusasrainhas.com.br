@@ -1,6 +1,6 @@
 # Catálogo dos 50 templates
 
-Gerado em 2026-10-23 por scripts/auditar.py
+Gerado em 2026-10-24 por scripts/auditar.py
 
 | Nº | Slug | Família | Hero | Efeito | N | C | R |
 |---|---|---|---|---|---|---|---|
@@ -24,11 +24,11 @@ Gerado em 2026-10-23 por scripts/auditar.py
 | 18 | enxame | favo | Partículas douradas sobre creme | Partículas em canvas se organizam em hexágonos | N5 | C8 | R9 |
 | 19 | cera | favo | Hero com nível de mel subindo | Preenchimento líquido sobe nas seções (altura animada com onda) | N6 | C0 | R2 |
 | 20 | quadro | favo | Quadro de colmeia antes e depois | Divisor arrastável compara caderno e app | N7 | C2 | R5 |
-| 21 | painel | dados | Painel de controle com números grandes | Contadores rolam como odômetro | N4 | C5 | R4 |
-| 22 | caderno | dados | Caderno de papel à esquerda, app à direita | Duas colunas rolam sincronizadas em velocidades diferentes | N5 | C7 | R7 |
-| 23 | relatorio | dados | Relatório de produção com tabela | Linhas da tabela deslizam e sparklines se traçam | N6 | C9 | R0 |
+| 21 | painel | dados | Painel de controle com números grandes | Contadores rolam como odômetro | N4 | C9 | R4 |
+| 22 | caderno | dados | Caderno de papel à esquerda, app à direita | Duas colunas rolam sincronizadas em velocidades diferentes | N8 | C7 | R7 |
+| 23 | relatorio | dados | Relatório de produção com tabela | Linhas da tabela deslizam e sparklines se traçam | N6 | C5 | R0 |
 | 24 | telemetria | dados | Gráfico de linha de produção como hero | Gráficos se desenham ao entrar na tela | N7 | C1 | R3 |
-| 25 | inventario | dados | Lista densa de colmeias com status | Cabeçalhos fixos por grupo e filtro instantâneo | N8 | C3 | R6 |
+| 25 | inventario | dados | Lista densa de colmeias com status | Cabeçalhos fixos por grupo e filtro instantâneo | N5 | C3 | R6 |
 | 26 | vitrine | app | Celular central com tela do app | Celular pinado troca telas conforme o scroll | N5 | C6 | R5 |
 | 27 | passo | app | Três passos numerados ao lado de um celular | Contador de etapas pinado com crossfade de telas | N6 | C8 | R8 |
 | 28 | tour | app | Telas do app em fila horizontal | Seção de scroll horizontal com translateX via ScrollTrigger | N7 | C0 | R1 |
@@ -66,10 +66,10 @@ Gerado em 2026-10-23 por scripts/auditar.py
 | N2 | 5 | 03, 07, 11, 45, 49 |
 | N3 | 5 | 04, 08, 12, 16, 50 |
 | N4 | 5 | 05, 09, 13, 17, 21 |
-| N5 | 5 | 10, 14, 18, 22, 26 |
+| N5 | 5 | 10, 14, 18, 25, 26 |
 | N6 | 5 | 15, 19, 23, 27, 31 |
 | N7 | 5 | 20, 24, 28, 32, 36 |
-| N8 | 5 | 25, 29, 33, 37, 41 |
+| N8 | 5 | 22, 29, 33, 37, 41 |
 | N9 | 5 | 30, 34, 38, 42, 46 |
 
 ### Cards (C)
@@ -81,11 +81,11 @@ Gerado em 2026-10-23 por scripts/auditar.py
 | C2 | 5 | 06, 20, 29, 38, 47 |
 | C3 | 5 | 02, 11, 25, 34, 43 |
 | C4 | 5 | 07, 16, 30, 39, 48 |
-| C5 | 5 | 03, 12, 21, 35, 44 |
+| C5 | 5 | 03, 12, 23, 35, 44 |
 | C6 | 5 | 08, 17, 26, 40, 49 |
 | C7 | 5 | 04, 13, 22, 31, 45 |
 | C8 | 5 | 09, 18, 27, 36, 50 |
-| C9 | 5 | 05, 14, 23, 32, 41 |
+| C9 | 5 | 05, 14, 21, 32, 41 |
 
 ### Ritmo (R)
 
