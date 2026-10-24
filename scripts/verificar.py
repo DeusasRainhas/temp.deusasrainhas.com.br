@@ -110,9 +110,7 @@ MEDIR_MOVIMENTO = """() => {
     let n = 0;
     sec.querySelectorAll('*').forEach(el => {
       if (n >= 5) return;
-      const proprio = Array.from(el.childNodes)
-        .some(c => c.nodeType === 3 && c.nodeValue.trim() !== '');
-      if (!proprio) return;
+      if (el.textContent.trim() === '') return;
       const cs = getComputedStyle(el);
       const op = parseFloat(cs.opacity);
       if (op < 0.9 || cs.visibility === 'hidden') {
