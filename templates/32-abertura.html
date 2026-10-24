@@ -309,7 +309,7 @@
         <ul class="nuvem nuvem--esq" data-c-lista="problema.consequencias">
           <template>
             <li class="chip chip--alerta">
-              <span class="chip__icone"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg></span>
+              <span class="chip__icone"><svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg></span>
               <p data-c="texto"></p>
             </li>
           </template>
@@ -522,7 +522,7 @@
   <script>
     (function () {
       'use strict';
-      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SPRITE = '#';
       var CHAVE = 'dr.abertura.32';
       function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
       function jaViu() { try { return window.sessionStorage.getItem(CHAVE) === '1'; } catch (e) { return false; } }

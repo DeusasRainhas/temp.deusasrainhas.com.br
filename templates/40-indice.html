@@ -250,12 +250,12 @@
       <img class="marca__coroa" src="../img/logos/coroa-cor.png" alt="" data-c-alt="marca.alt" width="129" height="93">
     </a>
     <ul class="trilho__lista">
-      <li><a href="#problema" data-alvo="problema"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg><span class="dr-sr-only" data-c="problema.eyebrow"></span><span class="dica" aria-hidden="true" data-c="problema.eyebrow"></span></a></li>
-      <li><a href="#funcionalidades" data-alvo="funcionalidades"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-colmeia"></use></svg><span class="dr-sr-only" data-c="funcionalidades.eyebrow"></span><span class="dica" aria-hidden="true" data-c="funcionalidades.eyebrow"></span></a></li>
-      <li><a href="#como-funciona" data-alvo="como-funciona"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-revisao"></use></svg><span class="dr-sr-only" data-c="comoFunciona.eyebrow"></span><span class="dica" aria-hidden="true" data-c="comoFunciona.eyebrow"></span></a></li>
-      <li><a href="#para-quem" data-alvo="para-quem"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg><span class="dr-sr-only" data-c="paraQuem.eyebrow"></span><span class="dica" aria-hidden="true" data-c="paraQuem.eyebrow"></span></a></li>
-      <li><a href="#tecnologia" data-alvo="tecnologia"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-drone"></use></svg><span class="dr-sr-only" data-c="tecnologia.eyebrow"></span><span class="dica" aria-hidden="true" data-c="tecnologia.eyebrow"></span></a></li>
-      <li><a href="#equipe" data-alvo="equipe"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-rainha"></use></svg><span class="dr-sr-only" data-c="equipe.eyebrow"></span><span class="dica" aria-hidden="true" data-c="equipe.eyebrow"></span></a></li>
+      <li><a href="#problema" data-alvo="problema"><svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg><span class="dr-sr-only" data-c="problema.eyebrow"></span><span class="dica" aria-hidden="true" data-c="problema.eyebrow"></span></a></li>
+      <li><a href="#funcionalidades" data-alvo="funcionalidades"><svg class="dr-icone" aria-hidden="true"><use href="#dr-colmeia"></use></svg><span class="dr-sr-only" data-c="funcionalidades.eyebrow"></span><span class="dica" aria-hidden="true" data-c="funcionalidades.eyebrow"></span></a></li>
+      <li><a href="#como-funciona" data-alvo="como-funciona"><svg class="dr-icone" aria-hidden="true"><use href="#dr-revisao"></use></svg><span class="dr-sr-only" data-c="comoFunciona.eyebrow"></span><span class="dica" aria-hidden="true" data-c="comoFunciona.eyebrow"></span></a></li>
+      <li><a href="#para-quem" data-alvo="para-quem"><svg class="dr-icone" aria-hidden="true"><use href="#dr-abelha"></use></svg><span class="dr-sr-only" data-c="paraQuem.eyebrow"></span><span class="dica" aria-hidden="true" data-c="paraQuem.eyebrow"></span></a></li>
+      <li><a href="#tecnologia" data-alvo="tecnologia"><svg class="dr-icone" aria-hidden="true"><use href="#dr-drone"></use></svg><span class="dr-sr-only" data-c="tecnologia.eyebrow"></span><span class="dica" aria-hidden="true" data-c="tecnologia.eyebrow"></span></a></li>
+      <li><a href="#equipe" data-alvo="equipe"><svg class="dr-icone" aria-hidden="true"><use href="#dr-rainha"></use></svg><span class="dr-sr-only" data-c="equipe.eyebrow"></span><span class="dica" aria-hidden="true" data-c="equipe.eyebrow"></span></a></li>
       <li><a href="#contato" data-alvo="contato"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="dr-sr-only" data-c="contato.eyebrow"></span><span class="dica" aria-hidden="true" data-c="contato.eyebrow"></span></a></li>
     </ul>
   </nav>
@@ -336,7 +336,7 @@
           <ul class="consequencias" data-c-lista="problema.consequencias" data-sobe-filhos>
             <template>
               <li>
-                <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg>
                 <p class="dr-body-lg" data-c="texto"></p>
               </li>
             </template>
@@ -564,7 +564,7 @@
   <script>
     (function () {
       'use strict';
-      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SPRITE = '#';
       function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
       var reduzido = window.matchMedia('(prefers-reduced-motion: reduce)');
       var toque = window.matchMedia('(pointer: coarse)');

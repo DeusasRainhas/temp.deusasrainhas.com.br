@@ -23,7 +23,7 @@ def test_busca_sem_acento(page, raiz_url):
     assert vis.count() == 1 and vis.first.get_attribute("data-n") == "21"
     page.fill("[data-gal=busca]", "celula")
     ns = [c.get_attribute("data-n") for c in page.locator("[data-gal=card]:visible").all()]
-    assert "17" in ns  # nome "Celula"; outros cards casam por "células" no efeito
+    assert "17" in ns  # nome "Célula"; outros cards casam por "células" no efeito
 def test_comparar_href_com_favoritos(page, raiz_url):
     page.goto(raiz_url + "galeria.html"); page.evaluate("localStorage.setItem('dr.favoritos','[5,21,33]')"); page.reload()
     assert page.get_attribute("a[data-gal=comparar]", "href").endswith("comparar.html?a=33&b=21")

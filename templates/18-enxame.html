@@ -316,14 +316,14 @@
           <ul class="consequencias" data-c-lista="problema.consequencias">
             <template>
               <li>
-                <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg>
                 <p class="dr-body-lg" data-c="texto"></p>
               </li>
             </template>
           </ul>
         </header>
         <div class="ficha ficha--grande">
-          <span class="ficha__eyebrow"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-revisao"></use></svg><span data-c="problema.eyebrow"></span></span>
+          <span class="ficha__eyebrow"><svg class="dr-icone" aria-hidden="true"><use href="#dr-revisao"></use></svg><span data-c="problema.eyebrow"></span></span>
           <span class="ficha__dado" data-c="problema.estatistica.valor"></span>
           <p class="dr-body-lg" data-c="problema.estatistica.texto"></p>
         </div>
@@ -384,7 +384,7 @@
         <ul class="perfis" data-c-lista="paraQuem.perfis">
           <template>
             <li class="ficha">
-              <span class="ficha__eyebrow"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-colmeia"></use></svg><span data-num></span></span>
+              <span class="ficha__eyebrow"><svg class="dr-icone" aria-hidden="true"><use href="#dr-colmeia"></use></svg><span data-num></span></span>
               <h3 class="ficha__titulo" data-c="titulo"></h3>
               <p class="dr-body" data-c="texto"></p>
             </li>
@@ -534,7 +534,7 @@
   <script>
     (function () {
       'use strict';
-      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SPRITE = '#';
       function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
 
       /* ---------- Geometria do favo: sete células "de pé" (centro + seis) ---------- */

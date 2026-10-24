@@ -74,6 +74,8 @@
       .pilula { left: 12px; transform: none; }
       .pilula a { padding: 0 10px; height: 40px; }
       .pilula a[data-opcional] { display: none; }
+      /* Folga para a última linha da tabela passar acima da pílula fixa (~88px) */
+      main > section[data-secao="hero"] { padding-bottom: 88px; }
     }
 
     /* ---------- Hero: a tabela periódica ---------- */
@@ -306,10 +308,10 @@
 
   <!-- SEÇÃO: nav (N2 · pílula inferior centralizada, estilo app) -->
   <nav data-secao="nav" class="pilula">
-    <a href="#funcionalidades"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-favo"></use></svg><span data-c="funcionalidades.eyebrow"></span></a>
-    <a href="#como-funciona"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-revisao"></use></svg><span data-c="comoFunciona.eyebrow"></span></a>
-    <a href="#para-quem" data-opcional><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg><span data-c="paraQuem.eyebrow"></span></a>
-    <a href="#equipe"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-rainha"></use></svg><span data-c="equipe.eyebrow"></span></a>
+    <a href="#funcionalidades"><svg class="dr-icone" aria-hidden="true"><use href="#dr-favo"></use></svg><span data-c="funcionalidades.eyebrow"></span></a>
+    <a href="#como-funciona"><svg class="dr-icone" aria-hidden="true"><use href="#dr-revisao"></use></svg><span data-c="comoFunciona.eyebrow"></span></a>
+    <a href="#para-quem" data-opcional><svg class="dr-icone" aria-hidden="true"><use href="#dr-abelha"></use></svg><span data-c="paraQuem.eyebrow"></span></a>
+    <a href="#equipe"><svg class="dr-icone" aria-hidden="true"><use href="#dr-rainha"></use></svg><span data-c="equipe.eyebrow"></span></a>
     <a href="#contato"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span data-c="contato.eyebrow"></span></a>
     <a class="pilula__cta" data-c-href="cta.baixar.url"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg><span data-c="cta.baixar.texto"></span></a>
   </nav>
@@ -416,7 +418,7 @@
           <ul class="consequencias" data-c-lista="problema.consequencias">
             <template>
               <li>
-                <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg>
                 <p class="dr-body-lg" data-c="texto"></p>
               </li>
             </template>
@@ -630,7 +632,7 @@
   <script>
     (function () {
       'use strict';
-      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SPRITE = '#';
       var VAZIAS = ['a', 'o', 'as', 'os', 'e', 'de', 'da', 'do', 'das', 'dos', 'em', 'no', 'na', 'nos', 'nas',
         'por', 'com', 'sem', 'seu', 'seus', 'sua', 'suas', 'um', 'uma', 'que', 'para'];
       function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }

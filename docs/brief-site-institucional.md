@@ -90,7 +90,7 @@ Regras obrigatórias herdadas do manual: área de proteção da logo igual à al
 
 ## 7. Valores provisórios adotados (substituir antes de publicar)
 
-Nenhuma pendência trava a implementação. Cada item abaixo entra no site com um **valor fictício**, marcado no HTML com o atributo `data-provisorio="<chave>"` e um comentário `<!-- PROVISÓRIO: … -->`. A lista operacional de troca está em `docs/PENDENCIAS.md`. Valores fictícios nunca devem ir ao ar: o checklist precisa estar todo riscado antes do deploy.
+Nenhuma pendência trava a implementação. Cada item abaixo entra no site com um **valor fictício**, guardado em `js/conteudo.js` como `{ v: '…', provisorio: '<chave>' }`. Para trocar, edite o valor em `conteudo.js` e remova o envoltório (ou coloque o valor real no lugar). Em tempo de execução, `js/hidratar.js` marca com `data-provisorio="<chave>"` os elementos preenchidos com esses valores e mostra o aviso no rodapé enquanto restar algum. Para listar o que ainda é provisório: `grep -n "provisorio:" js/conteudo.js` (saída vazia quando tudo estiver resolvido). As fotos provisórias são `img/placeholders/*.svg`, ligadas em `conteudo.js`. A lista operacional de troca está em `docs/PENDENCIAS.md`. Valores fictícios nunca devem ir ao ar: o checklist precisa estar todo riscado antes do deploy.
 
 | Chave | Pendência | Valor provisório no site | Origem / observação |
 |---|---|---|---|

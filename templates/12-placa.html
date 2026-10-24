@@ -289,7 +289,7 @@
           <ul class="tabela" data-c-lista="problema.consequencias" data-acende>
             <template>
               <li class="linha">
-                <span class="linha__id"><svg class="dr-icone dr-icone--sm" aria-hidden="true" style="color: var(--erro)"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg></span>
+                <span class="linha__id"><svg class="dr-icone dr-icone--sm" aria-hidden="true" style="color: var(--erro)"><use href="#dr-alerta"></use></svg></span>
                 <p class="dr-body-lg" data-c="texto"></p>
                 <svg class="spark spark--queda" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"><polyline class="spark__base" points="0,31 100,31"></polyline><polyline></polyline><circle r="3"></circle></svg>
               </li>
@@ -518,7 +518,7 @@
   <script>
     (function () {
       'use strict';
-      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SPRITE = '#';
       function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
       function pad(n) { return String(n).padStart(2, '0'); }
 

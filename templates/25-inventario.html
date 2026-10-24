@@ -394,7 +394,7 @@
           <ul class="linhas" data-c-lista="problema.consequencias">
             <template>
               <li class="registro registro--so-texto">
-                <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg>
                 <p class="registro__titulo" data-c="texto"></p>
                 <span class="estado" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
               </li>
@@ -605,7 +605,7 @@
   <script>
     (function () {
       'use strict';
-      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SPRITE = '#';
       function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
       function normalizar(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
 

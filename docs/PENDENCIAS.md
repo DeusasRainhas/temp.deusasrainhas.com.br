@@ -1,11 +1,19 @@
 # Pendências — valores provisórios no site
 
-Checklist operacional. Cada linha corresponde a um `data-provisorio="<chave>"` no HTML. Quando o valor real entrar, marque a caixa e remova o atributo e o comentário `<!-- PROVISÓRIO -->` correspondentes. O site só pode ir ao ar com todas as caixas marcadas ou com o item explicitamente removido do layout.
+Checklist operacional. Cada linha corresponde a uma chave `provisorio` em `js/conteudo.js`. Os valores provisórios ficam lá, embrulhados assim:
 
-Para localizar tudo que ainda é provisório:
+```js
+email: { v: 'contato@deusasrainhas.com.br', provisorio: 'email' },
+```
+
+Para trocar um valor, edite `js/conteudo.js`: coloque o valor real e remova o envoltório (fica `email: 'oficial@…'`), ou ao menos apague a chave `provisorio`. O HTML dos templates não precisa mudar. Em tempo de execução, `js/hidratar.js` marca com `data-provisorio="<chave>"` cada elemento preenchido com um valor provisório e, enquanto restar algum, mostra no rodapé o aviso de site em construção. As fotos provisórias são os arquivos `img/placeholders/*.svg`, ligados em `conteudo.js` com as chaves `foto-*`.
+
+O site só pode ir ao ar com todas as caixas marcadas ou com o item explicitamente removido do layout.
+
+Para listar tudo que ainda é provisório:
 
 ```bash
-grep -rn 'data-provisorio' *.html
+grep -n "provisorio:" js/conteudo.js
 ```
 
 ## Contato e identidade legal
@@ -49,4 +57,9 @@ grep -rn 'data-provisorio' *.html
 ## Encerramento
 
 - [ ] Remover do rodapé a frase "Site em construção. Dados de contato e números são provisórios."
-- [ ] Rodar `grep -rn 'data-provisorio' *.html` e confirmar saída vazia
+- [ ] Rodar `grep -n "provisorio:" js/conteudo.js` e confirmar saída vazia (sem valores provisórios, o hidratador não marca `data-provisorio` nem mostra o aviso)
+
+## Known issues do protótipo
+
+- O link do rodapé `../privacidade.html` não existe neste protótipo: a página de privacidade pertence ao site final.
+- Os ícones dependem de `js/hidratar.js` injetar o sprite (`#dr-sprite`) no início do `<body>`; os templates usam `<use href="#dr-…">`. `img/icones/sprite-icones.svg` continua no repositório como fonte, mas não é lido pelas páginas (`<use>` com arquivo externo é bloqueado via `file://`). Ao mudar um ícone, atualize os dois.

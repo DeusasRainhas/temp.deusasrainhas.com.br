@@ -328,7 +328,7 @@
         <ul class="filetes" data-c-lista="problema.consequencias">
           <template>
             <li class="item">
-              <svg class="dr-icone" aria-hidden="true" style="color: var(--erro)"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+              <svg class="dr-icone" aria-hidden="true" style="color: var(--erro)"><use href="#dr-alerta"></use></svg>
               <p class="dr-body-lg" data-c="texto"></p>
             </li>
           </template>
@@ -427,7 +427,7 @@
               </g>
             </svg>
             <div class="sinais__legenda dr-caption">
-              <span><svg class="dr-icone" aria-hidden="true" style="color: var(--petroleo)"><use href="../img/icones/sprite-icones.svg#dr-clima"></use></svg><span data-c="tecnologia.pilares[3].titulo"></span></span>
+              <span><svg class="dr-icone" aria-hidden="true" style="color: var(--petroleo)"><use href="#dr-clima"></use></svg><span data-c="tecnologia.pilares[3].titulo"></span></span>
             </div>
           </div>
         </div>
@@ -567,7 +567,7 @@
   <script>
     (function () {
       'use strict';
-      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SPRITE = '#';
       var SVGNS = 'http://www.w3.org/2000/svg';
       function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
       function linha(g, x1, y1, x2, y2) {

@@ -283,7 +283,7 @@
           <template>
             <li class="bloco bloco--alerta ancorado" style="display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 16px">
               <span class="no" aria-hidden="true"></span>
-              <svg class="dr-icone" aria-hidden="true" style="margin: 2px 0 0"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+              <svg class="dr-icone" aria-hidden="true" style="margin: 2px 0 0"><use href="#dr-alerta"></use></svg>
               <p class="dr-body-lg" data-c="texto"></p>
             </li>
           </template>
@@ -513,7 +513,7 @@
   <script>
     (function () {
       'use strict';
-      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SPRITE = '#';
       function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
 
       document.addEventListener('conteudo:pronto', function () {

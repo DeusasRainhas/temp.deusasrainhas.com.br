@@ -73,7 +73,7 @@
       background: var(--mel); box-shadow: var(--sh-mel); display: grid; place-items: center; transition: transform .35s cubic-bezier(.3,1.4,.5,1);
     }
     .leque__botao img { width: 30px; height: auto; }
-    .leque.aberto .leque__botao { transform: rotate(-12deg) scale(.94); background: var(--mel-escuro); }
+    .leque.aberto .leque__botao { transform: scale(.94); background: var(--mel-escuro); }
     .leque__itens li {
       position: absolute; z-index: 2; left: 6px; top: 6px; width: 48px; height: 48px;
       transform: scale(.2); pointer-events: none; transition: transform .4s cubic-bezier(.3,1.3,.5,1);
@@ -253,9 +253,9 @@
         <div class="leque" data-leque>
           <span class="leque__veu" data-leque-veu></span>
           <ul class="leque__itens">
-            <li><a href="#funcionalidades" tabindex="-1"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-colmeia"></use></svg><span class="leque__rotulo" data-c="funcionalidades.eyebrow"></span></a></li>
-            <li><a href="#como-funciona" tabindex="-1"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-revisao"></use></svg><span class="leque__rotulo" data-c="comoFunciona.eyebrow"></span></a></li>
-            <li><a href="#equipe" tabindex="-1"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg><span class="leque__rotulo" data-c="equipe.eyebrow"></span></a></li>
+            <li><a href="#funcionalidades" tabindex="-1"><svg class="dr-icone" aria-hidden="true"><use href="#dr-colmeia"></use></svg><span class="leque__rotulo" data-c="funcionalidades.eyebrow"></span></a></li>
+            <li><a href="#como-funciona" tabindex="-1"><svg class="dr-icone" aria-hidden="true"><use href="#dr-revisao"></use></svg><span class="leque__rotulo" data-c="comoFunciona.eyebrow"></span></a></li>
+            <li><a href="#equipe" tabindex="-1"><svg class="dr-icone" aria-hidden="true"><use href="#dr-abelha"></use></svg><span class="leque__rotulo" data-c="equipe.eyebrow"></span></a></li>
             <li><a href="#contato" tabindex="-1"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="leque__rotulo" data-c="contato.eyebrow"></span></a></li>
           </ul>
           <button class="leque__botao" type="button" aria-expanded="false" aria-label="Atalhos" data-leque-botao><img src="../img/logos/coroa-terra.png" alt="" width="30" height="22"></button>
@@ -270,11 +270,11 @@
           <button class="sheet__menu" type="button" aria-expanded="false" aria-label="Abrir navegação" data-sheet-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg></button>
         </div>
         <ul class="sheet__lista" inert>
-          <li><a href="#funcionalidades"><span class="ic"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-colmeia"></use></svg></span><span data-c="funcionalidades.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
-          <li><a href="#como-funciona"><span class="ic"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-revisao"></use></svg></span><span data-c="comoFunciona.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
-          <li><a href="#para-quem"><span class="ic"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-florada"></use></svg></span><span data-c="paraQuem.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
-          <li><a href="#tecnologia"><span class="ic"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-offline"></use></svg></span><span data-c="tecnologia.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
-          <li><a href="#equipe"><span class="ic"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg></span><span data-c="equipe.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
+          <li><a href="#funcionalidades"><span class="ic"><svg class="dr-icone" aria-hidden="true"><use href="#dr-colmeia"></use></svg></span><span data-c="funcionalidades.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
+          <li><a href="#como-funciona"><span class="ic"><svg class="dr-icone" aria-hidden="true"><use href="#dr-revisao"></use></svg></span><span data-c="comoFunciona.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
+          <li><a href="#para-quem"><span class="ic"><svg class="dr-icone" aria-hidden="true"><use href="#dr-florada"></use></svg></span><span data-c="paraQuem.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
+          <li><a href="#tecnologia"><span class="ic"><svg class="dr-icone" aria-hidden="true"><use href="#dr-offline"></use></svg></span><span data-c="tecnologia.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
+          <li><a href="#equipe"><span class="ic"><svg class="dr-icone" aria-hidden="true"><use href="#dr-abelha"></use></svg></span><span data-c="equipe.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
           <li><a href="#contato"><span class="ic"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span><span data-c="contato.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
         </ul>
         <div class="sheet__rodape" inert>
@@ -327,7 +327,7 @@
         <ul class="linhas" data-c-lista="problema.consequencias">
           <template>
             <li class="tile">
-              <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+              <svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg>
               <p class="dr-body" data-c="texto"></p>
             </li>
           </template>
@@ -507,7 +507,7 @@
   <script>
     (function () {
       'use strict';
-      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SPRITE = '#';
       function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
       var reduzido = window.matchMedia('(prefers-reduced-motion: reduce)');
 

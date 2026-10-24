@@ -376,7 +376,7 @@
           <ul class="consequencias c6-grade" data-c-lista="problema.consequencias">
             <template>
               <li class="c6" data-inclina>
-                <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg>
                 <p class="dr-body-lg" data-c="texto"></p>
               </li>
             </template>
@@ -602,7 +602,7 @@
   <script>
     (function () {
       'use strict';
-      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SPRITE = '#';
       function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
       var reduzido = window.matchMedia('(prefers-reduced-motion: reduce)');
       var fino = window.matchMedia('(hover: hover) and (pointer: fine)');

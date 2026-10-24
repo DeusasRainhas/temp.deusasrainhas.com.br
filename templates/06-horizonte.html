@@ -328,11 +328,11 @@
   <nav data-secao="nav" class="trilho">
     <a class="trilho__marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="60" height="60"></a>
     <div class="trilho__links">
-      <a class="trilho__link" href="#funcionalidades"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-colmeia"></use></svg><span class="trilho__rotulo" data-c="funcionalidades.eyebrow"></span></a>
-      <a class="trilho__link" href="#como-funciona"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-revisao"></use></svg><span class="trilho__rotulo" data-c="comoFunciona.eyebrow"></span></a>
-      <a class="trilho__link" href="#para-quem"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg><span class="trilho__rotulo" data-c="paraQuem.eyebrow"></span></a>
-      <a class="trilho__link trilho__link--extra" href="#tecnologia"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-drone"></use></svg><span class="trilho__rotulo" data-c="tecnologia.eyebrow"></span></a>
-      <a class="trilho__link" href="#equipe"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-rainha"></use></svg><span class="trilho__rotulo" data-c="equipe.eyebrow"></span></a>
+      <a class="trilho__link" href="#funcionalidades"><svg class="dr-icone" aria-hidden="true"><use href="#dr-colmeia"></use></svg><span class="trilho__rotulo" data-c="funcionalidades.eyebrow"></span></a>
+      <a class="trilho__link" href="#como-funciona"><svg class="dr-icone" aria-hidden="true"><use href="#dr-revisao"></use></svg><span class="trilho__rotulo" data-c="comoFunciona.eyebrow"></span></a>
+      <a class="trilho__link" href="#para-quem"><svg class="dr-icone" aria-hidden="true"><use href="#dr-abelha"></use></svg><span class="trilho__rotulo" data-c="paraQuem.eyebrow"></span></a>
+      <a class="trilho__link trilho__link--extra" href="#tecnologia"><svg class="dr-icone" aria-hidden="true"><use href="#dr-drone"></use></svg><span class="trilho__rotulo" data-c="tecnologia.eyebrow"></span></a>
+      <a class="trilho__link" href="#equipe"><svg class="dr-icone" aria-hidden="true"><use href="#dr-rainha"></use></svg><span class="trilho__rotulo" data-c="equipe.eyebrow"></span></a>
       <a class="trilho__link" href="#contato"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="trilho__rotulo" data-c="contato.eyebrow"></span></a>
     </div>
     <a class="trilho__baixar" data-c-href="cta.baixar.url">
@@ -420,7 +420,7 @@
         <ul class="linhas-campo" data-c-lista="problema.consequencias">
           <template>
             <li>
-              <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+              <svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg>
               <p class="dr-body-lg" data-c="texto"></p>
             </li>
           </template>
@@ -628,7 +628,7 @@
   <script>
     (function () {
       'use strict';
-      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SPRITE = '#';
       function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
 
       document.addEventListener('conteudo:pronto', function () {

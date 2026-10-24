@@ -16,8 +16,6 @@ SECOES = ["hero", "prova", "problema", "funcionalidades", "como-funciona",
           "para-quem", "tecnologia", "equipe", "depoimento", "contato", "rodape"]
 VIEWPORTS = {"desktop": {"width": 1440, "height": 900},
              "mobile": {"width": 390, "height": 844}}
-PRONTO = ("document.querySelector('[data-aviso-provisorio], [data-secao=rodape]')"
-          " && window.DR && document.readyState==='complete'")
 SLOTS_VAZIOS = """() => Array.from(document.querySelectorAll('[data-c],[data-c-html]'))
   .filter(e => !e.textContent.trim())
   .map(e => e.getAttribute('data-c') || e.getAttribute('data-c-html'))"""
@@ -46,6 +44,7 @@ def _abrir(page, url):
     Devolve (hidratou, slots_vazios, erros, requisicoes)."""
     erros, requisicoes = [], []
     page.on("console", lambda m: erros.append(m.text) if m.type == "error" else None)
+    page.on("pageerror", lambda e: erros.append("erro de pagina: " + _curto(str(e))))
     page.on("response", lambda r: requisicoes.append((r.url, r.status)) if r.status >= 400 else None)
     page.on("requestfailed", lambda r: requisicoes.append((r.url, r.failure or "falhou")))
     page.add_init_script(
@@ -63,6 +62,18 @@ def _abrir(page, url):
             break
         page.wait_for_timeout(250)
     return True, vazios, erros, requisicoes
+
+
+def _motivos_erros(erros, requisicoes, prefixo=""):
+    motivos = []
+    for texto in erros:
+        if texto.startswith("erro de pagina: "):
+            motivos.append(prefixo + texto)
+        else:
+            motivos.append(f"{prefixo}erro de console: {_curto(texto)}")
+    for u, status in requisicoes:
+        motivos.append(f"{prefixo}requisicao falhou: {u} {status}")
+    return motivos
 
 
 def verificar_template(page, url, viewport_nome="desktop", thumb=None):
@@ -85,10 +96,7 @@ def verificar_template(page, url, viewport_nome="desktop", thumb=None):
             motivos.append("gsap ausente")
         if not page.evaluate("!!document.querySelector('#dr-switcher')"):
             motivos.append("switcher ausente")
-        for texto in erros:
-            motivos.append(f"erro de console: {_curto(texto)}")
-        for u, status in requisicoes:
-            motivos.append(f"requisicao falhou: {u} {status}")
+        motivos += _motivos_erros(erros, requisicoes)
         if thumb is not None:
             page.evaluate("window.scrollTo({top: 0, behavior: 'instant'})")
             page.wait_for_timeout(200)
@@ -128,7 +136,7 @@ MEDIR_MOVIMENTO = """() => {
 def verificar_movimento_reduzido(page, url):
     motivos = []
     try:
-        hidratou = _abrir(page, url)[0]
+        hidratou, _vazios, erros, requisicoes = _abrir(page, url)
         if not hidratou:
             motivos.append("reduced-motion: hidratacao nao concluiu")
         altura = page.evaluate("document.documentElement.scrollHeight")
@@ -150,6 +158,8 @@ def verificar_movimento_reduzido(page, url):
                 motivos.append(f"reduced-motion esconde: {m['nome']} altura=0")
             if m["right"] > m["iw"] + 1 or m["left"] < -1:
                 motivos.append(f"reduced-motion fora da tela: {m['nome']}")
+        # erros só aparecem depois da rolagem completa, então são lidos no fim
+        motivos += _motivos_erros(erros, requisicoes, "reduced-motion: ")
     except Exception as e:  # noqa: BLE001
         motivos.append(_curto(f"excecao: {type(e).__name__}: {e}"))
     return motivos

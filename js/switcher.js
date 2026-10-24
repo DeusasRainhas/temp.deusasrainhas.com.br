@@ -118,7 +118,7 @@ window.DR = window.DR || {};
     location.href = destino;
   }
 
-  function exportar() {
+  function textoExportar() {
     var favs = favoritos().slice().sort(function (a, b) { return a - b; });
     var obj = notas();
     var linhas = ['Deusas Rainhas · templates favoritos (' + favs.length + ')'];
@@ -129,12 +129,22 @@ window.DR = window.DR || {};
         ' · ' + t.nav + ' ' + t.cards + ' ' + t.ritmo);
       if (obj[n]) linhas.push('  nota: ' + obj[n]);
     });
-    var txt = linhas.join('\n');
+    return linhas.join('\n');
+  }
+
+  // Copia o texto; a promessa resolve true só se a escrita na área de transferência deu certo.
+  function copiar(txt) {
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(txt).catch(function () {});
+        return navigator.clipboard.writeText(txt).then(function () { return true; }, function () { return false; });
       }
     } catch (e) { /* sem área de transferência */ }
+    return Promise.resolve(false);
+  }
+
+  function exportar() {
+    var txt = textoExportar();
+    copiar(txt);
     return txt;
   }
 
@@ -307,7 +317,7 @@ window.DR = window.DR || {};
     var rodape = el('div', { 'class': 'dr-sw-rodape' });
     [['anterior', 'Anterior'], ['proximo', 'Próximo'], ['galeria', 'Galeria'], ['comparar', 'Comparar'], ['exportar', 'Exportar']]
       .forEach(function (b) {
-        rodape.appendChild(el('button', { type: 'button', 'data-sw': b[0] }, b[1]));
+        rodape.appendChild(el('button', { type: 'button', 'data-sw': b[0], 'data-rotulo': b[1] }, b[1]));
       });
 
     painel.appendChild(topo);
@@ -431,10 +441,12 @@ window.DR = window.DR || {};
       else if (acao === 'galeria') abrirGaleria();
       else if (acao === 'comparar') abrirComparar();
       else if (acao === 'exportar') {
-        exportar();
-        var orig = b.textContent;
-        b.textContent = 'Copiado';
-        setTimeout(function () { b.textContent = orig; }, 1500);
+        var orig = b.getAttribute('data-rotulo') || 'Exportar';
+        copiar(textoExportar()).then(function (ok) {
+          clearTimeout(b._drTimer);
+          b.textContent = ok ? 'Copiado' : 'Texto gerado';
+          b._drTimer = setTimeout(function () { b.textContent = orig; }, 1500);
+        });
       }
     });
 

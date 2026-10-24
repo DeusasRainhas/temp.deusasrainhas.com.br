@@ -265,7 +265,7 @@
           </div>
 
           <!-- SEÇÃO: como-funciona (fundida ao hero: cada estação da fila é um passo) -->
-          <ol class="fila" data-secao="como-funciona" id="como-funciona" data-c-lista="comoFunciona.passos">
+          <ol class="fila" data-secao="como-funciona" id="como-funciona" data-c-lista="comoFunciona.passos" tabindex="0" aria-label="Telas do app (use as setas para navegar)">
             <template>
               <li class="painel estacao">
                 <div class="fone"><div class="fone__tela"><img data-c-src="imagem" data-c-alt="alt" alt=""><span class="esqueleto" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></div></div>
@@ -314,7 +314,7 @@
         <ul class="cards" data-c-lista="problema.consequencias">
           <template>
             <li class="c0">
-              <span class="c0__icone"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg></span>
+              <span class="c0__icone"><svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg></span>
               <p class="dr-body-lg" data-c="texto"></p>
             </li>
           </template>
@@ -489,7 +489,7 @@
   <script>
     (function () {
       'use strict';
-      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SPRITE = '#';
       function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
 
       function marcarTelas() {
@@ -554,6 +554,25 @@
         window.addEventListener('scroll', function () { if (!tick) { tick = true; requestAnimationFrame(atualizar); } }, { passive: true });
         window.addEventListener('resize', atualizar);
         atualizar();
+
+        /* ---- ←/→ dentro do carrossel andam um card (e não chegam ao switcher) ---- */
+        var trilhoTecla = document.querySelector('[data-trilho]');
+        trilhoTecla.addEventListener('keydown', function (e) {
+          if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+          if (e.altKey || e.ctrlKey || e.metaKey || e.defaultPrevented) return;
+          var pinado = document.documentElement.classList.contains('pin-tour');
+          var fila = trilhoTecla.querySelector('.fila');
+          if (!pinado && !(fila && fila.contains(e.target))) return;
+          e.preventDefault();
+          var dir = e.key === 'ArrowRight' ? 1 : -1;
+          var caixaGap = pinado ? trilhoTecla : fila;
+          var card = fila && fila.querySelector('.estacao');
+          var passo = (card ? card.getBoundingClientRect().width : 300) + (parseFloat(getComputedStyle(caixaGap).columnGap) || 0);
+          var comportamento = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+          // Pinado: o deslocamento horizontal acompanha o scroll vertical 1:1.
+          if (pinado) window.scrollBy({ top: dir * passo, behavior: comportamento });
+          else fila.scrollBy({ left: dir * passo, behavior: comportamento });
+        });
 
         /* ---- Movimento ---- */
         if (!window.gsap || !window.ScrollTrigger) return;

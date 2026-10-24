@@ -338,25 +338,25 @@
           <section data-secao="prova" class="prova">
             <div class="ficha" data-ficha>
               <div class="ficha__in"><div class="frente">
-                <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg>
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-abelha"></use></svg>
                 <span class="dado" data-c="prova.stats[0].valor"></span><span class="dado__rotulo" data-c="prova.stats[0].rotulo"></span>
               </div><div class="verso" aria-hidden="true"></div></div>
             </div>
             <div class="ficha" data-ficha>
               <div class="ficha__in"><div class="frente">
-                <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-colmeia"></use></svg>
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-colmeia"></use></svg>
                 <span class="dado" data-c="prova.stats[1].valor"></span><span class="dado__rotulo" data-c="prova.stats[1].rotulo"></span>
               </div><div class="verso" aria-hidden="true"></div></div>
             </div>
             <div class="ficha" data-ficha>
               <div class="ficha__in"><div class="frente">
-                <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-mapa"></use></svg>
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-mapa"></use></svg>
                 <span class="dado" data-c="prova.stats[2].valor"></span><span class="dado__rotulo" data-c="prova.stats[2].rotulo"></span>
               </div><div class="verso" aria-hidden="true"></div></div>
             </div>
             <div class="ficha" data-ficha>
               <div class="ficha__in"><div class="frente">
-                <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-offline"></use></svg>
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-offline"></use></svg>
                 <span class="dado" data-c="prova.stats[3].valor"></span><span class="dado__rotulo" data-c="prova.stats[3].rotulo"></span>
               </div><div class="verso" aria-hidden="true"></div></div>
             </div>
@@ -392,7 +392,7 @@
           <ul class="riscos" data-c-lista="problema.consequencias">
             <template>
               <li>
-                <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg>
                 <p class="dr-body-lg" data-c="texto"></p>
               </li>
             </template>
@@ -469,7 +469,7 @@
         <ul class="pilulas" data-c-lista="paraQuem.perfis">
           <template>
             <li class="pilula">
-              <span class="pilula__icone" aria-hidden="true"><svg class="dr-icone"><use href="../img/icones/sprite-icones.svg#dr-florada"></use></svg></span>
+              <span class="pilula__icone" aria-hidden="true"><svg class="dr-icone"><use href="#dr-florada"></use></svg></span>
               <h3 data-c="titulo"></h3>
               <p data-c="texto"></p>
             </li>
@@ -544,7 +544,7 @@
     <section data-secao="depoimento" class="grafite">
       <div class="dr-container">
         <figure class="citacao">
-          <span class="citacao__orn" aria-hidden="true"><svg class="dr-icone"><use href="../img/icones/sprite-icones.svg#dr-favo"></use></svg></span>
+          <span class="citacao__orn" aria-hidden="true"><svg class="dr-icone"><use href="#dr-favo"></use></svg></span>
           <blockquote style="margin:0"><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
           <figcaption>
             <img data-c-src="depoimento.foto" alt="" width="56" height="56">
@@ -641,7 +641,7 @@
   <script>
     (function () {
       'use strict';
-      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SPRITE = '#';
       function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
 
       /* Menu em tela cheia: abre/fecha, Esc fecha, foco volta ao botão. */

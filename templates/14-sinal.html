@@ -286,10 +286,10 @@
         <div class="diagrama" data-diagrama>
           <svg class="trilhas-svg" aria-hidden="true" focusable="false"></svg>
           <div class="apiario" aria-hidden="true">
-            <svg class="dr-icone apiario__colmeia"><use href="../img/icones/sprite-icones.svg#dr-colmeia"></use></svg>
-            <span class="sensor sensor--1"><svg class="dr-icone"><use href="../img/icones/sprite-icones.svg#dr-clima"></use></svg></span>
-            <span class="sensor sensor--2"><svg class="dr-icone"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg></span>
-            <span class="sensor sensor--3"><svg class="dr-icone"><use href="../img/icones/sprite-icones.svg#dr-revisao"></use></svg></span>
+            <svg class="dr-icone apiario__colmeia"><use href="#dr-colmeia"></use></svg>
+            <span class="sensor sensor--1"><svg class="dr-icone"><use href="#dr-clima"></use></svg></span>
+            <span class="sensor sensor--2"><svg class="dr-icone"><use href="#dr-abelha"></use></svg></span>
+            <span class="sensor sensor--3"><svg class="dr-icone"><use href="#dr-revisao"></use></svg></span>
           </div>
           <figure class="celular">
             <img src="../img/app/01_dashboard_apiarios.png" data-c-alt="comoFunciona.passos[0].alt" alt="" width="393" height="869">
@@ -329,7 +329,7 @@
         <ul class="nuvem" data-c-lista="problema.consequencias">
           <template>
             <li class="pilula pilula--alerta">
-              <span class="pilula__icone"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg></span>
+              <span class="pilula__icone"><svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg></span>
               <p class="dr-body" data-c="texto"></p>
             </li>
           </template>
@@ -547,7 +547,7 @@
   <script>
     (function () {
       'use strict';
-      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SPRITE = '#';
       var NS = 'http://www.w3.org/2000/svg';
       function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
       function svgEl(tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
