@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="pt-BR" data-template="25">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 25 Inventário</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       25 Inventário · dados · N5 / C3 / R6
+       Lista densa com status, como o inventário de colmeias do app:
+       cada grupo é uma seção do conteúdo (problema, funcionalidades,
+       tecnologia, para quem) com cabeçalho fixo enquanto o grupo rola,
+       e um filtro instantâneo (busca + chips por grupo) no topo.
+       Os itens vêm de data-c-lista; nenhum registro é inventado.
+       - nada de opacity < 1 fora do gsap.matchMedia;
+       - canto inferior direito livre (pílula do switcher).
+       ================================================================= */
+
+    :root { --lateral: 272px; --topo: 0px; --barra-h: 72px; }
+    @media (max-width: 1023px) { :root { --topo: 64px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 2px solid var(--petroleo); outline-offset: 2px;
+    }
+    body { background: var(--superficie); }
+
+    .prov[data-provisorio]::after, .prov [data-provisorio]::after {
+      content: "*"; font-size: .5em; vertical-align: super; margin-left: .06em; color: var(--terra-clara);
+    }
+    [data-aviso-provisorio]::before { content: "* "; }
+
+    /* ---------- N5: índice em coluna fixa à esquerda com seções e progresso ---------- */
+    .lateral {
+      position: fixed; left: 0; top: 0; bottom: 0; width: var(--lateral); z-index: 50;
+      display: flex; flex-direction: column; gap: var(--sp-5);
+      padding: var(--sp-5) var(--sp-5) var(--sp-5) var(--sp-5);
+      background: var(--grafite); color: var(--creme); overflow-y: auto;
+    }
+    .lateral__topo { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+    .lateral__marca img { width: 64px; height: 64px; }
+    .lateral__total { height: 3px; background: var(--grafite-suave); border-radius: 2px; overflow: hidden; }
+    .lateral__total i { display: block; height: 100%; background: var(--mel); transform-origin: left center; transform: scaleX(0); }
+    .lateral__atual { display: none; }
+    .indice-btn { display: none; }
+    .indice { display: flex; flex-direction: column; gap: 2px; counter-reset: idx; }
+    .indice a {
+      counter-increment: idx; position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--sp-2);
+      padding: 9px 10px 9px 14px; border-radius: var(--r-sm); text-decoration: none;
+      font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; line-height: 1.45; color: var(--tenue);
+      transition: background-color .2s ease, color .2s ease;
+    }
+    .indice a::before { content: counter(idx, decimal-leading-zero); color: var(--suave); transition: color .2s ease; }
+    .indice a > i { position: absolute; left: 0; top: 6px; bottom: 6px; width: 2px; background: var(--grafite-suave); border-radius: 2px; overflow: hidden; }
+    .indice a > i::after { content: ""; position: absolute; inset: 0; background: var(--mel); transform-origin: top center; transform: scaleY(var(--p, 0)); }
+    .indice a:hover { background: rgba(255,251,230,.05); color: var(--creme); }
+    .indice a.ativo { color: var(--creme); background: rgba(255,251,230,.06); }
+    .indice a.ativo::before { color: var(--mel); }
+    .lateral__base { margin-top: auto; display: grid; gap: var(--sp-3); }
+    .lateral__base .dr-btn { width: 100%; }
+    .lateral__base .dr-btn--secundario { color: var(--creme); border-color: var(--grafite-suave); }
+    .lateral__base .dr-btn--secundario:hover { background: var(--grafite-suave); }
+    .lateral__base small { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--tenue); }
+
+    @media (max-width: 1023px) {
+      .lateral {
+        right: 0; bottom: auto; width: auto; height: var(--topo); overflow: visible;
+        flex-direction: row; align-items: center; padding: 0 16px; gap: var(--sp-3);
+      }
+      .lateral__topo { flex: none; }
+      .lateral__marca img { width: 52px; height: 52px; }
+      .lateral__total { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 0; }
+      .lateral__atual {
+        display: block; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--mel-claro);
+      }
+      .indice-btn {
+        display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: var(--r-md);
+        background: transparent; border: 1.5px solid var(--grafite-suave); color: var(--creme); cursor: pointer;
+      }
+      .indice { display: none; position: absolute; top: var(--topo); left: 0; right: 0; padding: var(--sp-3) 16px var(--sp-5); background: var(--grafite); box-shadow: var(--sh-lg); }
+      .lateral.aberta .indice { display: flex; }
+      .lateral__base { display: none; }
+    }
+
+    /* ---------- R6: seções como cartões de canto --r-xl sobre o creme ---------- */
+    main { margin-left: var(--lateral); padding: var(--sp-4) var(--sp-5) 0; }
+    main > section {
+      max-width: 1120px; margin: 0 auto var(--sp-4); border-radius: var(--r-xl);
+      background: var(--creme); border: var(--bd); padding: var(--sp-7);
+      scroll-margin-top: calc(var(--topo) + 12px);
+    }
+    @media (max-width: 1023px) { main { margin-left: 0; padding: calc(var(--topo) + 10px) 10px 0; } }
+    @media (max-width: 767px) { main > section { padding: var(--sp-5) var(--sp-4); border-radius: var(--r-lg); margin-bottom: 10px; } }
+
+    /* ---------- Hero: inventário ---------- */
+    section[data-secao="hero"] { padding-bottom: var(--sp-5); }
+    .hero__topo { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-6); align-items: end; }
+    .hero__titulo { font-size: clamp(36px, 4.6vw, 62px); line-height: 1.02; letter-spacing: -.022em; margin-top: var(--sp-3); text-wrap: balance; }
+    .hero__sub { font-size: var(--fs-body-lg); line-height: 1.6; color: var(--corpo); }
+    .acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-4); }
+    @media (max-width: 899px) { .hero__topo { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); } }
+
+    /* Resumo do inventário (prova) */
+    .resumo {
+      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: var(--sp-6);
+      border: var(--bd); border-radius: var(--r-lg); background: var(--branco);
+    }
+    .resumo li { padding: var(--sp-4) var(--sp-5); }
+    .resumo li + li { border-left: var(--bd); }
+    .resumo__valor { display: block; font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; font-size: clamp(26px, 2.6vw, 36px); line-height: 1; color: var(--petroleo); letter-spacing: -.02em; }
+    .resumo__rotulo { display: block; margin-top: var(--sp-2); font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    @media (max-width: 767px) {
+      .resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .resumo li { padding: var(--sp-3) var(--sp-4); }
+      .resumo li:nth-child(odd) { border-left: 0; }
+      .resumo li:nth-child(n+3) { border-top: var(--bd); }
+    }
+
+    /* Barra de filtro: fixa no topo enquanto o inventário rola */
+    .filtro {
+      position: sticky; top: var(--topo); z-index: 20;
+      display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap;
+      margin: var(--sp-6) calc(var(--sp-7) * -1) 0; padding: var(--sp-3) var(--sp-7);
+      background: var(--creme); border-block: var(--bd);
+    }
+    .busca { position: relative; flex: 1 1 240px; max-width: 360px; }
+    .busca svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--suave); pointer-events: none; }
+    .busca input {
+      width: 100%; font: inherit; font-size: var(--fs-small); color: var(--ink);
+      padding: 10px 12px 10px 40px; border: var(--bd-forte); border-radius: var(--r-pill); background: var(--branco);
+    }
+    .busca input:focus { border-color: var(--petroleo); outline: none; box-shadow: 0 0 0 3px var(--petroleo-veu); }
+    .chips { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+    .chip-filtro {
+      display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+      padding: 7px 12px; border-radius: var(--r-pill); border: var(--bd-forte); background: var(--branco);
+      font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--terra-escura);
+      transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+    }
+    .chip-filtro::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--cor, var(--petroleo)); }
+    .chip-filtro[aria-pressed="false"] { background: transparent; color: var(--suave); border-style: dashed; }
+    .chip-filtro[aria-pressed="false"]::before { background: transparent; box-shadow: inset 0 0 0 1.5px var(--cor, var(--petroleo)); }
+    .contagem { margin-left: auto; font-family: var(--mono); font-size: var(--fs-small); color: var(--petroleo); font-variant-numeric: tabular-nums; }
+    @media (max-width: 767px) {
+      .filtro { margin-inline: calc(var(--sp-4) * -1); padding: var(--sp-3) var(--sp-4); }
+      .busca { max-width: none; flex-basis: 100%; order: -1; }
+      .chips { flex-wrap: nowrap; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; }
+      .chip-filtro { flex: none; }
+    }
+
+    /* Grupos com cabeçalho fixo */
+    .grupos { counter-reset: grupo; }
+    .grupo { counter-increment: grupo; counter-reset: item; --cor: var(--petroleo); }
+    .grupo[data-status="erro"] { --cor: var(--erro); --veu: var(--erro-veu); }
+    .grupo[data-status="ok"] { --cor: var(--sucesso); --veu: var(--sucesso-veu); }
+    .grupo[data-status="info"] { --cor: var(--petroleo); --veu: var(--petroleo-veu); }
+    .grupo[data-status="mel"] { --cor: var(--aviso); --veu: var(--aviso-veu); }
+    .grupo__cabeca {
+      position: sticky; top: calc(var(--topo) + var(--barra-h)); z-index: 10;
+      display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: var(--sp-4); align-items: center;
+      margin-inline: calc(var(--sp-7) * -1); padding: var(--sp-3) var(--sp-7);
+      background: var(--creme-papel); border-bottom: 2px solid var(--cor);
+    }
+    .grupo__cabeca::before {
+      content: attr(data-letra); display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--r-sm);
+      background: var(--cor); color: var(--branco); font-family: var(--mono); font-weight: 700; font-size: 15px;
+    }
+    .grupo__cabeca .dr-eyebrow { font-size: 11px; color: var(--cor); }
+    .grupo[data-status="mel"] .grupo__cabeca .dr-eyebrow { color: var(--terra); }
+    .grupo__cabeca .dr-h2 { font-size: 22px; line-height: 1.2; margin-top: 2px; }
+    .grupo__conta { font-family: var(--mono); font-size: var(--fs-small); color: var(--terra); font-variant-numeric: tabular-nums; }
+    @media (max-width: 767px) {
+      .grupo__cabeca { margin-inline: calc(var(--sp-4) * -1); padding: var(--sp-3) var(--sp-4); grid-template-columns: 36px minmax(0, 1fr) auto; gap: var(--sp-3); }
+      .grupo__cabeca .dr-h2 { font-size: 18px; }
+    }
+
+    .linhas { padding-block: var(--sp-2) var(--sp-5); }
+    .registro {
+      counter-increment: item;
+      display: grid; grid-template-columns: 56px 24px minmax(0, 4fr) minmax(0, 7fr) 92px; gap: var(--sp-4); align-items: start;
+      padding: 14px var(--sp-3); border-bottom: var(--bd); border-radius: var(--r-sm);
+      transition: background-color .15s ease;
+    }
+    .registro:hover { background: var(--veu); }
+    .registro::before {
+      content: attr(data-cod);
+      font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--suave); padding-top: 3px;
+    }
+    .registro .dr-icone { color: var(--cor); width: 22px; height: 22px; }
+    .registro__titulo { font-weight: 700; font-size: 16px; line-height: 1.4; color: var(--ink); }
+    .registro__texto { font-size: 15px; line-height: 1.55; color: var(--corpo); }
+    .registro--so-texto { grid-template-columns: 56px 24px minmax(0, 11fr) 92px; }
+    .registro--so-texto .registro__titulo { font-weight: 500; }
+    .estado { justify-self: end; display: inline-flex; gap: 3px; align-items: center; padding: 6px 8px; border-radius: var(--r-pill); background: var(--veu); margin-top: 1px; }
+    .estado i { width: 6px; height: 12px; border-radius: 2px; background: var(--cor); }
+    .estado i:nth-child(n+4) { background: transparent; box-shadow: inset 0 0 0 1px var(--cor); }
+    .grupo[data-status="erro"] .estado i:nth-child(n+2) { background: transparent; box-shadow: inset 0 0 0 1px var(--cor); }
+    .grupo[data-status="mel"] .estado i:nth-child(n+3) { background: transparent; box-shadow: inset 0 0 0 1px var(--cor); }
+    .grupo[data-status="ok"] .estado i { background: var(--cor); box-shadow: none; }
+    .registro[hidden], .grupo[hidden] { display: none !important; }
+    @media (max-width: 767px) {
+      .registro, .registro--so-texto { grid-template-columns: 22px minmax(0, 1fr) auto; gap: 2px var(--sp-3); padding-inline: 0; }
+      .registro::before { grid-column: 2; grid-row: 1; font-size: 11px; padding-top: 0; }
+      .registro .dr-icone { grid-column: 1; grid-row: 1 / span 3; margin-top: 2px; }
+      .registro__titulo { grid-column: 2; grid-row: 2; }
+      .registro__texto { grid-column: 2 / -1; grid-row: 3; }
+      .estado { grid-column: 3; grid-row: 1 / span 2; align-self: start; }
+      .registro--so-texto .registro__titulo { grid-row: 2 / span 2; }
+    }
+
+    /* Linha especial do problema: o 95% */
+    .marcador { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-5); align-items: center; margin-top: var(--sp-4); padding: var(--sp-4) var(--sp-5); border-radius: var(--r-md); background: var(--erro-veu); }
+    .marcador__valor { font-family: var(--mono); font-weight: 500; font-size: clamp(40px, 4vw, 56px); line-height: 1; letter-spacing: -.04em; color: var(--terra-escura); }
+    .marcador p { color: var(--ink); }
+
+    /* ---------- Cabeças dos cartões ---------- */
+    .cabeca .dr-eyebrow { margin-bottom: var(--sp-3); }
+    .cabeca .dr-h2 { text-wrap: balance; }
+    .cabeca .intro { margin-top: var(--sp-3); max-width: 58ch; }
+    .cabeca + * { margin-top: var(--sp-6); }
+    @media (max-width: 767px) { .dr-h2 { font-size: 28px; } }
+
+    /* ---------- C3: cartões com circuito-canto no canto superior ---------- */
+    .c3 { position: relative; background: var(--branco); border: var(--bd); border-radius: var(--r-lg); padding: var(--sp-5); }
+    .c3::before {
+      content: ""; position: absolute; top: 0; right: 0; width: 88px; height: 88px; pointer-events: none;
+      background: url(../img/padroes/circuito-canto.svg) 0 0 / 100% 100% no-repeat; transform: scaleX(-1);
+    }
+    .passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-4); }
+    .passo { display: flex; flex-direction: column; }
+    .passo__numero { font-family: var(--mono); font-weight: 500; font-size: 28px; color: var(--petroleo); }
+    .passo .dr-h4 { margin: var(--sp-3) 0 var(--sp-2); padding-right: 40px; }
+    .passo figure { margin-top: auto; padding-top: var(--sp-4); }
+    .passo img { width: 100%; height: 240px; object-fit: cover; object-position: top; border-radius: var(--r-md); border: var(--bd); background: var(--creme); }
+    .passo figcaption { margin-top: var(--sp-2); }
+    @media (max-width: 899px) { .passos { grid-template-columns: minmax(0, 1fr); } }
+
+    .equipe-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-4); }
+    .pessoa { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
+    .pessoa img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: var(--bd); }
+    .pessoa .dr-h4 { font-size: 17px; padding-right: 36px; }
+    .pessoa__cargo { margin-top: 2px; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    .origem { max-width: 60ch; }
+    .apoios { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-4); margin-top: var(--sp-4); }
+    .apoio { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-3); }
+    .apoio__logo { display: grid; place-items: center; height: 72px; padding: var(--sp-2) var(--sp-4); border-radius: var(--r-md); }
+    .apoio__logo img { max-height: 52px; width: auto; max-width: 160px; }
+    .apoio[data-fundo="escuro"] .apoio__logo { background: var(--grafite); }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--terra); }
+    @media (max-width: 899px) { .equipe-grade, .apoios { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Depoimento ---------- */
+    section[data-secao="depoimento"] { background: var(--grafite); border-color: var(--grafite); }
+    .citacao .dr-quote { font-size: clamp(24px, 3vw, 36px); line-height: 1.35; color: var(--creme); max-width: 30ch; }
+    .citacao blockquote { margin: 0; }
+    .citacao figcaption { display: flex; align-items: center; gap: var(--sp-4); margin-top: var(--sp-5); }
+    .citacao figcaption img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+    .citacao__nome { font-weight: 700; color: var(--creme); }
+    .citacao__local { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--mel-claro); }
+
+    /* ---------- Contato ---------- */
+    .contato-grade { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-5); align-items: start; }
+    .form { display: grid; gap: var(--sp-4); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo input, .campo textarea {
+      font: inherit; font-size: var(--fs-body); color: var(--ink);
+      background: var(--creme); border: var(--bd-forte); border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4); width: 100%;
+    }
+    .campo textarea { min-height: 130px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canais li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-3); align-items: center; padding-block: var(--sp-3); border-bottom: var(--bd); }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-weight: 600; text-underline-offset: 4px; overflow-wrap: anywhere; }
+    @media (max-width: 899px) { .contato-grade { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Rodapé ---------- */
+    footer[data-secao="rodape"] { margin-left: var(--lateral); background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 96px; margin-top: var(--sp-4); }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 1023px) { footer[data-secao="rodape"] { margin-left: 0; } }
+    @media (max-width: 767px) {
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N5 · índice em coluna fixa à esquerda com seções e progresso) -->
+  <nav data-secao="nav" class="lateral" data-lateral>
+    <div class="lateral__topo">
+      <a class="lateral__marca" href="#inicio"><img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+    </div>
+    <div class="lateral__total" aria-hidden="true"><i data-total></i></div>
+    <span class="lateral__atual" aria-hidden="true" data-atual></span>
+    <!-- aria-label é rótulo de interface (não é cópia do site) -->
+    <button class="indice-btn" type="button" aria-expanded="false" aria-controls="indice" aria-label="Índice" data-indice-btn>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+    </button>
+    <div class="indice" id="indice" data-indice>
+      <a href="#inicio"><i></i><span data-c="hero.eyebrow"></span></a>
+      <a href="#problema"><i></i><span data-c="problema.eyebrow"></span></a>
+      <a href="#funcionalidades"><i></i><span data-c="funcionalidades.eyebrow"></span></a>
+      <a href="#tecnologia"><i></i><span data-c="tecnologia.eyebrow"></span></a>
+      <a href="#para-quem"><i></i><span data-c="paraQuem.eyebrow"></span></a>
+      <a href="#como-funciona"><i></i><span data-c="comoFunciona.eyebrow"></span></a>
+      <a href="#equipe"><i></i><span data-c="equipe.eyebrow"></span></a>
+      <a href="#contato"><i></i><span data-c="contato.eyebrow"></span></a>
+    </div>
+    <div class="lateral__base">
+      <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+      <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+      <small data-c="rodape.endereco"></small>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (inventário: resumo, filtro e grupos com cabeçalho fixo) -->
+    <section data-secao="hero" id="inicio">
+      <div class="hero__topo">
+        <div>
+          <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+          <h1 class="dr-display hero__titulo" data-c="hero.titulo"></h1>
+        </div>
+        <div>
+          <p class="hero__sub" data-c="hero.subtitulo"></p>
+          <div class="acoes">
+            <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+            <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+            <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEÇÃO: prova (fundida no hero: resumo do inventário) -->
+      <section data-secao="prova">
+        <ul class="resumo" data-c-lista="prova.stats">
+          <template>
+            <li>
+              <span class="resumo__valor prov" data-c="valor"></span>
+              <span class="resumo__rotulo" data-c="rotulo"></span>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+      <div class="filtro" data-filtro>
+        <label class="busca">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <!-- aria-label é rótulo de interface (não é cópia do site) -->
+          <input type="search" autocomplete="off" aria-label="Filtrar" aria-controls="grupos" data-busca>
+        </label>
+        <div class="chips" data-chips>
+          <button class="chip-filtro" type="button" aria-pressed="true" data-grupo-alvo="problema" style="--cor: var(--erro)" data-c="problema.eyebrow"></button>
+          <button class="chip-filtro" type="button" aria-pressed="true" data-grupo-alvo="funcionalidades" style="--cor: var(--sucesso)" data-c="funcionalidades.eyebrow"></button>
+          <button class="chip-filtro" type="button" aria-pressed="true" data-grupo-alvo="tecnologia" style="--cor: var(--petroleo)" data-c="tecnologia.eyebrow"></button>
+          <button class="chip-filtro" type="button" aria-pressed="true" data-grupo-alvo="para-quem" style="--cor: var(--aviso)" data-c="paraQuem.eyebrow"></button>
+        </div>
+        <output class="contagem" aria-live="polite" data-contagem></output>
+      </div>
+
+      <div class="grupos" id="grupos">
+
+        <!-- SEÇÃO: problema (grupo A, status de alerta) -->
+        <section data-secao="problema" id="problema" class="grupo" data-status="erro" data-grupo="problema">
+          <header class="grupo__cabeca">
+            <div>
+              <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+              <h2 class="dr-h2" data-c="problema.titulo"></h2>
+            </div>
+            <span class="grupo__conta" data-conta></span>
+          </header>
+          <div class="marcador" data-filtravel>
+            <span class="marcador__valor" data-c="problema.estatistica.valor"></span>
+            <p class="dr-body-lg" data-c="problema.estatistica.texto"></p>
+          </div>
+          <ul class="linhas" data-c-lista="problema.consequencias">
+            <template>
+              <li class="registro registro--so-texto">
+                <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+                <p class="registro__titulo" data-c="texto"></p>
+                <span class="estado" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+              </li>
+            </template>
+          </ul>
+        </section>
+
+        <!-- SEÇÃO: funcionalidades (grupo B, status ok) -->
+        <section data-secao="funcionalidades" id="funcionalidades" class="grupo" data-status="ok" data-grupo="funcionalidades">
+          <header class="grupo__cabeca">
+            <div>
+              <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+              <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+            </div>
+            <span class="grupo__conta" data-conta></span>
+          </header>
+          <ul class="linhas" data-c-lista="funcionalidades.itens">
+            <template>
+              <li class="registro">
+                <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+                <h3 class="registro__titulo" data-c="titulo"></h3>
+                <p class="registro__texto" data-c="texto"></p>
+                <span class="estado" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+              </li>
+            </template>
+          </ul>
+        </section>
+
+        <!-- SEÇÃO: tecnologia (grupo C, status informativo) -->
+        <section data-secao="tecnologia" id="tecnologia" class="grupo" data-status="info" data-grupo="tecnologia">
+          <header class="grupo__cabeca">
+            <div>
+              <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+              <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+            </div>
+            <span class="grupo__conta" data-conta></span>
+          </header>
+          <ul class="linhas" data-c-lista="tecnologia.pilares">
+            <template>
+              <li class="registro">
+                <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+                <h3 class="registro__titulo" data-c="titulo"></h3>
+                <p class="registro__texto" data-c="texto"></p>
+                <span class="estado" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+              </li>
+            </template>
+          </ul>
+        </section>
+
+        <!-- SEÇÃO: para-quem (grupo D) -->
+        <section data-secao="para-quem" id="para-quem" class="grupo" data-status="mel" data-grupo="para-quem">
+          <header class="grupo__cabeca">
+            <div>
+              <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+              <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+            </div>
+            <span class="grupo__conta" data-conta></span>
+          </header>
+          <ul class="linhas" data-c-lista="paraQuem.perfis">
+            <template>
+              <li class="registro">
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <h3 class="registro__titulo" data-c="titulo"></h3>
+                <p class="registro__texto" data-c="texto"></p>
+                <span class="estado" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+              </li>
+            </template>
+          </ul>
+        </section>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona (cartões C3) -->
+    <section data-secao="como-funciona" id="como-funciona">
+      <header class="cabeca">
+        <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+        <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+      </header>
+      <ol class="passos" data-c-lista="comoFunciona.passos">
+        <template>
+          <li class="passo c3">
+            <span class="passo__numero" data-c="numero"></span>
+            <h3 class="dr-h4" data-c="titulo"></h3>
+            <p class="dr-body" data-c="texto"></p>
+            <figure>
+              <img data-c-src="imagem" data-c-alt="alt" alt="">
+              <figcaption class="dr-caption" data-c="alt"></figcaption>
+            </figure>
+          </li>
+        </template>
+      </ol>
+    </section>
+
+    <!-- SEÇÃO: equipe (cartões C3) -->
+    <section data-secao="equipe" id="equipe">
+      <header class="cabeca">
+        <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+        <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+        <p class="dr-body-lg intro origem" data-c="equipe.origem"></p>
+      </header>
+      <ul class="equipe-grade" data-c-lista="equipe.pessoas">
+        <template>
+          <li class="pessoa c3">
+            <img data-c-src="foto" data-c-alt="alt" alt="" width="64" height="64">
+            <div>
+              <h3 class="dr-h4" data-c="nome"></h3>
+              <p class="pessoa__cargo" data-c="cargo"></p>
+            </div>
+          </li>
+        </template>
+      </ul>
+      <ul class="apoios" data-c-lista="equipe.apoios">
+        <template>
+          <li class="apoio c3">
+            <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+            <span class="apoio__nome" data-c="nome"></span>
+          </li>
+        </template>
+      </ul>
+    </section>
+
+    <!-- SEÇÃO: depoimento (cartão grafite) -->
+    <section data-secao="depoimento">
+      <figure class="citacao">
+        <blockquote><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+        <figcaption>
+          <img data-c-src="depoimento.foto" alt="" width="56" height="56">
+          <span>
+            <span class="citacao__nome" data-c="depoimento.nome"></span><br>
+            <span class="citacao__local" data-c="depoimento.local"></span>
+          </span>
+        </figcaption>
+      </figure>
+    </section>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" id="contato">
+      <header class="cabeca">
+        <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+        <h2 class="dr-h2" data-c="contato.titulo"></h2>
+        <p class="dr-body-lg intro" data-c="contato.texto"></p>
+      </header>
+      <div class="contato-grade">
+        <form class="form c3" method="post" data-form-contato>
+          <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+          <div class="campo">
+            <label for="f-nome" data-c="contato.form.nome"></label>
+            <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+          </div>
+          <div class="campo">
+            <label for="f-email" data-c="contato.form.email"></label>
+            <input id="f-email" name="email" type="email" autocomplete="email" required>
+          </div>
+          <div class="campo">
+            <label for="f-msg" data-c="contato.form.mensagem"></label>
+            <textarea id="f-msg" name="mensagem" required></textarea>
+          </div>
+          <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+        </form>
+        <div>
+          <ul class="canais">
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <a data-mailto data-c="contato.email"></a>
+            </li>
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+              <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+            </li>
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+            </li>
+          </ul>
+          <div class="acoes">
+            <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+            <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '../img/icones/sprite-icones.svg#';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+      function normalizar(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+
+      var aoFiltrar = null; // gancho de movimento (preenchido dentro do matchMedia)
+
+      /* Filtro instantâneo: busca por texto + chips por grupo. */
+      function ligarFiltro() {
+        var busca = document.querySelector('[data-busca]');
+        var chips = Array.prototype.slice.call(document.querySelectorAll('[data-grupo-alvo]'));
+        var grupos = Array.prototype.slice.call(document.querySelectorAll('[data-grupo]'));
+        var contagem = document.querySelector('[data-contagem]');
+        var registros = [];
+        grupos.forEach(function (g) {
+          g.querySelectorAll('.registro, [data-filtravel]').forEach(function (r) {
+            registros.push({ el: r, grupo: g, texto: normalizar(r.textContent) });
+          });
+        });
+        var total = registros.length;
+        // Códigos fixos (A-01, B-03…) gravados uma vez: não mudam quando o filtro esconde linhas.
+        grupos.forEach(function (g, gi) {
+          var letra = String.fromCharCode(65 + gi);
+          var cab = g.querySelector('.grupo__cabeca');
+          if (cab) cab.setAttribute('data-letra', letra);
+          g.querySelectorAll('.registro').forEach(function (r, ri) {
+            r.setAttribute('data-cod', letra + '-' + String(ri + 1).padStart(2, '0'));
+          });
+        });
+        function aplicar() {
+          var termo = normalizar(busca.value.trim());
+          var ativos = {};
+          chips.forEach(function (c) { ativos[c.getAttribute('data-grupo-alvo')] = c.getAttribute('aria-pressed') === 'true'; });
+          var visiveis = 0, mostrados = [];
+          grupos.forEach(function (g) {
+            var n = 0;
+            registros.forEach(function (r) {
+              if (r.grupo !== g) return;
+              var ok = ativos[g.getAttribute('data-grupo')] && (!termo || r.texto.indexOf(termo) !== -1);
+              var estava = !r.el.hidden;
+              r.el.hidden = !ok;
+              if (ok) { n++; if (!estava) mostrados.push(r.el); }
+            });
+            g.hidden = n === 0;
+            visiveis += n;
+            var conta = g.querySelector('[data-conta]');
+            if (conta) conta.textContent = String(n).padStart(2, '0');
+          });
+          contagem.textContent = String(visiveis).padStart(2, '0') + ' / ' + String(total).padStart(2, '0');
+          if (aoFiltrar) aoFiltrar(mostrados);
+        }
+        busca.addEventListener('input', aplicar);
+        chips.forEach(function (c) {
+          c.addEventListener('click', function () {
+            c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+            aplicar();
+          });
+        });
+        aplicar();
+      }
+
+      /* Altura real da barra de filtro: os cabeçalhos de grupo grudam logo abaixo dela. */
+      function medirBarra() {
+        var f = document.querySelector('[data-filtro]');
+        if (f) document.documentElement.style.setProperty('--barra-h', f.offsetHeight + 'px');
+      }
+
+      /* N5: progresso por seção, total e rótulo atual. */
+      function ligarIndice() {
+        var nav = document.querySelector('[data-lateral]');
+        var links = Array.prototype.slice.call(document.querySelectorAll('[data-indice] a'));
+        var alvos = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+        var total = document.querySelector('[data-total]');
+        var atual = document.querySelector('[data-atual]');
+        var btn = document.querySelector('[data-indice-btn]');
+        function medir() {
+          var linhaRef = window.innerHeight * 0.3, ativo = 0;
+          alvos.forEach(function (s, i) {
+            if (!s) return;
+            var r = s.getBoundingClientRect();
+            var fim = (alvos[i + 1] && alvos[i + 1].getBoundingClientRect().top) || r.bottom;
+            var p = Math.min(1, Math.max(0, (linhaRef - r.top) / Math.max(1, fim - r.top)));
+            links[i].style.setProperty('--p', p.toFixed(3));
+            if (r.top <= linhaRef) ativo = i;
+          });
+          links.forEach(function (a, i) { a.classList.toggle('ativo', i === ativo); if (i === ativo) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
+          var doc = document.documentElement;
+          var prog = doc.scrollTop / Math.max(1, doc.scrollHeight - window.innerHeight);
+          total.style.transform = 'scaleX(' + prog.toFixed(3) + ')';
+          atual.textContent = links[ativo].textContent;
+        }
+        window.addEventListener('scroll', medir, { passive: true });
+        window.addEventListener('resize', function () { medirBarra(); medir(); });
+        btn.addEventListener('click', function () {
+          var aberta = nav.classList.toggle('aberta');
+          btn.setAttribute('aria-expanded', aberta ? 'true' : 'false');
+        });
+        links.forEach(function (a) { a.addEventListener('click', function () { nav.classList.remove('aberta'); btn.setAttribute('aria-expanded', 'false'); }); });
+        medir();
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) { if (email) a.setAttribute('href', 'mailto:' + email.v); });
+        document.querySelectorAll('[data-ano]').forEach(function (el) { el.textContent = '© ' + new Date().getFullYear(); });
+        medirBarra();
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(medirBarra);
+        ligarFiltro();
+        ligarIndice();
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          // Carga: resumo e as primeiras linhas do inventário entram em cascata.
+          gsap.from('.resumo li', { autoAlpha: 0, y: 10, duration: 0.45, ease: 'power2.out', stagger: 0.06, delay: 0.1 });
+          gsap.from('.filtro', { autoAlpha: 0, y: 8, duration: 0.45, ease: 'power2.out', delay: 0.25 });
+          gsap.utils.toArray('.linhas, .grupo .marcador').forEach(function (bloco) {
+            var alvo = bloco.classList.contains('linhas') ? bloco.children : bloco;
+            gsap.from(alvo, { autoAlpha: 0, x: -14, duration: 0.4, ease: 'power2.out', stagger: 0.04, scrollTrigger: { trigger: bloco, start: 'top 92%', once: true } });
+          });
+
+          // Ao filtrar, as linhas que reaparecem piscam no véu do grupo (o filtro em si é instantâneo).
+          aoFiltrar = function (mostrados) {
+            // Linhas que o filtro trouxe para a tela não podem ficar esperando a entrada em cascata.
+            gsap.set(document.querySelectorAll('.grupos .registro:not([hidden]), .grupos .marcador:not([hidden])'), { autoAlpha: 1, x: 0 });
+            ScrollTrigger.refresh();
+            if (!mostrados.length) return;
+            gsap.fromTo(mostrados, { backgroundColor: 'rgba(23,107,102,.14)' }, { backgroundColor: 'rgba(23,107,102,0)', duration: 0.6, ease: 'power1.out', clearProps: 'backgroundColor' });
+          };
+
+          // C3: os cartões sobem ao entrar.
+          gsap.utils.toArray('.passos, .equipe-grade, .apoios').forEach(function (lista) {
+            gsap.from(lista.children, { autoAlpha: 0, y: 18, duration: 0.5, ease: 'power2.out', stagger: 0.08, scrollTrigger: { trigger: lista, start: 'top 88%', once: true } });
+          });
+          return function () { aoFiltrar = null; };
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
