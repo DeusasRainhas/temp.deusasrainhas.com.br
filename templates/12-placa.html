@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="pt-BR" data-template="12">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 12 Placa</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       12 Placa · circuito · N3 / C5 / R5
+       O hero é uma placa de circuito vista de cima: uma grade de
+       componentes (trilhas, resistores, capacitores, vias) com a abelha
+       como chip central. As células acendem em sequência, numa onda que
+       sai do chip (stagger em grade). As listas são linhas de tabela com
+       sparkline; seções alternadas usam o favo claro como substrato.
+       - nada de opacity < 1 fora do gsap.matchMedia;
+       - favo só ao redor dos painéis, nunca atrás de texto corrido;
+       - canto inferior direito livre (pílula do switcher).
+       ================================================================= */
+
+    :root { --nav-h: 80px; --respiro: 104px; }
+    @media (max-width: 899px) { :root { --nav-h: 68px; --respiro: 64px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
+    body { padding-top: var(--nav-h); }
+    main > section { padding-block: var(--respiro); scroll-margin-top: var(--nav-h); }
+
+    /* ---------- N3: barra que se oculta ao descer e volta ao subir ---------- */
+    .barra {
+      position: fixed; inset: 0 0 auto 0; z-index: 60; height: var(--nav-h);
+      background: var(--creme); border-bottom: var(--bd);
+    }
+    .barra__in { height: 100%; display: flex; align-items: center; gap: var(--sp-5); }
+    .marca { display: block; flex: none; }
+    .marca img { width: 64px; height: 64px; }
+    .barra__links { display: flex; gap: 4px; margin-inline: auto; }
+    .barra__links a {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--r-sm);
+      font-family: var(--mono); font-size: var(--fs-eyebrow); font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--terra-escura); text-decoration: none;
+    }
+    .barra__links a::before { content: ""; width: 7px; height: 7px; border: 1.5px solid var(--linha-forte); border-radius: 50%; transition: border-color .2s, background-color .2s; }
+    .barra__links a:hover::before { border-color: var(--mel); background: var(--mel); }
+    .barra .dr-btn { padding: 10px 18px; font-size: var(--fs-small); margin-left: auto; }
+    .barra__links + .dr-btn { margin-left: 0; }
+    @media (max-width: 999px) { .barra__links { display: none; } .barra__links + .dr-btn { margin-left: auto; } }
+    @media (max-width: 767px) { .marca img { width: 52px; height: 52px; } }
+
+    /* ---------- R5: favo claro como substrato em seções alternadas ---------- */
+    .favo { background: linear-gradient(rgba(255, 251, 230, .62), rgba(255, 251, 230, .62)), var(--creme) url(../img/padroes/favo-claro.svg); border-block: var(--bd); }
+    .painel { background: var(--creme); border: var(--bd-forte); border-radius: var(--r-lg); padding: clamp(24px, 4vw, 56px); }
+
+    /* ---------- Hero: placa com a abelha como chip ---------- */
+    .hero { padding-top: clamp(40px, 6vw, 80px) !important; padding-bottom: clamp(48px, 5vw, 72px) !important; }
+    .hero__grade { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(32px, 5vw, 80px); align-items: center; }
+    .hero h1 { font-size: clamp(40px, 5.2vw, 72px); line-height: 1.02; letter-spacing: -.02em; margin-top: var(--sp-4); text-wrap: balance; }
+    .hero .dr-body-lg { margin-top: var(--sp-5); max-width: 38ch; }
+    .acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+    @media (max-width: 999px) { .hero__grade { grid-template-columns: minmax(0, 1fr); } }
+
+    .placa {
+      position: relative; padding: clamp(14px, 2.4vw, 28px);
+      background-color: var(--creme-papel);
+      background-image: radial-gradient(circle, var(--linha-forte) 1px, transparent 1.4px);
+      background-size: 16px 16px;
+      border: 1.5px solid var(--linha-forte); border-radius: var(--r-xl);
+    }
+    .placa::before, .placa::after {
+      content: ""; position: absolute; width: 12px; height: 12px; border: 2px solid var(--terra-clara); border-radius: 50%; top: 10px;
+    }
+    .placa::before { left: 10px; } .placa::after { right: 10px; }
+    .placa__furo { position: absolute; bottom: 10px; width: 12px; height: 12px; border: 2px solid var(--terra-clara); border-radius: 50%; }
+    .placa__furo--e { left: 10px; } .placa__furo--d { right: 10px; }
+    .celulas { display: grid; grid-template-columns: repeat(var(--cols, 9), minmax(0, 1fr)); gap: 0; }
+    .celula { position: relative; aspect-ratio: 1; color: var(--c-final, var(--terra-clara)); }
+    .celula svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .celula svg * { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+    .celula[data-tom="mel"] { --c-final: var(--mel-escuro); }
+    .celula[data-tom="grafite"] { --c-final: var(--grafite-suave); }
+    .celula[data-tom="petroleo"] { --c-final: var(--petroleo-claro); }
+    .celula[data-tom="tenue"] { --c-final: var(--linha-forte); }
+    .led { position: absolute; right: 10%; top: 10%; width: 14%; height: 14%; border-radius: 50%; border: 1.5px solid var(--mel); box-shadow: 0 0 0 3px rgba(245, 192, 44, .18); }
+    .chip { grid-column: var(--chip-col) / span 3; grid-row: var(--chip-row) / span 3; position: relative; color: var(--grafite); }
+    .chip__pinos { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .chip__pinos * { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+    .chip__die {
+      position: absolute; inset: 15%; display: grid; place-items: center;
+      background: var(--creme); border: 2px solid var(--grafite); border-radius: 12px;
+      box-shadow: inset 0 0 0 5px var(--creme), inset 0 0 0 6px var(--linha-forte);
+    }
+    .chip__die img { width: 74%; height: auto; }
+    .chip__marca { position: absolute; left: 10px; top: 10px; width: 8px; height: 8px; border: 1.5px solid var(--mel-escuro); border-radius: 50%; }
+
+    /* ---------- Cabeça de seção ---------- */
+    .cabeca { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-6); align-items: end; }
+    .cabeca .dr-eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: var(--sp-3); }
+    .cabeca .dr-eyebrow::before { content: ""; width: 9px; height: 9px; border: 1.8px solid var(--mel-escuro); border-radius: 50%; }
+    .cabeca .dr-h2 { text-wrap: balance; }
+    .cabeca + * { margin-top: var(--sp-7); }
+    @media (max-width: 899px) { .cabeca { grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); } .dr-h2 { font-size: 30px; } .cabeca + * { margin-top: var(--sp-6); } }
+
+    /* ---------- C5: linhas de tabela com sparkline ---------- */
+    .tabela { border-top: 2px solid var(--terra-escura); }
+    .linha {
+      display: grid; grid-template-columns: 44px minmax(0, 3fr) minmax(0, 5fr) 140px; gap: var(--sp-5); align-items: center;
+      padding-block: var(--sp-4); border-bottom: var(--bd); position: relative;
+    }
+    .linha__id { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .1em; color: var(--suave); display: flex; align-items: center; gap: 8px; }
+    .linha__id .dr-icone { color: var(--petroleo); }
+    .linha .dr-h4 { font-size: 19px; }
+    .linha .dr-body { color: var(--corpo); }
+    .spark { width: 140px; height: 36px; overflow: visible; }
+    .spark polyline { fill: none; stroke: var(--petroleo); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+    .spark .spark__base { stroke: var(--linha); stroke-width: 1; }
+    .spark circle { fill: var(--creme); stroke: var(--petroleo); stroke-width: 1.8; vector-effect: non-scaling-stroke; }
+    .spark--queda polyline:not(.spark__base) { stroke: var(--erro); }
+    .spark--queda circle { stroke: var(--erro); }
+    @media (max-width: 899px) {
+      .linha { grid-template-columns: 32px minmax(0, 1fr) 96px; gap: var(--sp-2) var(--sp-4); }
+      .linha .dr-body { grid-column: 2 / -1; }
+      .spark { width: 96px; height: 30px; }
+    }
+
+    /* Placar da prova: tabela larga */
+    .linha--stat { grid-template-columns: 44px minmax(0, 3fr) minmax(0, 5fr) 220px; padding-block: var(--sp-5); }
+    .linha--stat .dr-data { font-size: clamp(36px, 4vw, 56px); line-height: 1; color: var(--terra-escura); }
+    .linha--stat .linha__rotulo { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; color: var(--terra); }
+    .linha--stat .spark { width: 220px; height: 44px; }
+    @media (max-width: 899px) {
+      .linha--stat { grid-template-columns: 32px minmax(0, 1fr) 96px; }
+      .linha--stat .linha__rotulo { grid-column: 2 / -1; }
+      .linha--stat .spark { width: 96px; height: 34px; }
+    }
+
+    /* ---------- Problema ---------- */
+    .problema { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--sp-7); align-items: start; }
+    .problema__valor { display: block; font-size: clamp(88px, 11vw, 160px); line-height: .85; letter-spacing: -.04em; color: var(--terra-escura); }
+    .problema__texto { margin-top: var(--sp-4); }
+    .problema .dr-eyebrow { margin-bottom: var(--sp-3); }
+    .problema .linha { grid-template-columns: 44px minmax(0, 1fr) 140px; }
+    @media (max-width: 899px) {
+      .problema { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); }
+      .problema .linha { grid-template-columns: 32px minmax(0, 1fr) 96px; }
+      .problema .linha .dr-body-lg { grid-column: auto; }
+    }
+
+    /* ---------- Como funciona ---------- */
+    .passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+    .passo { background: var(--creme); border: var(--bd-forte); border-radius: var(--r-lg); padding: var(--sp-5); display: flex; flex-direction: column; }
+    .passo__num { font-size: var(--fs-h3); color: var(--petroleo); }
+    .passo .dr-h4 { margin-block: var(--sp-2); }
+    .passo figure { margin-top: auto; padding-top: var(--sp-5); }
+    .passo img { width: 100%; max-height: 340px; object-fit: cover; object-position: top; border-radius: var(--r-md); border: var(--bd); background: var(--creme-papel); }
+    .passo figcaption { margin-top: var(--sp-2); }
+    .cabeca-painel { background: var(--creme); border: var(--bd-forte); border-radius: var(--r-lg); padding: var(--sp-5) var(--sp-6); }
+    @media (max-width: 899px) { .passos { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Equipe ---------- */
+    .linha--pessoa { grid-template-columns: 64px minmax(0, 3fr) minmax(0, 5fr); }
+    .linha--pessoa img { width: 64px; height: 64px; border-radius: var(--r-md); object-fit: cover; border: var(--bd); }
+    .linha--pessoa .linha__rotulo { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .1em; text-transform: uppercase; color: var(--terra); }
+    .origem { max-width: 60ch; }
+    .apoios-placa { margin-top: var(--sp-7); background: var(--grafite); border-radius: var(--r-lg); padding: var(--sp-6); }
+    .apoios { display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: var(--sp-5) var(--sp-7); }
+    .apoio { display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
+    .apoio__logo { display: grid; place-items: center; height: 84px; padding: var(--sp-3) var(--sp-4); border-radius: var(--r-md); }
+    .apoio__logo img { max-height: 60px; width: auto; max-width: 170px; }
+    .apoio[data-fundo="claro"] .apoio__logo { background: var(--creme); }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--mel-claro); }
+    @media (max-width: 899px) {
+      .linha--pessoa { grid-template-columns: 56px minmax(0, 1fr); }
+      .linha--pessoa img { width: 56px; height: 56px; }
+      .linha--pessoa .linha__rotulo { grid-column: 2; }
+    }
+
+    /* ---------- Depoimento ---------- */
+    .citacao { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: var(--sp-6); align-items: start; max-width: 1000px; margin-inline: auto; }
+    .citacao > img { width: 120px; height: 120px; border-radius: var(--r-lg); object-fit: cover; border: var(--bd); }
+    .citacao .dr-quote { font-size: clamp(24px, 2.8vw, 36px); line-height: 1.32; color: var(--terra-escura); }
+    .citacao figcaption { margin-top: var(--sp-5); padding-top: var(--sp-4); border-top: var(--bd); }
+    .citacao__nome { font-weight: 700; color: var(--ink); }
+    .citacao__local { display: block; font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); margin-top: 2px; }
+    @media (max-width: 699px) { .citacao { grid-template-columns: minmax(0, 1fr); } .citacao > img { width: 80px; height: 80px; } }
+
+    /* ---------- Contato ---------- */
+    .contato { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-7); }
+    .form { display: grid; gap: var(--sp-4); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo input, .campo textarea { font: inherit; color: var(--ink); background: var(--branco); border: var(--bd-forte); border-radius: var(--r-sm); padding: var(--sp-3) var(--sp-4); width: 100%; }
+    .campo textarea { min-height: 140px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .linha--canal { grid-template-columns: 32px minmax(0, 1fr); }
+    .linha--canal a { font-weight: 600; overflow-wrap: anywhere; text-underline-offset: 4px; }
+    .linha--canal .dr-icone { color: var(--petroleo); }
+    .contato-acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+    @media (max-width: 899px) { .contato { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Rodapé ---------- */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 96px; }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) { .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); } footer > [data-aviso-provisorio] { padding-inline: 16px; } }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N3 · barra que se oculta ao descer e reaparece ao subir) -->
+  <nav data-secao="nav" class="barra">
+    <div class="dr-container barra__in">
+      <a class="marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+      <div class="barra__links">
+        <a href="#funcionalidades" data-c="funcionalidades.eyebrow"></a>
+        <a href="#como-funciona" data-c="comoFunciona.eyebrow"></a>
+        <a href="#para-quem" data-c="paraQuem.eyebrow"></a>
+        <a href="#equipe" data-c="equipe.eyebrow"></a>
+        <a href="#contato" data-c="contato.eyebrow"></a>
+      </div>
+      <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (texto à esquerda, placa com a abelha como chip à direita) -->
+    <section data-secao="hero" id="inicio" class="hero">
+      <div class="dr-container hero__grade">
+        <div>
+          <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+          <h1 class="dr-h1" data-c="hero.titulo"></h1>
+          <p class="dr-body-lg" data-c="hero.subtitulo"></p>
+          <div class="acoes">
+            <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+            <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+            <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+          </div>
+        </div>
+        <!-- A placa: células geradas em JS (decorativas); o chip central é a abelha -->
+        <div class="placa" aria-hidden="true">
+          <div class="celulas" data-placa>
+            <div class="chip">
+              <svg class="chip__pinos" viewBox="0 0 120 120" preserveAspectRatio="none" focusable="false"></svg>
+              <div class="chip__die"><span class="chip__marca"></span><img src="../img/logos/logo-abelha-cor.png" alt="" width="160" height="160"></div>
+            </div>
+          </div>
+          <span class="placa__furo placa__furo--e"></span><span class="placa__furo placa__furo--d"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: prova (tabela de leituras com sparkline) -->
+    <section data-secao="prova">
+      <div class="dr-container">
+        <ul class="tabela" data-c-lista="prova.stats" data-acende>
+          <template>
+            <li class="linha linha--stat">
+              <span class="linha__id"></span>
+              <span class="dr-data" data-c="valor"></span>
+              <span class="linha__rotulo" data-c="rotulo"></span>
+              <svg class="spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"><polyline class="spark__base" points="0,31 100,31"></polyline><polyline></polyline><circle r="3"></circle></svg>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: problema (favo ao redor do painel) -->
+    <section data-secao="problema" class="favo">
+      <div class="dr-container">
+        <div class="painel problema">
+          <div>
+            <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+            <h2 class="dr-h2" data-c="problema.titulo"></h2>
+            <span class="dr-data problema__valor" data-c="problema.estatistica.valor" style="margin-top: 32px"></span>
+            <p class="dr-body-lg problema__texto" data-c="problema.estatistica.texto"></p>
+          </div>
+          <ul class="tabela" data-c-lista="problema.consequencias" data-acende>
+            <template>
+              <li class="linha">
+                <span class="linha__id"><svg class="dr-icone dr-icone--sm" aria-hidden="true" style="color: var(--erro)"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg></span>
+                <p class="dr-body-lg" data-c="texto"></p>
+                <svg class="spark spark--queda" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"><polyline class="spark__base" points="0,31 100,31"></polyline><polyline></polyline><circle r="3"></circle></svg>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades (tabela com ícone, título, texto e sparkline) -->
+    <section data-secao="funcionalidades" id="funcionalidades">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+            <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+          </div>
+        </header>
+        <ul class="tabela" data-c-lista="funcionalidades.itens" data-acende>
+          <template>
+            <li class="linha">
+              <span class="linha__id"><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <svg class="spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"><polyline class="spark__base" points="0,31 100,31"></polyline><polyline></polyline><circle r="3"></circle></svg>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona (favo; passos em painéis) -->
+    <section data-secao="como-funciona" id="como-funciona" class="favo">
+      <div class="dr-container">
+        <header class="cabeca cabeca-painel">
+          <div>
+            <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+            <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+          </div>
+        </header>
+        <ol class="passos" data-c-lista="comoFunciona.passos">
+          <template>
+            <li class="passo">
+              <span class="dr-data passo__num" data-c="numero"></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <figure>
+                <img data-c-src="imagem" data-c-alt="alt" alt="">
+                <figcaption class="dr-caption" data-c="alt"></figcaption>
+              </figure>
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem (tabela de perfis) -->
+    <section data-secao="para-quem" id="para-quem">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+            <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+          </div>
+        </header>
+        <ul class="tabela" data-c-lista="paraQuem.perfis" data-acende>
+          <template>
+            <li class="linha">
+              <span class="linha__id"></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <svg class="spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"><polyline class="spark__base" points="0,31 100,31"></polyline><polyline></polyline><circle r="3"></circle></svg>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia (favo; painel com tabela de pilares) -->
+    <section data-secao="tecnologia" class="favo">
+      <div class="dr-container">
+        <div class="painel">
+          <header class="cabeca">
+            <div>
+              <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+              <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+            </div>
+            <p class="dr-body-lg" data-c="tecnologia.texto"></p>
+          </header>
+          <ul class="tabela" data-c-lista="tecnologia.pilares" data-acende>
+            <template>
+              <li class="linha">
+                <span class="linha__id"><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg></span>
+                <h3 class="dr-h4" data-c="titulo"></h3>
+                <p class="dr-body" data-c="texto"></p>
+                <svg class="spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"><polyline class="spark__base" points="0,31 100,31"></polyline><polyline></polyline><circle r="3"></circle></svg>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe (tabela de pessoas + placa grafite de apoios) -->
+    <section data-secao="equipe" id="equipe">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+            <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+          </div>
+          <p class="dr-body-lg origem" data-c="equipe.origem"></p>
+        </header>
+        <ul class="tabela" data-c-lista="equipe.pessoas" data-acende>
+          <template>
+            <li class="linha linha--pessoa">
+              <img data-c-src="foto" data-c-alt="alt" alt="" width="64" height="64">
+              <h3 class="dr-h4" data-c="nome"></h3>
+              <p class="linha__rotulo" data-c="cargo"></p>
+            </li>
+          </template>
+        </ul>
+        <div class="apoios-placa">
+          <ul class="apoios" data-c-lista="equipe.apoios">
+            <template>
+              <li class="apoio">
+                <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+                <span class="apoio__nome" data-c="nome"></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento (favo; citação em painel) -->
+    <section data-secao="depoimento" class="favo">
+      <div class="dr-container">
+        <figure class="painel citacao">
+          <img data-c-src="depoimento.foto" alt="" width="120" height="120">
+          <div>
+            <blockquote style="margin: 0"><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+            <figcaption>
+              <span class="citacao__nome" data-c="depoimento.nome"></span>
+              <span class="citacao__local" data-c="depoimento.local"></span>
+            </figcaption>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" id="contato">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+            <h2 class="dr-h2" data-c="contato.titulo"></h2>
+          </div>
+          <p class="dr-body-lg" data-c="contato.texto"></p>
+        </header>
+        <div class="contato">
+          <form class="form" method="post" data-form-contato>
+            <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+            <div class="campo">
+              <label for="f-nome" data-c="contato.form.nome"></label>
+              <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+            </div>
+            <div class="campo">
+              <label for="f-email" data-c="contato.form.email"></label>
+              <input id="f-email" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="campo">
+              <label for="f-msg" data-c="contato.form.mensagem"></label>
+              <textarea id="f-msg" name="mensagem" required></textarea>
+            </div>
+            <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+          </form>
+          <div>
+            <ul class="tabela">
+              <li class="linha linha--canal">
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <a data-mailto data-c="contato.email"></a>
+              </li>
+              <li class="linha linha--canal">
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+              </li>
+              <li class="linha linha--canal">
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+              </li>
+            </ul>
+            <div class="contato-acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- SEÇÃO: rodape -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '../img/icones/sprite-icones.svg#';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+      function pad(n) { return String(n).padStart(2, '0'); }
+
+      // Pseudoaleatório determinístico: a placa é sempre a mesma.
+      function semente(s) { return function () { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296; }; }
+
+      /* ---------- Componentes da placa (viewBox 0 0 40 40, só traço) ---------- */
+      var FORMAS = {
+        h: '<path d="M0 20H40"/>',
+        v: '<path d="M20 0V40"/>',
+        hPad: '<path d="M0 20H28"/><circle cx="32" cy="20" r="4"/>',
+        padH: '<circle cx="8" cy="20" r="4"/><path d="M12 20H40"/>',
+        vPad: '<path d="M20 0V28"/><circle cx="20" cy="32" r="4"/>',
+        padV: '<circle cx="20" cy="8" r="4"/><path d="M20 12V40"/>',
+        canto1: '<path d="M0 20H14L20 26V40"/>',
+        canto2: '<path d="M20 0V14L26 20H40"/>',
+        canto3: '<path d="M40 20H26L20 26V40"/>',
+        canto4: '<path d="M20 0V14L14 20H0"/>',
+        resistor: '<path d="M0 20H9M31 20H40"/><rect x="9" y="14" width="22" height="12" rx="3"/><path d="M15 14V26M25 14V26"/>',
+        resistorV: '<path d="M20 0V9M20 31V40"/><rect x="14" y="9" width="12" height="22" rx="3"/><path d="M14 15H26M14 25H26"/>',
+        capacitor: '<path d="M0 20H16M24 20H40M16 11V29M24 11V29"/>',
+        diodo: '<path d="M0 20H13M27 20H40M13 12V28L27 20Z M27 12V28"/>',
+        via: '<circle cx="20" cy="20" r="5"/><circle cx="20" cy="20" r="1.5"/>',
+        ci: '<rect x="11" y="11" width="18" height="18" rx="2"/><path d="M15 11V6M20 11V6M25 11V6M15 29V34M20 29V34M25 29V34"/>',
+        vazio: '<circle cx="20" cy="20" r="1"/>'
+      };
+      var SOLTAS = ['resistor', 'resistorV', 'capacitor', 'diodo', 'via', 'ci', 'canto1', 'canto2', 'canto3', 'canto4', 'via', 'vazio', 'vazio', 'h', 'v'];
+
+      function montarPlaca() {
+        var grade = document.querySelector('[data-placa]');
+        if (!grade) return [];
+        var estreita = window.innerWidth < 600;
+        var COLS = estreita ? 7 : 9, ROWS = 7;
+        var cc = (COLS - 3) / 2 + 1, cr = 3; // coluna/linha (1-based) onde começa o chip 3x3
+        grade.style.setProperty('--cols', COLS);
+        var chip = grade.querySelector('.chip');
+        chip.style.setProperty('--chip-col', cc);
+        chip.style.setProperty('--chip-row', cr);
+        chip.style.gridColumn = cc + ' / span 3';
+        chip.style.gridRow = cr + ' / span 3';
+        // Pinos do chip: 4 por lado.
+        var pinos = '';
+        [30, 50, 70, 90].forEach(function (p) {
+          pinos += '<path d="M' + p + ' 0V18M' + p + ' 102V120M0 ' + p + 'H18M102 ' + p + 'H120"/>';
+        });
+        chip.querySelector('.chip__pinos').innerHTML = pinos;
+
+        grade.querySelectorAll('.celula').forEach(function (c) { c.remove(); });
+        var rnd = semente(estreita ? 7 : 11);
+        var celulas = [];
+        for (var r = 1; r <= ROWS; r++) {
+          for (var c = 1; c <= COLS; c++) {
+            var noChip = c >= cc && c < cc + 3 && r >= cr && r < cr + 3;
+            if (noChip) continue;
+            var forma, tom;
+            var naFaixaH = r >= cr && r < cr + 3, naFaixaV = c >= cc && c < cc + 3;
+            if (naFaixaH && (c === cc - 1 || c === cc + 3)) forma = 'h';
+            else if (naFaixaV && (r === cr - 1 || r === cr + 3)) forma = 'v';
+            else if (naFaixaH && c === 1) forma = 'padH';
+            else if (naFaixaH && c === COLS) forma = 'hPad';
+            else if (naFaixaV && r === 1) forma = 'padV';
+            else if (naFaixaV && r === ROWS) forma = 'vPad';
+            else if (naFaixaH) forma = rnd() < .5 ? 'h' : (rnd() < .5 ? 'resistor' : 'capacitor');
+            else if (naFaixaV) forma = rnd() < .5 ? 'v' : 'resistorV';
+            else forma = SOLTAS[Math.floor(rnd() * SOLTAS.length)];
+            // Marca: mel acima/à direita do chip, grafite abaixo/à esquerda.
+            var acimaDir = (r < cr + 1.5) && (c >= cc + 1) || r < cr;
+            var abaixoEsq = r >= cr + 3 || c < cc;
+            if (forma === 'vazio') tom = 'tenue';
+            else if (naFaixaH || naFaixaV) tom = acimaDir ? 'mel' : 'grafite';
+            else tom = acimaDir ? (rnd() < .7 ? 'mel' : 'terra') : (abaixoEsq ? (rnd() < .6 ? 'grafite' : 'terra') : 'petroleo');
+            var el = document.createElement('div');
+            el.className = 'celula';
+            if (tom !== 'terra') el.setAttribute('data-tom', tom);
+            el.style.gridColumn = c; el.style.gridRow = r;
+            el.innerHTML = '<svg viewBox="0 0 40 40" focusable="false">' + FORMAS[forma] + '</svg>' + (forma !== 'vazio' && rnd() < .28 ? '<span class="led"></span>' : '');
+            grade.appendChild(el);
+            celulas.push(el);
+          }
+        }
+        return celulas;
+      }
+
+      /* ---------- Sparklines (decorativas) ---------- */
+      function sparklines() {
+        var n = 0;
+        document.querySelectorAll('.spark').forEach(function (svg) {
+          var rnd = semente(31 + (n++) * 17);
+          var queda = svg.classList.contains('spark--queda');
+          var pts = [], y = queda ? 8 : 24;
+          for (var i = 0; i <= 12; i++) {
+            y += (queda ? 1.7 : -1.5) + (rnd() - .5) * 9;
+            y = Math.max(3, Math.min(29, y));
+            pts.push([i * (100 / 12), y]);
+          }
+          var linha = svg.querySelectorAll('polyline')[1];
+          linha.setAttribute('points', pts.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' '));
+          var u = pts[pts.length - 1], c = svg.querySelector('circle');
+          c.setAttribute('cx', u[0]); c.setAttribute('cy', u[1]);
+        });
+        // Índices das linhas (mono), gerados: não são cópia.
+        document.querySelectorAll('.tabela').forEach(function (t) {
+          t.querySelectorAll(':scope > .linha').forEach(function (li, i) {
+            var id = li.querySelector('.linha__id');
+            if (id && !id.children.length) id.textContent = pad(i + 1);
+          });
+        });
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) { if (email) a.setAttribute('href', 'mailto:' + email.v); });
+        document.querySelectorAll('[data-ano]').forEach(function (el) { el.textContent = '© ' + new Date().getFullYear(); });
+
+        var celulas = montarPlaca();
+        sparklines();
+        var estreitaAntes = window.innerWidth < 600;
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          var COLS = estreitaAntes ? 7 : 9;
+          var ordem = celulas.slice().sort(function (a, b) {
+            return (parseInt(a.style.gridRow) * 100 + parseInt(a.style.gridColumn)) - (parseInt(b.style.gridRow) * 100 + parseInt(b.style.gridColumn));
+          });
+          // A grade completa (com o vão do chip) para o stagger em grade sair do centro.
+          var grade = [];
+          ordem.forEach(function (c) { grade.push(c); });
+          var leds = document.querySelectorAll('.placa .led');
+
+          // 1. Ligar a placa: o chip acende e a onda percorre a grade a partir do centro.
+          var tl = gsap.timeline({ delay: .15 });
+          tl.from('.chip', { color: '#D8CBA8', duration: .5, ease: 'power1.out' })
+            .from('.chip__die', { scale: .92, duration: .6, ease: 'back.out(2)' }, '<')
+            .fromTo(grade, { color: '#E7DFC8' }, {
+              keyframes: [{ color: '#F5C02C', duration: .18 }, { color: function (i, el) { return getComputedStyle(el).getPropertyValue('--c-final').trim() || '#A1887F'; }, duration: .45 }],
+              stagger: { grid: 'auto', from: 'center', amount: 1.1 }, clearProps: 'color'
+            }, '-=.25')
+            .fromTo(leds, { autoAlpha: 0 }, { autoAlpha: 1, duration: .2, stagger: { each: .05, from: 'random' } }, '-=.6');
+          // 2. Depois de ligada, um pulso de sinal volta a varrer a placa de tempos em tempos.
+          var pulso = gsap.timeline({ repeat: -1, repeatDelay: 3.4, delay: 3.2 });
+          pulso.to(grade, {
+            keyframes: [{ color: '#2E8B82', duration: .14 }, { color: function (i, el) { return getComputedStyle(el).getPropertyValue('--c-final').trim() || '#A1887F'; }, duration: .5 }],
+            stagger: { grid: 'auto', from: 'center', amount: .9 }
+          }).to(leds, { autoAlpha: .15, duration: .12, yoyo: true, repeat: 1, stagger: { each: .03, from: 'random' } }, 0);
+
+          // 3. Linhas de tabela acendem em sequência quando entram: led da linha e sparkline.
+          gsap.utils.toArray('[data-acende]').forEach(function (t) {
+            var linhas = t.querySelectorAll(':scope > .linha');
+            var tlt = gsap.timeline({ scrollTrigger: { trigger: t, start: 'top 80%', once: true } });
+            tlt.from(linhas, { autoAlpha: 0, x: -10, duration: .45, ease: 'power2.out', stagger: .08 });
+            var sparks = t.querySelectorAll('.spark'), icones = t.querySelectorAll('.linha__id .dr-icone');
+            if (sparks.length) tlt.from(sparks, { clipPath: 'inset(0 100% 0 0)', duration: .7, ease: 'power2.inOut', stagger: .08 }, '-=.3');
+            if (icones.length) tlt.from(icones, { color: '#D8CBA8', duration: .3, stagger: .08 }, '<');
+          });
+          gsap.utils.toArray('.passos, .apoios').forEach(function (l) {
+            gsap.from(l.children, { autoAlpha: 0, y: 14, duration: .5, stagger: .1, scrollTrigger: { trigger: l, start: 'top 82%', once: true } });
+          });
+
+          // N3: a barra some ao descer e volta ao subir.
+          var barra = document.querySelector('.barra');
+          var st = ScrollTrigger.create({
+            start: 0, end: 'max',
+            onUpdate: function (self) {
+              var esconder = self.direction === 1 && self.scroll() > 160;
+              gsap.to(barra, { yPercent: esconder ? -100 : 0, duration: .35, ease: 'power2.out', overwrite: true });
+            }
+          });
+          return function () { st.kill(); gsap.set(barra, { clearProps: 'transform' }); };
+        });
+
+        // Se a largura cruzar o ponto de quebra, a placa é redesenhada (sem movimento).
+        window.addEventListener('resize', function () {
+          var est = window.innerWidth < 600;
+          if (est === estreitaAntes) return;
+          estreitaAntes = est;
+          gsap.killTweensOf('.celula');
+          celulas = montarPlaca();
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
