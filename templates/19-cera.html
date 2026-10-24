@@ -125,7 +125,7 @@
 
     /* ---------- R2: blocos grafite intercalados com creme ---------- */
     .secao { position: relative; padding-block: var(--respiro); }
-    .escuro { background: var(--grafite); color: #D9CFBD; padding-bottom: calc(var(--respiro) + 64px); overflow: hidden; }
+    .escuro { background: var(--grafite); color: #D9CFBD; padding-bottom: calc(var(--respiro) + 40px); overflow: hidden; }
     .escuro .dr-h2, .escuro .dr-h3, .escuro .dr-h4 { color: var(--creme); }
     .escuro .dr-eyebrow { color: var(--mel-claro); }
     .escuro .dr-body, .escuro .dr-body-lg { color: #D9CFBD; }
@@ -606,7 +606,7 @@
         desenharOndas();
         ligarPontos();
         // Sem movimento, o mel dos blocos grafite já está no nível final.
-        document.querySelectorAll('[data-mel-secao]').forEach(function (m) { m.style.height = '64px'; });
+        document.querySelectorAll('[data-mel-secao]').forEach(function (m) { m.style.height = '40px'; });
 
         /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
         if (!window.gsap || !window.ScrollTrigger) return;
@@ -646,7 +646,7 @@
           // Blocos grafite: o mel se acumula no pé enquanto a seção passa.
           document.querySelectorAll('[data-mel-secao]').forEach(function (m) {
             gsap.fromTo(m, { height: 0 }, {
-              height: 64, ease: 'none',
+              height: 40, ease: 'none',
               scrollTrigger: { trigger: m.parentNode, start: 'top 70%', end: 'bottom bottom', scrub: 0.6 }
             });
           });

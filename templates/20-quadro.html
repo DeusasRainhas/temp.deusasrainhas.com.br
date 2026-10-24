@@ -164,6 +164,18 @@
     .quadro__dica span { display: inline-flex; align-items: center; gap: var(--sp-2); }
     .quadro__dica svg { width: 16px; height: 16px; color: var(--terra); }
 
+    .rotulo-movel { display: none; }
+    @media (max-width: 599px) {
+      .lado .lado__rotulo { display: none; }
+      .rotulo-movel {
+        display: block; position: absolute; top: 10px; z-index: 6; max-width: calc(100% - 104px);
+        padding: 4px 8px; border-radius: var(--r-pill); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        font-family: var(--mono); font-size: 9.5px; font-weight: 500; letter-spacing: .02em; text-transform: uppercase; line-height: 1.4;
+        pointer-events: none;
+      }
+      .rotulo-movel--antes { left: 8px; max-width: none; background: var(--terra-escura); color: var(--creme); }
+      .rotulo-movel--depois { right: 8px; background: var(--petroleo); color: var(--creme); }
+    }
     @media (max-width: 767px) {
       .quadro { padding-inline: 10px; margin-top: var(--sp-6); }
       .quadro__topo { margin-inline: -10px; height: 18px; }
@@ -347,6 +359,9 @@
                 <div class="tela"><img src="../img/app/03_inspecao_detalhada.png" data-c-alt="comoFunciona.passos[1].alt" alt="" draggable="false"></div>
               </div>
             </div>
+            <!-- No celular os rótulos saem das camadas recortadas e ficam fixos nos cantos de cima (o canto de baixo é do seletor) -->
+            <span class="rotulo-movel rotulo-movel--antes" aria-hidden="true" data-c="problema.eyebrow"></span>
+            <span class="rotulo-movel rotulo-movel--depois" aria-hidden="true" data-c="hero.eyebrow"></span>
             <div class="divisor" data-divisor>
               <div class="divisor__pega" role="slider" tabindex="0" aria-orientation="horizontal"
                    aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="50%"

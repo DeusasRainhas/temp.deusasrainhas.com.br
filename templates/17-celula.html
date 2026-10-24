@@ -293,9 +293,8 @@
     <div class="dr-container topo__miolo">
       <a class="marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
     </div>
-    <button class="abrir" type="button" aria-expanded="false" aria-controls="menu" data-abrir>
+    <button class="abrir" type="button" aria-expanded="false" aria-controls="menu" aria-label="Abrir menu" data-abrir>
       <span class="abrir__linhas" aria-hidden="true"><i></i><i></i><i></i></span>
-      <span class="dr-sr-only" data-c="marca.nome"></span>
     </button>
     <div class="menu" id="menu" hidden data-menu>
       <div class="menu__favo" aria-hidden="true"></div>
@@ -617,6 +616,7 @@
         function abrir() {
           menu.hidden = false;
           botao.setAttribute('aria-expanded', 'true');
+          botao.setAttribute('aria-label', 'Fechar menu');
           document.documentElement.style.overflow = 'hidden';
           if (window.gsap && !reduzido.matches) {
             if (animando) animando.kill();
@@ -629,6 +629,7 @@
         }
         function fechar(devolverFoco) {
           botao.setAttribute('aria-expanded', 'false');
+          botao.setAttribute('aria-label', 'Abrir menu');
           document.documentElement.style.overflow = '';
           function fim() { menu.hidden = true; if (window.gsap) gsap.set(menu, { clearProps: 'clipPath' }); if (devolverFoco) botao.focus(); }
           if (window.gsap && !reduzido.matches) {
