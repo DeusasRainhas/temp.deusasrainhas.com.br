@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="pt-BR" data-template="03">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 03 Dossiê</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       03 Dossiê · editorial · N2 / C5 / R6
+       Dossiê técnico: sumário lateral fixo e títulos numerados. O índice
+       acompanha a leitura (destaca a seção atual, enche a barra de cada
+       item e mostra a porcentagem lida). Cada seção é uma folha de canto
+       --r-xl sobre o creme (R6); dados em linhas de tabela com sparkline
+       (C5); navegação em pílula inferior (N2).
+       O índice é retorno de leitura, não animação: funciona também com
+       movimento reduzido. Regras: nada de opacity < 1 fora do
+       gsap.matchMedia; canto inferior direito livre para o switcher.
+       ================================================================= */
+
+    :root { --indice: 300px; --respiro: var(--sp-7); }
+    @media (max-width: 1023px) { :root { --indice: 0px; --respiro: var(--sp-6); } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 2px solid var(--petroleo); outline-offset: 2px;
+    }
+
+    /* ---------- Estrutura: sumário à esquerda, folhas à direita ---------- */
+    .dossie { display: grid; grid-template-columns: var(--indice) minmax(0, 1fr); }
+    main { padding: var(--sp-6) clamp(16px, 4vw, 64px) 120px; counter-reset: folha; min-width: 0; }
+    main > section { scroll-margin-top: var(--sp-5); }
+    main > section + section { margin-top: var(--sp-6); }
+    @media (max-width: 1023px) {
+      .dossie { grid-template-columns: minmax(0, 1fr); }
+      main { padding: var(--sp-5) 16px 120px; }
+      main > section { scroll-margin-top: 72px; }
+      main > section + section { margin-top: var(--sp-4); }
+    }
+
+    /* ---------- Sumário lateral (o efeito) ---------- */
+    .sumario {
+      position: sticky; top: 0; height: 100vh; z-index: 40;
+      display: flex; flex-direction: column; gap: var(--sp-6);
+      padding: var(--sp-5) var(--sp-5) var(--sp-6) var(--sp-6);
+      background: var(--creme-papel); border-right: var(--bd);
+    }
+    .sumario__marca img { width: 64px; height: 64px; }
+    .sumario__corpo { position: relative; flex: 1; min-height: 0; padding-left: var(--sp-5); }
+    /* Trilho vertical de progresso: --lido vai de 0 a 1 */
+    .sumario__trilho { position: absolute; left: 0; top: 6px; bottom: 6px; width: 2px; background: var(--linha); border-radius: 2px; }
+    .sumario__trilho i { position: absolute; inset: 0; background: var(--petroleo); transform-origin: top; transform: scaleY(var(--lido, 0)); border-radius: 2px; }
+    .indice { counter-reset: item; display: grid; gap: 2px; }
+    .indice a {
+      counter-increment: item; position: relative;
+      display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 0 var(--sp-2); align-items: baseline;
+      padding: 9px 10px; border-radius: var(--r-md); text-decoration: none; color: var(--suave);
+      font-family: var(--sans); font-size: var(--fs-small); font-weight: 500; line-height: 1.3;
+      transition: background-color .25s ease, color .25s ease;
+    }
+    .indice a::before { content: counter(item, decimal-leading-zero); font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; color: var(--tenue); }
+    .indice a:hover { color: var(--terra-escura); }
+    .indice__barra { grid-column: 2; height: 2px; margin-top: 7px; background: var(--linha); border-radius: 2px; overflow: hidden; }
+    .indice__barra i { display: block; height: 100%; background: var(--mel-escuro); transform-origin: left; transform: scaleX(var(--p, 0)); }
+    .indice a.lido { color: var(--terra); }
+    .indice a.lido::before { color: var(--terra-clara); }
+    .indice a.atual { background: var(--branco); color: var(--terra-escura); font-weight: 700; box-shadow: var(--sh-sm); }
+    .indice a.atual::before { color: var(--petroleo); font-weight: 700; }
+    .indice a.atual::after {
+      content: ""; position: absolute; left: calc(-1 * var(--sp-5) - 3px); top: 14px;
+      width: 8px; height: 8px; border-radius: 50%; background: var(--petroleo); box-shadow: 0 0 0 3px var(--creme-papel);
+    }
+    .sumario__lido { display: flex; align-items: baseline; gap: var(--sp-3); border-top: var(--bd); padding-top: var(--sp-4); }
+    .sumario__pct { font-family: var(--mono); font-weight: 500; font-size: 40px; line-height: 1; letter-spacing: -.03em; color: var(--terra-escura); font-variant-numeric: tabular-nums; }
+    .sumario__total { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; color: var(--terra); font-variant-numeric: tabular-nums; }
+
+    @media (max-width: 1023px) {
+      /* No celular o sumário vira faixa fixa no topo: só a seção atual e a barra. */
+      .sumario {
+        height: auto; flex-direction: row; align-items: center; gap: var(--sp-3);
+        padding: 8px 16px 10px; border-right: 0; border-bottom: var(--bd);
+      }
+      .sumario__marca img { width: 48px; height: 48px; }
+      .sumario__corpo { padding-left: 0; }
+      .sumario__trilho { left: 0; right: 0; top: auto; bottom: -10px; width: auto; height: 2px; }
+      .sumario__trilho i { transform-origin: left; transform: scaleX(var(--lido, 0)); }
+      .indice li { display: none; }
+      .indice li:has(a.atual) { display: block; }
+      .indice a.atual { background: none; box-shadow: none; padding: 4px 0; }
+      .indice a.atual::after { display: none; }
+      .indice__barra { display: none; }
+      .sumario__lido { border-top: 0; padding-top: 0; }
+      .sumario__pct { font-size: 20px; }
+      .sumario__total { display: none; }
+    }
+
+    /* ---------- N2: pílula inferior centralizada ---------- */
+    .pilula {
+      position: fixed; z-index: 70; bottom: 16px; left: calc(50% + var(--indice) / 2); transform: translateX(-50%);
+      display: flex; align-items: center; gap: var(--sp-2);
+      padding: 6px 6px 6px 16px; border-radius: var(--r-pill);
+      background: var(--grafite); box-shadow: var(--sh-lg);
+    }
+    .pilula__coroa img { width: 39px; height: 28px; }
+    .pilula__links { display: flex; gap: 2px; margin-left: var(--sp-2); }
+    .pilula__links a {
+      padding: 10px 14px; border-radius: var(--r-pill); color: var(--creme); text-decoration: none;
+      font-size: var(--fs-small); font-weight: 600; white-space: nowrap;
+    }
+    .pilula__links a:hover { background: var(--grafite-suave); }
+    .pilula .dr-btn { border-radius: var(--r-pill); padding: 10px 18px; font-size: var(--fs-small); white-space: nowrap; }
+    @media (max-width: 1100px) { .pilula__links a:nth-child(3) { display: none; } }
+    @media (max-width: 767px) {
+      .pilula { left: 16px; transform: none; padding-left: 14px; }
+      .pilula__links { display: none; }
+    }
+
+    /* ---------- R6: seções como folhas de canto --r-xl ---------- */
+    .folha {
+      counter-increment: folha;
+      position: relative; background: var(--branco); border: var(--bd); border-radius: var(--r-xl);
+      padding: var(--respiro) clamp(20px, 4.5vw, 64px);
+    }
+    .folha--papel { background: var(--creme-papel); }
+    .folha--anexa { counter-increment: none; } /* prova e depoimento não entram no índice */
+    .folha--grafite { background: var(--grafite); border-color: var(--grafite); }
+    .cab { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-2) var(--sp-5); align-items: start; margin-bottom: var(--sp-7); }
+    .cab::before {
+      content: counter(folha, decimal-leading-zero); grid-row: span 3;
+      font-family: var(--mono); font-weight: 500; font-size: 15px; letter-spacing: .06em; color: var(--petroleo);
+      border: 1.5px solid var(--petroleo); border-radius: var(--r-sm); padding: 4px 8px; margin-top: 2px;
+    }
+    .cab .dr-h2 { max-width: 22ch; }
+    .cab .dr-body-lg { max-width: 56ch; margin-top: var(--sp-3); }
+    @media (max-width: 767px) {
+      .cab { grid-template-columns: minmax(0, 1fr); margin-bottom: var(--sp-6); }
+      .cab::before { justify-self: start; grid-row: auto; }
+      .dr-h2 { font-size: 29px; }
+    }
+
+    /* ---------- Hero: capa do dossiê ---------- */
+    .capa-dossie { padding-top: calc(var(--respiro) + 12px); overflow: hidden; }
+    .aba {
+      position: absolute; top: 0; left: clamp(20px, 4.5vw, 64px); transform: translateY(-1px);
+      padding: 8px 18px 10px; background: var(--mel); color: var(--terra-escura);
+      border-radius: 0 0 var(--r-md) var(--r-md);
+      font-family: var(--mono); font-size: var(--fs-eyebrow); font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+    }
+    .ficha-topo {
+      display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--sp-2) var(--sp-5);
+      font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; color: var(--terra);
+    }
+    .capa-grade { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-7); align-items: center; margin-top: var(--sp-6); }
+    .titulo-num { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-5); align-items: start; }
+    .titulo-num__n {
+      font-family: var(--mono); font-weight: 500; font-size: clamp(56px, 6vw, 88px); line-height: .85; letter-spacing: -.04em;
+      color: var(--petroleo);
+    }
+    .titulo-num__n::before { content: "01"; }
+    .titulo-num h1 { font-size: clamp(40px, 4.8vw, 66px); line-height: 1.02; letter-spacing: -.025em; text-wrap: balance; }
+    .capa-sub { margin-top: var(--sp-5); padding-left: calc(clamp(56px, 6vw, 88px) * 1.2 + var(--sp-5)); max-width: 62ch; }
+    .capa-acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); padding-left: calc(clamp(56px, 6vw, 88px) * 1.2 + var(--sp-5)); }
+    .anexo { position: relative; transform: rotate(2deg); margin-top: var(--sp-3); }
+    .anexo img { width: 100%; height: auto; aspect-ratio: 5 / 4; object-fit: cover; border: 8px solid var(--branco); box-shadow: var(--sh-md); background: var(--creme-papel); }
+    /* Clipe de papel desenhado em CSS */
+    .anexo::before {
+      content: ""; position: absolute; z-index: 2; top: -18px; left: 28px; width: 18px; height: 58px;
+      border: 2.5px solid var(--terra-clara); border-radius: 10px;
+    }
+    .anexo::after {
+      content: ""; position: absolute; z-index: 3; top: -10px; left: 33px; width: 8px; height: 40px;
+      border: 2.5px solid var(--terra-clara); border-top: 0; border-radius: 0 0 6px 6px;
+    }
+    .anexo figcaption { margin-top: var(--sp-3); transform: rotate(-2deg); color: var(--terra); }
+    .carimbo {
+      position: absolute; right: -18px; bottom: 72px; z-index: 4;
+      display: grid; gap: 2px; padding: 10px 14px; text-align: center;
+      border: 2.5px solid var(--petroleo); border-radius: var(--r-sm); background: rgba(255,255,255,.85);
+      color: var(--petroleo); transform: rotate(-8deg);
+      outline: 1px solid var(--petroleo); outline-offset: 3px;
+    }
+    .carimbo strong { font-family: var(--mono); font-size: 30px; line-height: 1; font-weight: 700; letter-spacing: -.02em; }
+    .carimbo span { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; max-width: 16ch; line-height: 1.35; }
+    @media (max-width: 1199px) {
+      .capa-grade { grid-template-columns: minmax(0, 1fr); }
+      .anexo { max-width: 420px; margin-inline: auto; }
+    }
+    @media (max-width: 767px) {
+      .ficha-topo { justify-content: flex-start; margin-top: var(--sp-5); }
+      .titulo-num { grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); }
+      .titulo-num__n { font-size: 48px; }
+      .titulo-num h1 { font-size: 40px; }
+      .capa-sub, .capa-acoes { padding-left: 0; }
+      .anexo { margin: var(--sp-6) var(--sp-3) 0; }
+      .carimbo { right: -6px; }
+    }
+
+    /* ---------- C5: linhas de tabela com sparkline ---------- */
+    .tabela { border-top: 1.5px solid var(--terra-escura); }
+    .tabela > li {
+      display: grid; grid-template-columns: 36px minmax(0, 4fr) minmax(0, 6fr) 120px; gap: var(--sp-5); align-items: center;
+      padding-block: var(--sp-5); border-bottom: var(--bd);
+    }
+    .tabela .dr-icone { color: var(--petroleo); }
+    .tabela h3 { font-family: var(--sans); font-weight: 700; font-size: 17px; line-height: 1.3; color: var(--ink); }
+    .tabela p { color: var(--corpo); }
+    .spark { width: 120px; height: 36px; overflow: visible; }
+    .spark polyline { fill: none; stroke: var(--petroleo); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .spark .spark__area { fill: var(--petroleo-veu); stroke: none; }
+    .spark circle { fill: var(--mel); stroke: var(--terra-escura); stroke-width: 1.2; }
+    .tabela--dados > li { grid-template-columns: minmax(0, 5fr) minmax(0, 3fr) 160px; }
+    .tabela--dados .valor { font-family: var(--mono); font-weight: 500; font-size: clamp(30px, 3.2vw, 44px); line-height: 1; letter-spacing: -.03em; color: var(--terra-escura); text-align: right; font-variant-numeric: tabular-nums; }
+    .tabela--dados .rotulo { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; color: var(--terra); }
+    .tabela--dados .spark { width: 160px; }
+    .tabela-cab {
+      display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 3fr) 160px; gap: var(--sp-5); padding-bottom: var(--sp-2);
+      font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--suave);
+    }
+    .tabela-cab span:nth-child(2) { text-align: right; }
+    @media (max-width: 899px) {
+      .tabela > li { grid-template-columns: 28px minmax(0, 1fr) 84px; gap: var(--sp-2) var(--sp-4); align-items: start; }
+      .tabela > li > p { grid-column: 2 / -1; }
+      .tabela .spark { width: 84px; grid-column: 3; grid-row: 1; }
+      .tabela--dados > li { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+      .tabela--dados .spark { grid-column: 1 / -1; grid-row: auto; width: 100%; height: 28px; }
+      .tabela-cab { display: none; }
+    }
+
+    /* ---------- Problema ---------- */
+    .problema-grade { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: var(--sp-7); align-items: start; }
+    .marca-texto { font-family: var(--mono); font-weight: 500; font-size: clamp(72px, 8vw, 112px); line-height: .9; letter-spacing: -.05em; color: var(--terra-escura); }
+    .marca-texto + p { margin-top: var(--sp-4); }
+    .achados { counter-reset: achado; border-top: var(--bd); }
+    .achados > li { counter-increment: achado; display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: var(--sp-3); padding-block: var(--sp-5); border-bottom: var(--bd); }
+    .achados > li::before { content: counter(achado, lower-alpha) ")"; font-family: var(--mono); font-size: var(--fs-small); color: var(--erro); font-weight: 700; }
+    @media (max-width: 899px) { .problema-grade { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } }
+
+    /* ---------- Como funciona: anexos numerados ---------- */
+    .anexos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+    .anexos > li { border-top: 2px solid var(--terra-escura); padding-top: var(--sp-4); }
+    .anexos .num { font-family: var(--mono); font-size: var(--fs-small); font-weight: 700; color: var(--petroleo); letter-spacing: .08em; }
+    .anexos h3 { margin-block: var(--sp-2); }
+    .anexos figure { margin-top: var(--sp-5); background: var(--creme-papel); border: var(--bd); border-radius: var(--r-lg); padding: var(--sp-4) var(--sp-4) var(--sp-3); }
+    .anexos img { width: 100%; max-height: 340px; object-fit: cover; object-position: top; border-radius: var(--r-md); }
+    .anexos figcaption { margin-top: var(--sp-3); color: var(--terra); }
+    @media (max-width: 899px) { .anexos { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } .anexos img { max-height: 280px; } }
+
+    /* ---------- Para quem ---------- */
+    .perfis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-4); }
+    .perfis > li { background: var(--branco); border: var(--bd); border-radius: var(--r-lg); padding: var(--sp-5); }
+    .perfis .dr-icone { color: var(--petroleo); margin-bottom: var(--sp-4); }
+    .perfis h3 { margin-bottom: var(--sp-2); }
+    @media (max-width: 899px) { .perfis { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Equipe ---------- */
+    .fichas-pessoa { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+    .fichas-pessoa > li { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: var(--sp-4); align-items: center; padding: var(--sp-4); border: var(--bd); border-radius: var(--r-lg); }
+    .fichas-pessoa img { width: 80px; height: 96px; object-fit: cover; border-radius: var(--r-md); border: var(--bd); }
+    .fichas-pessoa h3 { font-size: 17px; }
+    .fichas-pessoa p { margin-top: 4px; font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    .origem { font-family: var(--serif); font-size: var(--fs-h4); line-height: 1.5; color: var(--terra-escura); max-width: 60ch; margin-bottom: var(--sp-6); }
+    .apoios { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-4) var(--sp-7); margin-top: var(--sp-6); padding: var(--sp-5) var(--sp-6); background: var(--grafite); border-radius: var(--r-lg); }
+    .apoio { display: flex; align-items: center; gap: var(--sp-3); }
+    .apoio__logo { display: grid; place-items: center; height: 72px; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md); }
+    .apoio__logo img { max-height: 56px; width: auto; max-width: 150px; }
+    .apoio[data-fundo="claro"] .apoio__logo { background: var(--creme); }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--mel-claro); }
+    @media (max-width: 1199px) { .fichas-pessoa { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 767px) { .apoios { flex-direction: column; align-items: flex-start; padding: var(--sp-5); } }
+
+    /* ---------- Depoimento: transcrição ---------- */
+    .transcricao { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--sp-6); align-items: start; }
+    .transcricao img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 2px solid var(--mel); }
+    .transcricao .dr-quote { font-size: clamp(24px, 2.8vw, 36px); line-height: 1.3; color: var(--creme); text-wrap: balance; }
+    .transcricao .dr-quote::before { content: "\201C"; color: var(--mel); margin-right: .08em; }
+    .transcricao .dr-quote::after { content: "\201D"; color: var(--mel); margin-left: .04em; }
+    .transcricao figcaption { margin-top: var(--sp-5); }
+    .transcricao__nome { color: var(--creme); font-weight: 700; }
+    .transcricao__local { display: block; font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; color: var(--mel-claro); margin-top: 4px; }
+    @media (max-width: 767px) { .transcricao { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); } .transcricao img { width: 72px; height: 72px; } }
+
+    /* ---------- Contato ---------- */
+    .contato-grade { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--sp-7); }
+    .form { display: grid; gap: var(--sp-4); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; color: var(--terra); }
+    .campo input, .campo textarea {
+      font: inherit; font-size: var(--fs-body); color: var(--ink); width: 100%;
+      background: var(--creme); border: var(--bd-forte); border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4);
+    }
+    .campo textarea { min-height: 132px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canais > li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-4); align-items: center; padding-block: var(--sp-4); border-bottom: var(--bd); }
+    .canais > li:first-child { border-top: 1.5px solid var(--terra-escura); }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-weight: 600; font-size: var(--fs-body-lg); overflow-wrap: anywhere; text-underline-offset: 4px; }
+    .contato-acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+    @media (max-width: 899px) { .contato-grade { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Rodapé ---------- */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 104px; position: relative; z-index: 41; }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) {
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N2 · pílula inferior centralizada, estilo app) -->
+  <nav data-secao="nav" class="pilula">
+    <a class="pilula__coroa" href="#inicio"><img src="../img/logos/coroa-cor.png" alt="" data-c-alt="marca.alt" width="39" height="28"></a>
+    <div class="pilula__links">
+      <a href="#funcionalidades" data-c="funcionalidades.eyebrow"></a>
+      <a href="#como-funciona" data-c="comoFunciona.eyebrow"></a>
+      <a href="#contato" data-c="contato.eyebrow"></a>
+    </div>
+    <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+  </nav>
+
+  <div class="dossie">
+
+    <!-- Sumário lateral: destaca a seção atual e mostra o progresso de leitura -->
+    <aside class="sumario" data-sumario>
+      <a class="sumario__marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+      <div class="sumario__corpo">
+        <span class="sumario__trilho" aria-hidden="true"><i></i></span>
+        <ol class="indice">
+          <li><a href="#inicio" data-alvo="inicio"><span data-c="hero.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a></li>
+          <li><a href="#problema" data-alvo="problema"><span data-c="problema.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a></li>
+          <li><a href="#funcionalidades" data-alvo="funcionalidades"><span data-c="funcionalidades.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a></li>
+          <li><a href="#como-funciona" data-alvo="como-funciona"><span data-c="comoFunciona.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a></li>
+          <li><a href="#para-quem" data-alvo="para-quem"><span data-c="paraQuem.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a></li>
+          <li><a href="#tecnologia" data-alvo="tecnologia"><span data-c="tecnologia.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a></li>
+          <li><a href="#equipe" data-alvo="equipe"><span data-c="equipe.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a></li>
+          <li><a href="#contato" data-alvo="contato"><span data-c="contato.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a></li>
+        </ol>
+      </div>
+      <div class="sumario__lido" aria-hidden="true">
+        <span class="sumario__pct" data-pct></span>
+        <span class="sumario__total" data-total></span>
+      </div>
+    </aside>
+
+    <main>
+
+      <!-- SEÇÃO: hero (capa do dossiê: aba, título numerado, anexo com clipe e carimbo) -->
+      <section data-secao="hero" id="inicio" class="folha capa-dossie">
+        <span class="aba" data-c="hero.eyebrow"></span>
+        <div class="ficha-topo">
+          <span data-c="rodape.endereco"></span>
+          <time data-hoje></time>
+        </div>
+        <div class="capa-grade">
+          <div>
+            <div class="titulo-num">
+              <span class="titulo-num__n" aria-hidden="true"></span>
+              <h1 class="dr-h1" data-c="hero.titulo"></h1>
+            </div>
+            <p class="dr-body-lg capa-sub" data-c="hero.subtitulo"></p>
+            <div class="capa-acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+          <figure class="anexo">
+            <img data-c-src="hero.imagem" data-c-alt="hero.imagemAlt" alt="" width="1600" height="1000">
+            <div class="carimbo" data-carimbo aria-hidden="true">
+              <strong data-c="prova.stats[3].valor"></strong>
+              <span data-c="prova.stats[3].rotulo"></span>
+            </div>
+            <figcaption class="dr-caption" data-c="hero.imagemAlt"></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- SEÇÃO: prova (C5 · tabela de indicadores com sparkline) -->
+      <section data-secao="prova" class="folha folha--papel folha--anexa">
+        <ul class="tabela tabela--dados" data-c-lista="prova.stats">
+          <template>
+            <li>
+              <span class="rotulo" data-c="rotulo"></span>
+              <span class="valor" data-c="valor"></span>
+              <svg class="spark" data-spark viewBox="0 0 160 36" preserveAspectRatio="none" aria-hidden="true"></svg>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+      <!-- SEÇÃO: problema -->
+      <section data-secao="problema" id="problema" class="folha">
+        <header class="cab">
+          <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+          <h2 class="dr-h2" data-c="problema.titulo"></h2>
+        </header>
+        <div class="problema-grade">
+          <div>
+            <p class="marca-texto" data-c="problema.estatistica.valor"></p>
+            <p class="dr-body-lg" data-c="problema.estatistica.texto"></p>
+          </div>
+          <ul class="achados" data-c-lista="problema.consequencias">
+            <template>
+              <li><p class="dr-body-lg" data-c="texto"></p></li>
+            </template>
+          </ul>
+        </div>
+      </section>
+
+      <!-- SEÇÃO: funcionalidades (C5 · linhas de tabela com sparkline) -->
+      <section data-secao="funcionalidades" id="funcionalidades" class="folha">
+        <header class="cab">
+          <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+          <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+        </header>
+        <ul class="tabela" data-c-lista="funcionalidades.itens">
+          <template>
+            <li>
+              <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+              <h3 data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <svg class="spark" data-spark viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true"></svg>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+      <!-- SEÇÃO: como-funciona (anexos numerados com telas do app) -->
+      <section data-secao="como-funciona" id="como-funciona" class="folha folha--papel">
+        <header class="cab">
+          <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+          <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+        </header>
+        <ol class="anexos" data-c-lista="comoFunciona.passos">
+          <template>
+            <li>
+              <span class="num" data-c="numero"></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <figure>
+                <img data-c-src="imagem" data-c-alt="alt" alt="">
+                <figcaption class="dr-caption" data-c="alt"></figcaption>
+              </figure>
+            </li>
+          </template>
+        </ol>
+      </section>
+
+      <!-- SEÇÃO: para-quem -->
+      <section data-secao="para-quem" id="para-quem" class="folha">
+        <header class="cab">
+          <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+          <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+        </header>
+        <ul class="perfis" data-c-lista="paraQuem.perfis">
+          <template>
+            <li>
+              <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-colmeia"></use></svg>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+      <!-- SEÇÃO: tecnologia (C5 · linhas de tabela com sparkline) -->
+      <section data-secao="tecnologia" id="tecnologia" class="folha">
+        <header class="cab">
+          <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+          <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+          <p class="dr-body-lg" data-c="tecnologia.texto"></p>
+        </header>
+        <ul class="tabela" data-c-lista="tecnologia.pilares">
+          <template>
+            <li>
+              <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+              <h3 data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <svg class="spark" data-spark viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true"></svg>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+      <!-- SEÇÃO: equipe (fichas de pessoal + faixa grafite de apoios) -->
+      <section data-secao="equipe" id="equipe" class="folha folha--papel">
+        <header class="cab">
+          <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+          <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+        </header>
+        <p class="origem" data-c="equipe.origem"></p>
+        <ul class="fichas-pessoa" data-c-lista="equipe.pessoas">
+          <template>
+            <li>
+              <img data-c-src="foto" data-c-alt="alt" alt="" width="80" height="96">
+              <div>
+                <h3 class="dr-h4" data-c="nome"></h3>
+                <p data-c="cargo"></p>
+              </div>
+            </li>
+          </template>
+        </ul>
+        <!-- Centelha só funciona no escuro; logos de fundo claro ganham placa creme -->
+        <ul class="apoios" data-c-lista="equipe.apoios">
+          <template>
+            <li class="apoio">
+              <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+              <span class="apoio__nome" data-c="nome"></span>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+      <!-- SEÇÃO: depoimento (transcrição sobre folha grafite) -->
+      <section data-secao="depoimento" class="folha folha--grafite folha--anexa">
+        <figure class="transcricao">
+          <img data-c-src="depoimento.foto" alt="" width="96" height="96">
+          <div>
+            <blockquote style="margin:0"><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+            <figcaption>
+              <span class="transcricao__nome" data-c="depoimento.nome"></span>
+              <span class="transcricao__local" data-c="depoimento.local"></span>
+            </figcaption>
+          </div>
+        </figure>
+      </section>
+
+      <!-- SEÇÃO: contato -->
+      <section data-secao="contato" id="contato" class="folha">
+        <header class="cab">
+          <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+          <h2 class="dr-h2" data-c="contato.titulo"></h2>
+          <p class="dr-body-lg" data-c="contato.texto"></p>
+        </header>
+        <div class="contato-grade">
+          <form class="form" method="post" data-form-contato>
+            <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+            <div class="campo">
+              <label for="f-nome" data-c="contato.form.nome"></label>
+              <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+            </div>
+            <div class="campo">
+              <label for="f-email" data-c="contato.form.email"></label>
+              <input id="f-email" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="campo">
+              <label for="f-msg" data-c="contato.form.mensagem"></label>
+              <textarea id="f-msg" name="mensagem" required></textarea>
+            </div>
+            <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+          </form>
+          <div>
+            <ul class="canais">
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <a data-mailto data-c="contato.email"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+              </li>
+            </ul>
+            <div class="contato-acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SVG = 'http://www.w3.org/2000/svg';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+
+      /* Sparkline determinística (mesma forma a cada carga), sempre subindo no fim. */
+      function desenharSpark(svg, semente) {
+        var vb = svg.viewBox.baseVal, w = vb.width, h = vb.height, n = 12, pts = [];
+        var s = semente * 9301 + 49297;
+        for (var i = 0; i < n; i++) {
+          s = (s * 9301 + 49297) % 233280;
+          var tendencia = i / (n - 1);
+          var y = h - 4 - (tendencia * 0.7 + (s / 233280) * 0.3) * (h - 8);
+          pts.push([(i / (n - 1)) * (w - 4) + 2, Math.round(y * 10) / 10]);
+        }
+        var linha = pts.map(function (p) { return p.join(','); }).join(' ');
+        var area = document.createElementNS(SVG, 'polygon');
+        area.setAttribute('class', 'spark__area');
+        area.setAttribute('points', '2,' + h + ' ' + linha + ' ' + (w - 2) + ',' + h);
+        var pl = document.createElementNS(SVG, 'polyline');
+        pl.setAttribute('points', linha);
+        var c = document.createElementNS(SVG, 'circle');
+        var ult = pts[pts.length - 1];
+        c.setAttribute('cx', ult[0]); c.setAttribute('cy', ult[1]); c.setAttribute('r', 3.2);
+        svg.appendChild(area); svg.appendChild(pl); svg.appendChild(c);
+      }
+
+      /* Índice fixo: seção atual, barra por item e porcentagem lida.
+         É retorno de leitura (não animação), por isso roda também com movimento reduzido. */
+      function ligarSumario() {
+        var aside = document.querySelector('[data-sumario]');
+        var links = Array.prototype.slice.call(aside.querySelectorAll('[data-alvo]'));
+        var alvos = links.map(function (a) { return document.getElementById(a.getAttribute('data-alvo')); });
+        var trilho = aside.querySelector('.sumario__trilho');
+        var pct = aside.querySelector('[data-pct]');
+        var total = aside.querySelector('[data-total]');
+        var pendente = false;
+
+        function atualizar() {
+          pendente = false;
+          var vh = window.innerHeight, linha = vh * 0.35, atual = 0;
+          alvos.forEach(function (sec, i) {
+            if (!sec) return;
+            var r = sec.getBoundingClientRect();
+            // Fim do trecho = início do próximo item do índice (inclui prova/depoimento no meio).
+            var prox = alvos[i + 1] ? alvos[i + 1].getBoundingClientRect().top : r.bottom;
+            var p = Math.min(1, Math.max(0, (linha - r.top) / Math.max(1, prox - r.top)));
+            links[i].style.setProperty('--p', p.toFixed(3));
+            if (r.top <= linha) atual = i;
+          });
+          links.forEach(function (a, i) {
+            a.classList.toggle('atual', i === atual);
+            a.classList.toggle('lido', i < atual);
+            if (i === atual) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current');
+          });
+          var doc = document.documentElement;
+          var lido = Math.min(1, Math.max(0, window.scrollY / Math.max(1, doc.scrollHeight - vh)));
+          trilho.style.setProperty('--lido', lido.toFixed(3));
+          pct.textContent = Math.round(lido * 100) + '%';
+          total.textContent = String(atual + 1).padStart(2, '0') + ' / ' + String(links.length).padStart(2, '0');
+        }
+        function agendar() { if (!pendente) { pendente = true; requestAnimationFrame(atualizar); } }
+        window.addEventListener('scroll', agendar, { passive: true });
+        window.addEventListener('resize', agendar);
+        atualizar();
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        document.querySelectorAll('[data-spark]').forEach(function (svg, i) { desenharSpark(svg, i + 3); });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) {
+          if (email) a.setAttribute('href', 'mailto:' + email.v);
+        });
+        document.querySelectorAll('[data-ano]').forEach(function (el) {
+          el.textContent = '© ' + new Date().getFullYear();
+        });
+        document.querySelectorAll('[data-hoje]').forEach(function (el) {
+          var hoje = new Date();
+          el.setAttribute('datetime', hoje.toISOString().slice(0, 10));
+          el.textContent = hoje.toLocaleDateString('pt-BR');
+        });
+        ligarSumario();
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          // Abertura do dossiê: índice preenche de cima para baixo, capa assenta, carimbo bate.
+          var tl = gsap.timeline();
+          tl.from('.indice li', { autoAlpha: 0, x: -14, duration: 0.4, ease: 'power2.out', stagger: 0.05 }, 0);
+          tl.from('.capa-dossie', { y: 24, duration: 0.6, ease: 'power3.out' }, 0);
+          tl.from('.aba', { yPercent: -100, duration: 0.4, ease: 'power2.out' }, 0.2);
+          tl.from('.titulo-num__n', { autoAlpha: 0, y: 12, duration: 0.4, ease: 'power2.out' }, 0.25);
+          tl.from('.titulo-num h1, .capa-sub, .capa-acoes', { autoAlpha: 0, y: 14, duration: 0.5, ease: 'power2.out', stagger: 0.08 }, 0.3);
+          tl.from('.anexo', { autoAlpha: 0, rotation: 7, y: 30, duration: 0.6, ease: 'power3.out' }, 0.4);
+          tl.from('[data-carimbo]', { scale: 1.8, autoAlpha: 0, duration: 0.3, ease: 'power4.in' }, 0.95);
+
+          // Cada folha sobe ao entrar; as linhas da tabela entram e as sparklines se traçam.
+          gsap.utils.toArray('main > section:not(.capa-dossie)').forEach(function (sec) {
+            gsap.from(sec, { y: 40, duration: 0.7, ease: 'power3.out', scrollTrigger: { trigger: sec, start: 'top 92%', once: true } });
+          });
+          gsap.utils.toArray('.tabela, .achados, .anexos, .perfis, .fichas-pessoa').forEach(function (lista) {
+            gsap.from(lista.querySelectorAll(':scope > li'), {
+              autoAlpha: 0, y: 14, duration: 0.5, ease: 'power2.out', stagger: 0.07,
+              scrollTrigger: { trigger: lista, start: 'top 85%', once: true }
+            });
+          });
+          gsap.utils.toArray('.spark polyline').forEach(function (pl) {
+            var len = pl.getTotalLength();
+            gsap.fromTo(pl, { strokeDasharray: len, strokeDashoffset: len }, {
+              strokeDashoffset: 0, duration: 1, ease: 'power2.inOut',
+              scrollTrigger: { trigger: pl.ownerSVGElement, start: 'top 90%', once: true }
+            });
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
