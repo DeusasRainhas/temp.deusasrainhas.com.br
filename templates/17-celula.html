@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="pt-BR" data-template="17">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 17 Célula</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       17 Célula · favo · N4 / C6 / R6
+       Uma única célula hexagonal gigante emoldura a foto do hero. A
+       imagem aparece por uma máscara hexagonal que cresce conforme a
+       página rola; o mesmo gesto revela as telas do app e os retratos.
+       Regras herdadas do 01:
+       - nada de opacity < 1 fora do gsap.matchMedia (texto "apagado" usa cor);
+       - canto inferior direito livre (pílula do switcher);
+       - menu fechado usa [hidden] (display: none), nunca visibility.
+       Sem movimento, a máscara fica aberta (--k: 1) e tudo é visível.
+       ================================================================= */
+
+    :root { --respiro: clamp(36px, 6vw, 80px); }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible {
+      outline: 2px solid var(--petroleo); outline-offset: 3px;
+    }
+
+    /* ---------- Máscara hexagonal (--k: 0 fechada, 1 hexágono cheio, 2 retângulo) ---------- */
+    .revela {
+      --k: 1;
+      clip-path: polygon(
+        50% calc(50% - 50% * var(--k)),
+        calc(50% + 50% * var(--k)) calc(50% - 25% * var(--k)),
+        calc(50% + 50% * var(--k)) calc(50% + 25% * var(--k)),
+        50% calc(50% + 50% * var(--k)),
+        calc(50% - 50% * var(--k)) calc(50% + 25% * var(--k)),
+        calc(50% - 50% * var(--k)) calc(50% - 25% * var(--k)));
+    }
+
+    /* ---------- N4: hambúrguer que abre overlay em tela cheia ---------- */
+    .topo { position: absolute; inset: 0 0 auto 0; z-index: 70; min-height: 96px; }
+    .topo__miolo { display: flex; align-items: center; justify-content: space-between; height: 96px; }
+    .marca img { width: 64px; height: 64px; }
+    .abrir {
+      position: fixed; top: 20px; right: max(16px, calc((100vw - 1200px) / 2 + 16px)); z-index: 80;
+      display: grid; place-items: center; width: 56px; height: 64px; border: 0; padding: 0; cursor: pointer;
+      background: var(--mel); color: var(--terra-escura);
+      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+      transition: background-color .2s ease, transform .3s ease;
+    }
+    .abrir:hover { background: var(--mel-escuro); }
+    .abrir:focus-visible { outline: none; background: var(--terra-escura); color: var(--mel); }
+    .abrir__linhas { position: relative; width: 22px; height: 14px; }
+    .abrir__linhas i { position: absolute; left: 0; width: 100%; height: 2px; border-radius: 2px; background: currentColor; transition: transform .3s ease, opacity .2s ease, top .3s ease; }
+    .abrir__linhas i:nth-child(1) { top: 0; }
+    .abrir__linhas i:nth-child(2) { top: 6px; }
+    .abrir__linhas i:nth-child(3) { top: 12px; }
+    .abrir[aria-expanded="true"] { background: var(--creme); }
+    .abrir[aria-expanded="true"] .abrir__linhas i:nth-child(1) { top: 6px; transform: rotate(45deg); }
+    .abrir[aria-expanded="true"] .abrir__linhas i:nth-child(2) { transform: scaleX(0); }
+    .abrir[aria-expanded="true"] .abrir__linhas i:nth-child(3) { top: 6px; transform: rotate(-45deg); }
+
+    .menu {
+      position: fixed; inset: 0; z-index: 75; overflow-y: auto;
+      background: var(--grafite); color: var(--creme);
+    }
+    .menu__favo {
+      position: absolute; top: 0; right: 0; bottom: 0; width: 42%;
+      background: url(../img/padroes/favo-escuro.svg);
+      -webkit-mask-image: linear-gradient(to left, #000 10%, transparent 95%); mask-image: linear-gradient(to left, #000 10%, transparent 95%);
+      pointer-events: none;
+    }
+    .menu__favo::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 100% 50%, rgba(32,32,32,0), rgba(32,32,32,.55)); }
+    .menu__miolo { position: relative; min-height: 100%; display: flex; flex-direction: column; padding-block: 20px var(--sp-8); }
+    .menu__marca img { width: 64px; height: 64px; }
+    .menu__lista { margin-top: clamp(32px, 7vh, 80px); counter-reset: m; max-width: 640px; }
+    .menu__lista li { counter-increment: m; border-top: 1px solid rgba(255,251,230,.14); }
+    .menu__lista li:last-child { border-bottom: 1px solid rgba(255,251,230,.14); }
+    .menu__lista a {
+      display: flex; align-items: baseline; gap: var(--sp-5); padding-block: var(--sp-4);
+      font-family: var(--serif); font-weight: 500; font-size: clamp(30px, 4.6vw, 54px); line-height: 1.1;
+      color: var(--creme); text-decoration: none;
+    }
+    .menu__lista a::before {
+      content: counter(m, decimal-leading-zero); flex: none; width: 2.2em;
+      font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .18em; color: var(--mel);
+    }
+    .menu__lista a:hover, .menu__lista a:focus-visible { color: var(--mel-claro); }
+    .menu__acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-7); }
+    .menu .dr-btn--secundario { color: var(--creme); border-color: rgba(255,251,230,.4); }
+    .menu .dr-btn--secundario:hover { background: rgba(255,251,230,.08); }
+    @media (max-width: 767px) {
+      .menu__favo { width: 100%; height: 34%; bottom: auto; -webkit-mask-image: linear-gradient(to bottom, #000, transparent); mask-image: linear-gradient(to bottom, #000, transparent); }
+      .topo__miolo { height: 84px; }
+      .marca img, .menu__marca img { width: 56px; height: 56px; }
+      .abrir { top: 14px; }
+    }
+
+    /* ---------- Hero: a célula gigante ---------- */
+    .hero { position: relative; padding-top: 120px; padding-bottom: calc(var(--respiro) + 64px); overflow: hidden; }
+    .hero__grade { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-7); align-items: center; }
+    .hero__texto .dr-eyebrow { display: block; }
+    .hero__titulo { margin-top: var(--sp-5); font-size: clamp(42px, 5.4vw, 76px); line-height: 1; letter-spacing: -.026em; text-wrap: balance; }
+    .hero__sub { margin-top: var(--sp-5); max-width: 44ch; }
+    .hero__acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+
+    .celula { --w: min(520px, 40vw); position: relative; width: var(--w); height: calc(var(--w) * 1.1547); }
+    .celula__aneis { position: absolute; inset: -9%; width: 118%; height: 118%; overflow: visible; pointer-events: none; }
+    .celula__moldura {
+      position: absolute; inset: 0; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+      background: var(--mel);
+    }
+    .celula__fundo {
+      position: absolute; inset: 14px; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+      background: var(--mel-claro) url(../img/padroes/favo-mel.svg); background-size: 56px auto;
+    }
+    .celula__foto { position: absolute; inset: 14px; overflow: hidden; }
+    .celula__foto img { width: 100%; height: 100%; object-fit: cover; }
+    .celula__legenda {
+      position: absolute; left: 50%; bottom: -84px; transform: translateX(-50%); width: max-content; max-width: 100%; justify-content: center;
+      display: flex; gap: var(--sp-2); align-items: center; text-align: center;
+    }
+    .celula__legenda::before { content: ""; width: 10px; height: 11px; flex: none; background: var(--mel); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+    .dr-caption { color: var(--terra); }
+    @media (max-width: 899px) {
+      .hero { padding-top: 104px; }
+      .hero__grade { grid-template-columns: minmax(0, 1fr); gap: var(--sp-8); }
+      .celula { --w: min(340px, 78vw); margin-inline: auto; }
+      .celula { margin-bottom: 72px; }
+      .celula__legenda { bottom: -76px; width: 100%; }
+    }
+    @media (max-width: 767px) { .hero__titulo { font-size: 40px; } }
+
+    /* ---------- R6: seções como cartões de canto --r-xl ---------- */
+    .faixa { padding-block: calc(var(--sp-5) / 2); }
+    .cartao {
+      position: relative; border-radius: var(--r-xl); padding: var(--respiro) clamp(20px, 5vw, 72px);
+      background: var(--creme-papel); border: 1px solid var(--linha);
+    }
+    .cartao--branco { background: var(--branco); }
+    .cartao--sup { background: var(--superficie); border-color: var(--linha-forte); }
+    .cartao--veu { background: var(--mel-veu); border-color: var(--mel-claro); }
+    .cartao--escuro { background: var(--grafite); border-color: var(--grafite); color: var(--tenue); }
+    .cartao--escuro .dr-h2, .cartao--escuro .dr-h4 { color: var(--creme); }
+    .cartao--escuro .dr-eyebrow { color: var(--mel-claro); }
+    .cartao--escuro .dr-body-lg { color: #D9CFBD; }
+    .cabeca .dr-eyebrow { margin-bottom: var(--sp-3); }
+    .cabeca .dr-body-lg { margin-top: var(--sp-4); max-width: 56ch; }
+    .cabeca + * { margin-top: var(--sp-7); }
+    @media (max-width: 767px) {
+      .dr-h2 { font-size: 30px; }
+      .faixa > .dr-container { padding-inline: 10px; }
+      .cartao { padding-inline: 20px; }
+    }
+
+    /* ---------- C6: cards com sombra e inclinação 3D sutil ---------- */
+    .c6-grade { display: grid; gap: var(--sp-5); perspective: 900px; }
+    .c6 {
+      position: relative; border-radius: var(--r-lg); background: var(--branco); box-shadow: var(--sh-md);
+      padding: var(--sp-6); transform-style: preserve-3d;
+      transition: transform .5s cubic-bezier(.2, .8, .2, 1), box-shadow .3s ease;
+    }
+    .c6:hover { box-shadow: var(--sh-lg); }
+    .c6--inclina { transition: transform .12s linear, box-shadow .3s ease; }
+    .c6__icone {
+      display: grid; place-items: center; width: 44px; height: 50px; margin-bottom: var(--sp-5);
+      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+      background: var(--petroleo-veu); color: var(--petroleo);
+    }
+    .c6 .dr-h4 { margin-bottom: var(--sp-2); }
+
+    /* Prova */
+    .placar { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .placar .c6 { padding: var(--sp-6) var(--sp-5); }
+    .placar__valor { display: block; font-size: clamp(36px, 3.8vw, 54px); line-height: 1; color: var(--terra-escura); }
+    .placar__rotulo { display: block; margin-top: var(--sp-3); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); line-height: 1.55; }
+    .placar .c6::before { content: ""; display: block; width: 24px; height: 4px; border-radius: 2px; background: var(--mel); margin-bottom: var(--sp-5); }
+    @media (max-width: 899px) { .placar { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); } .placar .c6 { padding: var(--sp-5) var(--sp-4); } }
+
+    /* Problema */
+    .problema { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--sp-8); align-items: start; }
+    .problema .cabeca + * { margin-top: var(--sp-6); }
+    .dado__valor { display: block; font-size: clamp(80px, 10vw, 140px); line-height: .85; color: var(--terra-escura); }
+    .dado p { margin-top: var(--sp-4); max-width: 30ch; }
+    .consequencias { display: grid; gap: var(--sp-4); }
+    .consequencias .c6 { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-4); padding: var(--sp-5); }
+    .consequencias .dr-icone { color: var(--erro); margin-top: 3px; }
+    @media (max-width: 899px) { .problema { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } }
+
+    /* Funcionalidades */
+    .funcs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    @media (max-width: 1023px) { .funcs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 639px) { .funcs { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); } }
+
+    /* Como funciona: telas reveladas pela máscara */
+    .passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-6); }
+    .tela { position: relative; width: 100%; max-width: 280px; aspect-ratio: 1 / 1.1547; margin-bottom: var(--sp-5); }
+    .tela__fundo { position: absolute; inset: 0; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: var(--mel-veu); }
+    .tela .revela { position: absolute; inset: 0; border-radius: var(--r-lg); overflow: hidden; background: var(--creme-papel); }
+    .tela img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    .tela .revela { --k: 2.05; }
+    .tela img[src*="02_lista"] { object-fit: contain; object-position: center; padding: var(--sp-3); }
+    .passo__num { display: inline-block; font-size: 15px; color: var(--petroleo); padding: 2px 10px; border-radius: var(--r-pill); background: var(--petroleo-veu); }
+    .passo .dr-h4 { margin-block: var(--sp-3) var(--sp-2); }
+    .passo figcaption { margin-top: var(--sp-3); }
+    @media (max-width: 899px) { .passos { grid-template-columns: minmax(0, 1fr); gap: var(--sp-7); } .tela { max-width: 260px; } }
+
+    /* Para quem */
+    .perfis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .perfis .dr-h3 { font-family: var(--serif); font-weight: 500; color: var(--terra-escura); margin-bottom: var(--sp-3); }
+    .perfis .c6 { padding-top: var(--sp-7); }
+    .perfil__num { position: absolute; top: var(--sp-5); right: var(--sp-5); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .18em; color: var(--terra-clara); }
+    @media (max-width: 899px) { .perfis { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); } }
+
+    /* Tecnologia */
+    .tec { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: var(--sp-8); align-items: start; }
+    .tec .cabeca + * { margin-top: 0; }
+    .pilares { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-4); }
+    .pilares .c6__icone { background: var(--petroleo); color: var(--creme); }
+    @media (max-width: 899px) { .tec { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } }
+    @media (max-width: 599px) { .pilares { grid-template-columns: minmax(0, 1fr); } }
+
+    /* Equipe (cartão escuro) */
+    .pessoas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-6); }
+    .pessoa { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
+    .pessoa__foto { position: relative; width: 96px; height: 111px; }
+    .pessoa__foto::before { content: ""; position: absolute; inset: 0; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: var(--mel); }
+    .pessoa__foto .revela { position: absolute; inset: 3px; overflow: hidden; }
+    .pessoa__foto img { width: 100%; height: 100%; object-fit: cover; }
+    .pessoa__cargo { margin-top: var(--sp-1); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .1em; text-transform: uppercase; color: var(--mel-claro); line-height: 1.5; }
+    .apoios { display: flex; flex-wrap: wrap; gap: var(--sp-5) var(--sp-7); align-items: center; margin-top: var(--sp-8); padding-top: var(--sp-6); border-top: 1px solid rgba(255,251,230,.14); }
+    .apoio { display: flex; align-items: center; gap: var(--sp-4); }
+    .apoio__logo { display: grid; place-items: center; height: 80px; padding: var(--sp-3) var(--sp-4); border-radius: var(--r-md); }
+    .apoio[data-fundo="claro"] .apoio__logo { background: var(--creme); }
+    .apoio__logo img { max-height: 56px; width: auto; max-width: 150px; }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--mel-claro); }
+    @media (max-width: 899px) { .pessoas { grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); } }
+
+    /* Depoimento */
+    .citacao { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-8); align-items: center; }
+    .citacao__foto { position: relative; width: 220px; height: 254px; }
+    .citacao__foto::before { content: ""; position: absolute; inset: 0; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: var(--mel); }
+    .citacao__foto .revela { position: absolute; inset: 8px; overflow: hidden; }
+    .citacao__foto img { width: 100%; height: 100%; object-fit: cover; }
+    .citacao .dr-quote { font-size: clamp(24px, 3vw, 38px); line-height: 1.3; color: var(--terra-escura); text-wrap: balance; }
+    .citacao__assina { margin-top: var(--sp-6); }
+    .citacao__nome { display: block; font-weight: 700; color: var(--ink); }
+    .citacao__local { display: block; font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); margin-top: var(--sp-1); }
+    @media (max-width: 767px) { .citacao { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } .citacao__foto { width: 160px; height: 185px; } }
+
+    /* Contato */
+    .contato { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--sp-8); }
+    .contato .cabeca + * { margin-top: var(--sp-6); }
+    .form { display: grid; gap: var(--sp-4); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo input, .campo textarea { font: inherit; font-size: var(--fs-body); color: var(--ink); width: 100%; background: var(--creme); border: var(--bd-forte); border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4); }
+    .campo textarea { min-height: 150px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canais { display: grid; gap: var(--sp-3); }
+    .canais li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-3); align-items: center; }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-weight: 600; overflow-wrap: anywhere; text-underline-offset: 4px; }
+    .contato__acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+    @media (max-width: 899px) { .contato { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } }
+
+    /* Rodapé */
+    footer[data-secao="rodape"] { padding-block: var(--sp-5) 96px; }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: center; background: var(--grafite); color: var(--tenue); border-radius: var(--r-xl); padding: var(--sp-6) clamp(20px, 5vw, 56px); }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-4) auto 0; padding-inline: 32px; color: var(--suave); }
+    @media (max-width: 767px) {
+      footer > .dr-container { padding-inline: 10px; }
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N4 · botão hambúrguer hexagonal que abre overlay em tela cheia) -->
+  <nav data-secao="nav" class="topo">
+    <div class="dr-container topo__miolo">
+      <a class="marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+    </div>
+    <button class="abrir" type="button" aria-expanded="false" aria-controls="menu" data-abrir>
+      <span class="abrir__linhas" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="dr-sr-only" data-c="marca.nome"></span>
+    </button>
+    <div class="menu" id="menu" hidden data-menu>
+      <div class="menu__favo" aria-hidden="true"></div>
+      <div class="dr-container menu__miolo">
+        <a class="menu__marca" href="#inicio" data-fechar><img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+        <ul class="menu__lista">
+          <li><a href="#funcionalidades" data-fechar data-c="funcionalidades.eyebrow"></a></li>
+          <li><a href="#como-funciona" data-fechar data-c="comoFunciona.eyebrow"></a></li>
+          <li><a href="#para-quem" data-fechar data-c="paraQuem.eyebrow"></a></li>
+          <li><a href="#equipe" data-fechar data-c="equipe.eyebrow"></a></li>
+          <li><a href="#contato" data-fechar data-c="contato.eyebrow"></a></li>
+        </ul>
+        <div class="menu__acoes">
+          <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+          <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (a célula gigante emoldura a foto) -->
+    <section data-secao="hero" id="inicio" class="hero">
+      <div class="dr-container hero__grade">
+        <div class="hero__texto">
+          <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+          <h1 class="dr-display hero__titulo" data-c="hero.titulo"></h1>
+          <p class="dr-body-lg hero__sub" data-c="hero.subtitulo"></p>
+          <div class="hero__acoes">
+            <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+            <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+            <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+          </div>
+        </div>
+        <figure class="celula" data-celula>
+          <svg class="celula__aneis" viewBox="0 0 118 136.25" aria-hidden="true">
+            <path d="M59 1 117 34.5 117 101.7 59 135.2 1 101.7 1 34.5Z" fill="none" stroke="var(--linha-forte)" stroke-width=".35"/>
+            <path d="M59 5.5 113 36.7 113 99.5 59 130.7 5 99.5 5 36.7Z" fill="none" stroke="var(--terra-clara)" stroke-width=".25" stroke-dasharray="1.2 1.6"/>
+          </svg>
+          <div class="celula__moldura" aria-hidden="true"></div>
+          <div class="celula__fundo" aria-hidden="true"></div>
+          <div class="celula__foto revela" data-mascara-hero>
+            <img data-c-src="hero.imagem" data-c-alt="hero.imagemAlt" alt="" width="1600" height="1000">
+          </div>
+          <figcaption class="dr-caption celula__legenda" data-c="hero.imagemAlt"></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: prova (quatro cards com sombra) -->
+    <section data-secao="prova" class="faixa">
+      <div class="dr-container">
+        <ul class="c6-grade placar" data-c-lista="prova.stats">
+          <template>
+            <li class="c6" data-inclina>
+              <span class="dr-data placar__valor" data-c="valor"></span>
+              <span class="placar__rotulo" data-c="rotulo"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: problema -->
+    <section data-secao="problema" class="faixa">
+      <div class="dr-container">
+        <div class="cartao cartao--sup problema">
+          <div>
+            <header class="cabeca">
+              <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+              <h2 class="dr-h2" data-c="problema.titulo"></h2>
+            </header>
+            <div class="dado">
+              <span class="dr-data dado__valor" data-c="problema.estatistica.valor"></span>
+              <p class="dr-body-lg" data-c="problema.estatistica.texto"></p>
+            </div>
+          </div>
+          <ul class="consequencias c6-grade" data-c-lista="problema.consequencias">
+            <template>
+              <li class="c6" data-inclina>
+                <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+                <p class="dr-body-lg" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades (C6) -->
+    <section data-secao="funcionalidades" id="funcionalidades" class="faixa">
+      <div class="dr-container">
+        <div class="cartao">
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+            <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+          </header>
+          <ul class="c6-grade funcs" data-c-lista="funcionalidades.itens">
+            <template>
+              <li class="c6" data-inclina>
+                <span class="c6__icone"><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg></span>
+                <h3 class="dr-h4" data-c="titulo"></h3>
+                <p class="dr-body" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona (as telas do app saem da célula ao rolar) -->
+    <section data-secao="como-funciona" id="como-funciona" class="faixa">
+      <div class="dr-container">
+        <div class="cartao cartao--branco">
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+            <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+          </header>
+          <ol class="passos" data-c-lista="comoFunciona.passos">
+            <template>
+              <li class="passo">
+                <figure>
+                  <div class="tela">
+                    <div class="tela__fundo" aria-hidden="true"></div>
+                    <div class="revela" data-mascara><img data-c-src="imagem" data-c-alt="alt" alt=""></div>
+                  </div>
+                  <span class="dr-data passo__num" data-c="numero"></span>
+                  <h3 class="dr-h4" data-c="titulo"></h3>
+                  <p class="dr-body" data-c="texto"></p>
+                  <figcaption class="dr-caption" data-c="alt"></figcaption>
+                </figure>
+              </li>
+            </template>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem -->
+    <section data-secao="para-quem" id="para-quem" class="faixa">
+      <div class="dr-container">
+        <div class="cartao cartao--veu">
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+            <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+          </header>
+          <ul class="c6-grade perfis" data-c-lista="paraQuem.perfis">
+            <template>
+              <li class="c6" data-inclina>
+                <span class="perfil__num" aria-hidden="true"></span>
+                <h3 class="dr-h3" data-c="titulo"></h3>
+                <p class="dr-body" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia -->
+    <section data-secao="tecnologia" class="faixa">
+      <div class="dr-container">
+        <div class="cartao tec">
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+            <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+            <p class="dr-body-lg" data-c="tecnologia.texto"></p>
+          </header>
+          <ul class="c6-grade pilares" data-c-lista="tecnologia.pilares">
+            <template>
+              <li class="c6" data-inclina>
+                <span class="c6__icone"><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg></span>
+                <h3 class="dr-h4" data-c="titulo"></h3>
+                <p class="dr-body" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe (cartão grafite: a logo do Centelha só funciona no escuro) -->
+    <section data-secao="equipe" id="equipe" class="faixa">
+      <div class="dr-container">
+        <div class="cartao cartao--escuro">
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+            <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+            <p class="dr-body-lg" data-c="equipe.origem"></p>
+          </header>
+          <ul class="pessoas" data-c-lista="equipe.pessoas">
+            <template>
+              <li class="pessoa">
+                <div class="pessoa__foto"><div class="revela" data-mascara><img data-c-src="foto" data-c-alt="alt" alt="" width="96" height="111"></div></div>
+                <div>
+                  <h3 class="dr-h4" data-c="nome"></h3>
+                  <p class="pessoa__cargo" data-c="cargo"></p>
+                </div>
+              </li>
+            </template>
+          </ul>
+          <ul class="apoios" data-c-lista="equipe.apoios">
+            <template>
+              <li class="apoio">
+                <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+                <span class="apoio__nome" data-c="nome"></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento -->
+    <section data-secao="depoimento" class="faixa">
+      <div class="dr-container">
+        <figure class="cartao cartao--branco citacao">
+          <div class="citacao__foto"><div class="revela" data-mascara><img data-c-src="depoimento.foto" alt="" width="220" height="254"></div></div>
+          <div>
+            <blockquote style="margin:0"><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+            <figcaption class="citacao__assina">
+              <span class="citacao__nome" data-c="depoimento.nome"></span>
+              <span class="citacao__local" data-c="depoimento.local"></span>
+            </figcaption>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" id="contato" class="faixa">
+      <div class="dr-container">
+        <div class="cartao cartao--sup contato">
+          <div>
+            <header class="cabeca">
+              <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+              <h2 class="dr-h2" data-c="contato.titulo"></h2>
+              <p class="dr-body-lg" data-c="contato.texto"></p>
+            </header>
+            <ul class="canais">
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <a data-mailto data-c="contato.email"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+              </li>
+            </ul>
+            <div class="contato__acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+          <form class="form c6" method="post" data-form-contato>
+            <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+            <div class="campo">
+              <label for="f-nome" data-c="contato.form.nome"></label>
+              <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+            </div>
+            <div class="campo">
+              <label for="f-email" data-c="contato.form.email"></label>
+              <input id="f-email" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="campo">
+              <label for="f-msg" data-c="contato.form.mensagem"></label>
+              <textarea id="f-msg" name="mensagem" required></textarea>
+            </div>
+            <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SEÇÃO: rodape (cartão grafite; hidratar.js acrescenta o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container">
+      <div class="rodape">
+        <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+        <div>
+          <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+          <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span> · <span data-c="rodape.endereco"></span></p>
+        </div>
+        <div>
+          <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+          <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '../img/icones/sprite-icones.svg#';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+      var reduzido = window.matchMedia('(prefers-reduced-motion: reduce)');
+      var fino = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+      /* ---------- N4: overlay em tela cheia ---------- */
+      function ligarMenu() {
+        var botao = document.querySelector('[data-abrir]');
+        var menu = document.querySelector('[data-menu]');
+        if (!botao || !menu) return;
+        var animando = null;
+        function abrir() {
+          menu.hidden = false;
+          botao.setAttribute('aria-expanded', 'true');
+          document.documentElement.style.overflow = 'hidden';
+          if (window.gsap && !reduzido.matches) {
+            if (animando) animando.kill();
+            animando = gsap.timeline()
+              .fromTo(menu, { clipPath: 'circle(0% at calc(100% - 60px) 52px)' }, { clipPath: 'circle(150% at calc(100% - 60px) 52px)', duration: 0.6, ease: 'power3.inOut' })
+              .from(menu.querySelectorAll('.menu__lista li, .menu__acoes'), { y: 24, autoAlpha: 0, duration: 0.45, stagger: 0.05, ease: 'power2.out' }, '-=0.25');
+          }
+          var primeiro = menu.querySelector('.menu__lista a');
+          if (primeiro) primeiro.focus({ preventScroll: true });
+        }
+        function fechar(devolverFoco) {
+          botao.setAttribute('aria-expanded', 'false');
+          document.documentElement.style.overflow = '';
+          function fim() { menu.hidden = true; if (window.gsap) gsap.set(menu, { clearProps: 'clipPath' }); if (devolverFoco) botao.focus(); }
+          if (window.gsap && !reduzido.matches) {
+            if (animando) animando.kill();
+            animando = gsap.to(menu, { clipPath: 'circle(0% at calc(100% - 60px) 52px)', duration: 0.45, ease: 'power3.inOut', onComplete: fim });
+          } else fim();
+        }
+        botao.addEventListener('click', function () {
+          if (botao.getAttribute('aria-expanded') === 'true') fechar(true); else abrir();
+        });
+        menu.addEventListener('click', function (e) { if (e.target.closest('[data-fechar]')) fechar(false); });
+        document.addEventListener('keydown', function (e) {
+          if (botao.getAttribute('aria-expanded') !== 'true') return;
+          if (e.key === 'Escape') { e.preventDefault(); fechar(true); return; }
+          if (e.key === 'Tab') {
+            // Prende o foco entre o botão e o overlay enquanto aberto.
+            var focaveis = [botao].concat(Array.prototype.slice.call(menu.querySelectorAll('a[href], button')));
+            var i = focaveis.indexOf(document.activeElement);
+            if (e.shiftKey && i <= 0) { e.preventDefault(); focaveis[focaveis.length - 1].focus(); }
+            else if (!e.shiftKey && i === focaveis.length - 1) { e.preventDefault(); focaveis[0].focus(); }
+          }
+        });
+      }
+
+      /* ---------- C6: inclinação 3D sutil, só com mouse ---------- */
+      function ligarInclinacao() {
+        document.querySelectorAll('[data-inclina]').forEach(function (card) {
+          card.addEventListener('pointermove', function (e) {
+            if (!fino.matches || reduzido.matches || e.pointerType !== 'mouse') return;
+            var r = card.getBoundingClientRect();
+            var px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5;
+            card.classList.add('c6--inclina');
+            card.style.transform = 'rotateX(' + (-py * 6).toFixed(2) + 'deg) rotateY(' + (px * 7).toFixed(2) + 'deg) translateZ(4px)';
+          });
+          card.addEventListener('pointerleave', function () {
+            card.classList.remove('c6--inclina');
+            card.style.transform = '';
+          });
+        });
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+            var num = el.querySelector('.perfil__num');
+            if (num) num.textContent = String(i + 1).padStart(2, '0');
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) {
+          if (email) a.setAttribute('href', 'mailto:' + email.v);
+        });
+        document.querySelectorAll('[data-ano]').forEach(function (el) {
+          el.textContent = '© ' + new Date().getFullYear();
+        });
+        ligarMenu();
+        ligarInclinacao();
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          var hero = document.querySelector('[data-mascara-hero]');
+          var foto = hero.querySelector('img');
+          // 1) Na chegada, a célula se abre até a metade: um favo dentro do favo.
+          gsap.fromTo(hero, { '--k': 0.12 }, { '--k': 0.56, duration: 1.3, ease: 'expo.out' });
+          gsap.from('.celula__aneis', { scale: 0.86, autoAlpha: 0, rotate: -8, transformOrigin: '50% 50%', duration: 1.3, ease: 'expo.out' });
+          gsap.from('.hero__texto > *', { y: 22, autoAlpha: 0, duration: 0.8, ease: 'power3.out', stagger: 0.08 });
+          // 2) Rolando, a máscara cresce até encher a moldura, e a foto assenta.
+          gsap.fromTo(hero, { '--k': 0.56 }, {
+            '--k': 1, ease: 'none', immediateRender: false,
+            scrollTrigger: { trigger: '.hero', start: 'top top', end: '70% top', scrub: 0.6 }
+          });
+          gsap.fromTo(foto, { scale: 1.25 }, {
+            scale: 1, ease: 'none',
+            scrollTrigger: { trigger: '.hero', start: 'top top', end: '70% top', scrub: 0.6 }
+          });
+          gsap.to('.celula__aneis', { rotate: 12, transformOrigin: '50% 50%', ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1 } });
+
+          // 3) Telas, retratos e depoimento: a célula pequena cresce até virar quadro.
+          gsap.utils.toArray('[data-mascara]').forEach(function (m) {
+            var tela = !!m.closest('.tela');
+            gsap.fromTo(m, { '--k': 0.18 }, {
+              '--k': tela ? 2.05 : 1, ease: 'none',
+              scrollTrigger: { trigger: m, start: 'top 92%', end: tela ? 'center 45%' : 'center 60%', scrub: 0.5 }
+            });
+            gsap.fromTo(m.querySelector('img'), { scale: 1.3 }, {
+              scale: 1, ease: 'none',
+              scrollTrigger: { trigger: m, start: 'top 92%', end: 'center 50%', scrub: 0.5 }
+            });
+          });
+
+          // Cartões sobem de leve; os cards C6 entram em cascata.
+          gsap.utils.toArray('.cartao').forEach(function (c) {
+            gsap.from(c, { y: 40, duration: 0.9, ease: 'power3.out', scrollTrigger: { trigger: c, start: 'top 92%', once: true } });
+          });
+          gsap.utils.toArray('.c6-grade').forEach(function (g) {
+            gsap.from(g.children, {
+              y: 28, rotateX: -12, autoAlpha: 0, transformOrigin: '50% 100%', duration: 0.7, ease: 'power3.out', stagger: 0.08, clearProps: 'transform',
+              scrollTrigger: { trigger: g, start: 'top 86%', once: true }
+            });
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

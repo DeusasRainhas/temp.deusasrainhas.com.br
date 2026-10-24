@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="pt-BR" data-template="20">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 20 Quadro</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       20 Quadro · favo · N7 / C2 / R5
+       O hero é um quadro de colmeia de madeira, como os que saem da
+       caixa na revisão. Dentro dele, antes e depois: o caderno de campo
+       manchado à esquerda, o app à direita. O divisor arrasta com o
+       dedo ou o mouse e também responde às setas do teclado
+       (role="slider"; Home/End vão aos extremos).
+       Regras herdadas do 01:
+       - nada de opacity < 1 fora do gsap.matchMedia (texto "apagado" usa cor);
+       - canto inferior direito livre (pílula do switcher);
+       - favo claro de fundo nas seções alternadas, mas o texto fica sempre
+         sobre placa ou tile sólido, nunca direto sobre o favo.
+       ================================================================= */
+
+    :root { --nav-h: 76px; --respiro: clamp(72px, 9vw, 120px); }
+    @media (max-width: 767px) { :root { --nav-h: 64px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    body { padding-top: var(--nav-h); }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible {
+      outline: 2px solid var(--petroleo); outline-offset: 2px;
+    }
+    main > section { scroll-margin-top: calc(var(--nav-h) + 8px); }
+
+    /* ---------- N7: barra de progresso no topo com rótulos de seção ---------- */
+    .barra { position: fixed; inset: 0 0 auto 0; z-index: 60; background: var(--creme); }
+    .barra__miolo { display: flex; align-items: center; gap: var(--sp-5); height: calc(var(--nav-h) - 3px); }
+    .marca img { width: 60px; height: 60px; }
+    .rotulos { display: flex; gap: 2px; margin-inline: auto; }
+    .rotulos a {
+      position: relative; padding: 8px 12px; border-radius: var(--r-sm);
+      font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--suave); text-decoration: none;
+    }
+    .rotulos a:hover { color: var(--terra-escura); background: var(--superficie); }
+    .rotulos a[aria-current="true"] { color: var(--terra-escura); }
+    .rotulos a[aria-current="true"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 2px; height: 2px; background: var(--terra-escura); }
+    .barra .dr-btn { padding: 10px 18px; font-size: var(--fs-small); }
+    .progresso { position: relative; height: 3px; background: var(--linha); }
+    .progresso__fio { position: absolute; inset: 0 auto 0 0; width: calc(var(--p, 0) * 100%); background: var(--mel); }
+    .progresso__marcas { position: absolute; inset: 0; }
+    .progresso__marcas i { position: absolute; top: -2px; width: 2px; height: 7px; background: var(--terra-clara); }
+    .barra__atual { display: none; }
+    @media (max-width: 1099px) {
+      .rotulos { display: none; }
+      .barra__atual {
+        display: block; flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+        font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--terra-escura);
+      }
+    }
+    @media (max-width: 767px) { .marca img { width: 50px; height: 50px; } .barra__miolo { gap: var(--sp-3); } }
+
+    /* ---------- R5: favo claro de fundo em seções alternadas ---------- */
+    .secao { padding-block: var(--respiro); }
+    .favo {
+      background:
+        linear-gradient(rgba(255, 251, 230, .62), rgba(255, 251, 230, .62)),
+        url(../img/padroes/favo-claro.svg) center / 84px auto;
+      background-color: var(--creme);
+      border-block: 1px solid var(--linha);
+    }
+    .placa { display: inline-block; background: var(--creme); padding: var(--sp-4) var(--sp-5) var(--sp-5) 0; box-shadow: -24px 0 0 var(--creme); }
+    .favo .placa { padding-left: var(--sp-5); margin-left: calc(var(--sp-5) * -1); box-shadow: none; border-radius: 0 var(--r-md) var(--r-md) 0; }
+    .cabeca .dr-eyebrow { margin-bottom: var(--sp-3); }
+    .cabeca .dr-body-lg { margin-top: var(--sp-4); max-width: 54ch; }
+    .cabeca + * { margin-top: var(--sp-6); }
+    @media (max-width: 767px) { .dr-h2 { font-size: 30px; } .favo .placa { margin-left: -16px; padding-left: 16px; } }
+
+    /* ---------- C2: tiles sólidos em --creme-papel com número grande em mono ---------- */
+    .tile { position: relative; background: var(--creme-papel); border-radius: var(--r-md); padding: var(--sp-5); box-shadow: inset 0 0 0 1px var(--linha); }
+    .tile__num { display: block; font-family: var(--mono); font-weight: 500; font-size: clamp(44px, 5vw, 68px); line-height: .9; letter-spacing: -.04em; color: var(--terra-escura); }
+    .tile__num--claro { color: var(--terra-clara); }
+    .tile .dr-h4 { margin-block: var(--sp-5) var(--sp-2); }
+
+    /* ---------- Hero: o quadro de colmeia, antes e depois ---------- */
+    .hero { padding-block: var(--sp-7) var(--sp-8); }
+    .hero__topo { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-7); align-items: end; }
+    .hero__titulo { font-size: clamp(42px, 5.6vw, 80px); line-height: .98; letter-spacing: -.028em; text-wrap: balance; margin-top: var(--sp-4); }
+    .hero__lado .dr-body-lg { max-width: 40ch; }
+    .hero__acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+    @media (max-width: 899px) { .hero__topo { grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); } }
+    @media (max-width: 767px) { .hero { padding-top: var(--sp-6); } .hero__titulo { font-size: 40px; } }
+
+    .quadro { position: relative; margin-top: var(--sp-8); padding: 0 18px; }
+    /* Barra superior do quadro, com as "orelhas" que apoiam na caixa */
+    .quadro__topo {
+      position: relative; height: 26px; margin-inline: -18px; border-radius: 4px;
+      background: repeating-linear-gradient(90deg, rgba(78,52,46,0) 0 34px, rgba(78,52,46,.07) 34px 36px, rgba(78,52,46,0) 36px 70px), var(--terra);
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,.18);
+    }
+    .quadro__caixa {
+      position: relative; aspect-ratio: 16 / 8.2;
+      border: 14px solid var(--terra); border-top: 0; border-bottom-width: 16px; border-radius: 0 0 6px 6px;
+      background: var(--terra-escura); overflow: hidden; touch-action: pan-y; cursor: ew-resize; user-select: none; -webkit-user-select: none;
+    }
+    .quadro__caixa::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 2px 8px rgba(0,0,0,.25); pointer-events: none; z-index: 5; }
+    .lado { position: absolute; inset: 0; }
+    .lado__rotulo {
+      position: absolute; top: 18px; z-index: 3; padding: 6px 12px; border-radius: var(--r-pill);
+      font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase;
+    }
+
+    /* Antes: o caderno de campo */
+    .antes {
+      background:
+        radial-gradient(ellipse 18% 22% at 72% 68%, rgba(109,76,65,.16), rgba(109,76,65,.07) 60%, transparent 72%),
+        radial-gradient(ellipse 9% 7% at 20% 82%, rgba(109,76,65,.12), transparent 70%),
+        linear-gradient(90deg, transparent 0 calc(9% - 1px), rgba(192,73,47,.45) calc(9% - 1px) 9%, transparent 9%),
+        repeating-linear-gradient(180deg, transparent 0 31px, rgba(23,107,102,.22) 31px 32px),
+        #FBF3DA;
+    }
+    .antes .lado__rotulo { left: 18px; background: var(--terra-escura); color: var(--creme); }
+    .antes__dado {
+      position: absolute; left: 13%; top: 22%;
+      font-family: var(--serif); font-style: italic; font-weight: 500; font-size: clamp(56px, 9vw, 132px); line-height: 1; color: var(--terra);
+      transform: rotate(-4deg);
+    }
+    .antes__circulo { position: absolute; left: 10%; top: 17%; width: clamp(150px, 24vw, 340px); height: auto; overflow: visible; }
+    .antes__rabiscos { position: absolute; left: 12%; right: 6%; top: 56%; height: 34%; width: auto; overflow: visible; }
+    .antes__rasgo { position: absolute; right: 0; bottom: 0; width: 70px; height: 70px; background: linear-gradient(135deg, transparent 50%, var(--terra-escura) 50%); }
+
+    /* Depois: o app */
+    .depois {
+      background: var(--mel-veu) url(../img/padroes/favo-mel.svg) center / 70px auto;
+      clip-path: inset(0 0 0 var(--pos, 50%));
+    }
+    .depois::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 70% 50%, rgba(253,239,194,.2), rgba(253,239,194,.85) 70%); }
+    .depois .lado__rotulo { right: 18px; background: var(--petroleo); color: var(--creme); }
+    .telas { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; gap: 4%; padding-right: 9%; }
+    .tela { position: relative; width: 22%; aspect-ratio: 393 / 760; border-radius: 18px; border: 6px solid var(--grafite); background: var(--grafite); overflow: hidden; box-shadow: var(--sh-lg); }
+    .tela img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    .tela:nth-child(1) { transform: translateY(6%) rotate(-3deg); }
+    .tela:nth-child(2) { transform: translateY(-5%) rotate(2deg); }
+
+    /* Divisor (role="slider") */
+    .divisor { position: absolute; top: 0; bottom: 0; left: var(--pos, 50%); z-index: 4; width: 0; }
+    .divisor::before { content: ""; position: absolute; top: 0; bottom: 0; left: -1.5px; width: 3px; background: var(--creme); box-shadow: 0 0 0 1px rgba(78,52,46,.25); }
+    .divisor__pega {
+      position: absolute; top: 50%; left: 0; transform: translate(-50%, -50%);
+      display: grid; place-items: center; width: 56px; height: 64px; cursor: grab;
+      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+      background: var(--mel); color: var(--terra-escura); touch-action: none;
+    }
+    .divisor__pega:active { cursor: grabbing; }
+    .divisor__pega:focus { outline: none; }
+    .divisor__pega:focus-visible { background: var(--terra-escura); color: var(--mel); }
+    .divisor__pega svg { width: 26px; height: 26px; }
+    .quadro__dica { display: flex; justify-content: space-between; gap: var(--sp-4); margin-top: var(--sp-4); }
+    .quadro__dica span { display: inline-flex; align-items: center; gap: var(--sp-2); }
+    .quadro__dica svg { width: 16px; height: 16px; color: var(--terra); }
+
+    @media (max-width: 767px) {
+      .quadro { padding-inline: 10px; margin-top: var(--sp-6); }
+      .quadro__topo { margin-inline: -10px; height: 18px; }
+      .quadro__caixa { aspect-ratio: 4 / 5; border-width: 0 9px 11px; }
+      .antes__dado { left: 14%; top: 18%; font-size: 64px; }
+      .antes__circulo { left: 9%; top: 13%; width: 190px; }
+      .antes__rabiscos { top: 50%; height: 40%; }
+      .telas { justify-content: flex-end; padding-right: 7%; gap: 3%; }
+      .tela { width: 34%; border-width: 4px; border-radius: 12px; }
+      .tela:nth-child(1) { display: none; }
+      .lado__rotulo { top: 12px; font-size: 10px; letter-spacing: .1em; }
+      .antes .lado__rotulo { left: 12px; }
+      .depois .lado__rotulo { right: 12px; }
+      .divisor__pega { width: 46px; height: 52px; }
+    }
+
+    /* ---------- Prova ---------- */
+    .placar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-3); }
+    .placar .tile { padding: var(--sp-5) var(--sp-5) var(--sp-6); }
+    .placar__rotulo { display: block; margin-top: var(--sp-4); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    .placar .tile:first-child { background: var(--mel); box-shadow: none; }
+    .placar .tile:first-child .placar__rotulo { color: var(--terra-escura); }
+    @media (max-width: 899px) { .placar { grid-template-columns: repeat(2, minmax(0, 1fr)); } .placar .tile { padding: var(--sp-4); } .placar .tile__num { font-size: 38px; } }
+
+    /* ---------- Problema ---------- */
+    .problema { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-6); align-items: start; }
+    .problema .cabeca + * { margin-top: 0; }
+    .problema__dado { margin-top: var(--sp-5); }
+    .problema__dado .tile__num { font-size: clamp(72px, 9vw, 120px); }
+    .problema__dado p { margin-top: var(--sp-3); }
+    .consequencias { display: grid; gap: var(--sp-3); }
+    .consequencias .tile { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
+    .consequencias .tile__num { font-size: 40px; color: var(--erro); }
+    @media (max-width: 899px) { .problema { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Funcionalidades ---------- */
+    .funcs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
+    .funcs .tile { padding: var(--sp-6) var(--sp-5); min-height: 280px; display: flex; flex-direction: column; }
+    .funcs .tile__topo { display: flex; justify-content: space-between; align-items: flex-start; }
+    .funcs .dr-icone { color: var(--petroleo); }
+    .funcs .dr-h4 { margin-top: var(--sp-7); }
+    @media (max-width: 1023px) { .funcs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 599px) { .funcs { grid-template-columns: minmax(0, 1fr); } .funcs .tile { min-height: 0; } }
+
+    /* ---------- Como funciona ---------- */
+    .passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
+    .passo { display: flex; flex-direction: column; }
+    .passo img { width: 100%; max-height: 300px; object-fit: cover; object-position: top; border-radius: var(--r-sm); margin-top: var(--sp-5); background: var(--creme); }
+    .passo figcaption { margin-top: var(--sp-3); }
+    .passo img[src*="02_lista"] { object-fit: contain; object-position: center bottom; background: transparent; }
+    @media (max-width: 899px) { .passos { grid-template-columns: minmax(0, 1fr); } .passo img { max-height: 260px; } }
+
+    /* ---------- Para quem ---------- */
+    .perfis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
+    .perfis .dr-h3 { font-family: var(--serif); font-weight: 500; color: var(--terra-escura); margin-block: var(--sp-5) var(--sp-3); }
+    @media (max-width: 899px) { .perfis { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Tecnologia ---------- */
+    .tec { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: var(--sp-6); align-items: start; }
+    .tec .cabeca + * { margin-top: 0; }
+    .pilares { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); }
+    .pilares .dr-icone { color: var(--petroleo); float: right; }
+    @media (max-width: 899px) { .tec { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 599px) { .pilares { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Equipe ---------- */
+    .pessoas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
+    .pessoa { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
+    .pessoa img { width: 80px; height: 80px; border-radius: var(--r-sm); object-fit: cover; }
+    .pessoa__cargo { margin-top: var(--sp-1); font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    .apoios { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); margin-top: var(--sp-3); }
+    .apoio { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); }
+    .apoio__logo { display: grid; place-items: center; height: 72px; padding: var(--sp-2) var(--sp-4); border-radius: var(--r-sm); background: var(--branco); }
+    .apoio[data-fundo="escuro"] .apoio__logo { background: var(--grafite); }
+    .apoio__logo img { max-height: 48px; max-width: 120px; width: auto; }
+    .apoio__nome { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--terra); }
+    @media (max-width: 899px) { .pessoas, .apoios { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Depoimento ---------- */
+    .citacao { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-6); align-items: start; padding: var(--sp-7); }
+    .citacao__aspas { font-family: var(--mono); font-size: 96px; line-height: .8; color: var(--mel-escuro); }
+    .citacao .dr-quote { font-size: clamp(24px, 3vw, 38px); line-height: 1.3; color: var(--terra-escura); text-wrap: balance; }
+    .citacao figcaption { display: flex; align-items: center; gap: var(--sp-4); margin-top: var(--sp-6); }
+    .citacao figcaption img { width: 56px; height: 56px; border-radius: var(--r-sm); object-fit: cover; }
+    .citacao__nome { display: block; font-weight: 700; color: var(--ink); }
+    .citacao__local { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--terra); }
+    @media (max-width: 767px) { .citacao { grid-template-columns: minmax(0, 1fr); gap: var(--sp-2); padding: var(--sp-5); } .citacao__aspas { font-size: 64px; } }
+
+    /* ---------- Contato ---------- */
+    .contato { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--sp-7); }
+    .contato .cabeca + * { margin-top: var(--sp-5); }
+    .form { display: grid; gap: var(--sp-4); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo input, .campo textarea { font: inherit; font-size: var(--fs-body); color: var(--ink); width: 100%; background: var(--branco); border: var(--bd-forte); border-radius: var(--r-sm); padding: var(--sp-3) var(--sp-4); }
+    .campo textarea { min-height: 140px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canais { display: grid; gap: var(--sp-3); }
+    .canais li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-3); align-items: center; }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-weight: 600; overflow-wrap: anywhere; text-underline-offset: 4px; }
+    .contato__acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+    @media (max-width: 899px) { .contato { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Rodapé ---------- */
+    footer[data-secao="rodape"] { background: var(--terra-escura); color: #D9CFBD; padding-block: var(--sp-7) 96px; border-top: 14px solid var(--terra); }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--terra-clara); }
+    @media (max-width: 767px) { .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); } footer > [data-aviso-provisorio] { padding-inline: 16px; } }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N7 · barra de progresso no topo com rótulos de seção) -->
+  <nav data-secao="nav" class="barra" data-barra>
+    <div class="dr-container barra__miolo">
+      <a class="marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="60" height="60"></a>
+      <span class="barra__atual" data-atual aria-hidden="true"></span>
+      <div class="rotulos" data-rotulos>
+        <a href="#problema" data-c="problema.eyebrow"></a>
+        <a href="#funcionalidades" data-c="funcionalidades.eyebrow"></a>
+        <a href="#como-funciona" data-c="comoFunciona.eyebrow"></a>
+        <a href="#para-quem" data-c="paraQuem.eyebrow"></a>
+        <a href="#tecnologia" data-c="tecnologia.eyebrow"></a>
+        <a href="#equipe" data-c="equipe.eyebrow"></a>
+        <a href="#contato" data-c="contato.eyebrow"></a>
+      </div>
+      <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+    </div>
+    <div class="progresso" aria-hidden="true"><div class="progresso__fio" data-fio></div><div class="progresso__marcas" data-marcas></div></div>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (quadro de colmeia: caderno antes, app depois, divisor arrastável) -->
+    <section data-secao="hero" id="inicio" class="hero">
+      <div class="dr-container">
+        <div class="hero__topo">
+          <div>
+            <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+            <h1 class="dr-display hero__titulo" data-c="hero.titulo"></h1>
+          </div>
+          <div class="hero__lado">
+            <p class="dr-body-lg" data-c="hero.subtitulo"></p>
+            <div class="hero__acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+
+        <figure class="quadro">
+          <div class="quadro__topo" aria-hidden="true"></div>
+          <div class="quadro__caixa" data-caixa>
+            <!-- Antes: o caderno de campo, com mancha de chuva e rabiscos -->
+            <div class="lado antes">
+              <span class="lado__rotulo" id="rotulo-antes" data-c="problema.eyebrow"></span>
+              <svg class="antes__circulo" viewBox="0 0 340 200" aria-hidden="true"><path d="M40 110C28 60 120 18 210 24s132 52 112 100-118 66-200 56S36 150 52 96" fill="none" stroke="var(--erro)" stroke-width="3" stroke-linecap="round" opacity=".7"/></svg>
+              <span class="antes__dado" data-c="problema.estatistica.valor"></span>
+              <svg class="antes__rabiscos" viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true">
+                <g fill="none" stroke="var(--terra)" stroke-width="2.2" stroke-linecap="round" opacity=".55">
+                  <path d="M0 20c20-8 30 8 50 0s30-10 46 2 26-6 44-2 24 8 40-2 30 4 52 0 26-8 44 0 30 6 50-2"/>
+                  <path d="M0 72c18-6 28 6 46 0s24-8 40 0 30-4 48 2 22-6 40-2 34 6 52-4 26 4 46 0 22-6 38 2 30 4 56-2 22 2 40-2"/>
+                  <path d="M0 124c22-8 34 6 52 0s28-8 44 2 24-4 40-2 26 8 42 0"/>
+                  <path d="M300 118l120 14M306 134l112-20" stroke="var(--erro)" opacity=".8"/>
+                  <path d="M0 176c16-6 30 6 48 0s22-6 38 0 30-4 44 0"/>
+                </g>
+              </svg>
+              <span class="antes__rasgo" aria-hidden="true"></span>
+            </div>
+            <!-- Depois: o app, sobre o favo -->
+            <div class="lado depois" data-depois>
+              <span class="lado__rotulo" id="rotulo-depois" data-c="hero.eyebrow"></span>
+              <div class="telas">
+                <div class="tela"><img src="../img/app/01_dashboard_apiarios.png" data-c-alt="comoFunciona.passos[0].alt" alt="" draggable="false"></div>
+                <div class="tela"><img src="../img/app/03_inspecao_detalhada.png" data-c-alt="comoFunciona.passos[1].alt" alt="" draggable="false"></div>
+              </div>
+            </div>
+            <div class="divisor" data-divisor>
+              <div class="divisor__pega" role="slider" tabindex="0" aria-orientation="horizontal"
+                   aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="50%"
+                   aria-labelledby="rotulo-antes rotulo-depois" data-pega>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18-6-6 6-6"/><path d="m15 6 6 6-6 6"/></svg>
+              </div>
+            </div>
+          </div>
+          <figcaption class="quadro__dica dr-caption">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span data-c="problema.titulo"></span></span>
+            <span><span data-c="funcionalidades.titulo"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: prova (tiles com número grande) -->
+    <section data-secao="prova" style="padding-bottom: var(--respiro)">
+      <div class="dr-container">
+        <ul class="placar" data-c-lista="prova.stats">
+          <template>
+            <li class="tile">
+              <span class="tile__num" data-c="valor"></span>
+              <span class="placar__rotulo" data-c="rotulo"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: problema (favo de fundo) -->
+    <section data-secao="problema" id="problema" class="secao favo">
+      <div class="dr-container problema">
+        <div>
+          <header class="cabeca placa">
+            <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+            <h2 class="dr-h2" data-c="problema.titulo"></h2>
+          </header>
+          <div class="tile problema__dado">
+            <span class="tile__num" data-c="problema.estatistica.valor"></span>
+            <p class="dr-body-lg" data-c="problema.estatistica.texto"></p>
+          </div>
+        </div>
+        <ul class="consequencias" data-c-lista="problema.consequencias">
+          <template>
+            <li class="tile">
+              <span class="tile__num" data-num></span>
+              <p class="dr-body-lg" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades -->
+    <section data-secao="funcionalidades" id="funcionalidades" class="secao">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+          <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+        </header>
+        <ul class="funcs" data-c-lista="funcionalidades.itens">
+          <template>
+            <li class="tile">
+              <div class="tile__topo">
+                <span class="tile__num tile__num--claro" data-num></span>
+                <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+              </div>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona (favo de fundo) -->
+    <section data-secao="como-funciona" id="como-funciona" class="secao favo">
+      <div class="dr-container">
+        <header class="cabeca placa">
+          <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+          <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+        </header>
+        <ol class="passos" data-c-lista="comoFunciona.passos">
+          <template>
+            <li class="tile passo">
+              <span class="tile__num" data-c="numero"></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <figure style="margin-top:auto">
+                <img data-c-src="imagem" data-c-alt="alt" alt="">
+                <figcaption class="dr-caption" data-c="alt"></figcaption>
+              </figure>
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem -->
+    <section data-secao="para-quem" id="para-quem" class="secao">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+          <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+        </header>
+        <ul class="perfis" data-c-lista="paraQuem.perfis">
+          <template>
+            <li class="tile">
+              <span class="tile__num tile__num--claro" data-num></span>
+              <h3 class="dr-h3" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia (favo de fundo) -->
+    <section data-secao="tecnologia" id="tecnologia" class="secao favo">
+      <div class="dr-container tec">
+        <header class="cabeca placa">
+          <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+          <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+          <p class="dr-body-lg" data-c="tecnologia.texto"></p>
+        </header>
+        <ul class="pilares" data-c-lista="tecnologia.pilares">
+          <template>
+            <li class="tile">
+              <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+              <span class="tile__num tile__num--claro" data-num></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe -->
+    <section data-secao="equipe" id="equipe" class="secao">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+          <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+          <p class="dr-body-lg" data-c="equipe.origem"></p>
+        </header>
+        <ul class="pessoas" data-c-lista="equipe.pessoas">
+          <template>
+            <li class="tile pessoa">
+              <img data-c-src="foto" data-c-alt="alt" alt="" width="80" height="80">
+              <div>
+                <h3 class="dr-h4" data-c="nome"></h3>
+                <p class="pessoa__cargo" data-c="cargo"></p>
+              </div>
+            </li>
+          </template>
+        </ul>
+        <!-- A logo do Centelha só funciona sobre escuro: data-fundo escolhe a placa -->
+        <ul class="apoios" data-c-lista="equipe.apoios">
+          <template>
+            <li class="tile apoio">
+              <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+              <span class="apoio__nome" data-c="nome"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento (favo de fundo, citação em tile) -->
+    <section data-secao="depoimento" class="secao favo">
+      <div class="dr-container">
+        <figure class="tile citacao">
+          <span class="citacao__aspas" aria-hidden="true">&ldquo;</span>
+          <div>
+            <blockquote style="margin:0"><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+            <figcaption>
+              <img data-c-src="depoimento.foto" alt="" width="56" height="56">
+              <span>
+                <span class="citacao__nome" data-c="depoimento.nome"></span>
+                <span class="citacao__local" data-c="depoimento.local"></span>
+              </span>
+            </figcaption>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" id="contato" class="secao">
+      <div class="dr-container contato">
+        <div>
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+            <h2 class="dr-h2" data-c="contato.titulo"></h2>
+            <p class="dr-body-lg" data-c="contato.texto"></p>
+          </header>
+          <ul class="canais">
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <a data-mailto data-c="contato.email"></a>
+            </li>
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+              <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+            </li>
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+            </li>
+          </ul>
+          <div class="contato__acoes">
+            <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+            <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+          </div>
+        </div>
+        <form class="form tile" method="post" data-form-contato>
+          <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+          <div class="campo">
+            <label for="f-nome" data-c="contato.form.nome"></label>
+            <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+          </div>
+          <div class="campo">
+            <label for="f-email" data-c="contato.form.email"></label>
+            <input id="f-email" name="email" type="email" autocomplete="email" required>
+          </div>
+          <div class="campo">
+            <label for="f-msg" data-c="contato.form.mensagem"></label>
+            <textarea id="f-msg" name="mensagem" required></textarea>
+          </div>
+          <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SEÇÃO: rodape (madeira escura, como a caixa; hidratar.js acrescenta o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '../img/icones/sprite-icones.svg#';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+
+      /* ---------- Divisor antes/depois ----------
+         Ponteiro: arrasta em qualquer ponto do quadro (o rolar vertical continua
+         livre por touch-action: pan-y). Teclado: setas ±2, PageUp/PageDown ±10,
+         Home/End aos extremos. O evento é consumido (preventDefault) para as
+         setas não acionarem o atalho de troca de template do seletor. */
+      var quadro = { pos: 50, pinta: null, demo: null };
+      function ligarDivisor() {
+        var caixa = document.querySelector('[data-caixa]');
+        var pega = document.querySelector('[data-pega]');
+        if (!caixa || !pega) return;
+        function pintar(p) {
+          p = Math.max(0, Math.min(100, p));
+          quadro.pos = p;
+          caixa.style.setProperty('--pos', p.toFixed(2) + '%');
+          var arred = Math.round(p);
+          pega.setAttribute('aria-valuenow', String(arred));
+          pega.setAttribute('aria-valuetext', arred + '%');
+        }
+        quadro.pinta = pintar;
+        function deX(x) { var r = caixa.getBoundingClientRect(); return (x - r.left) / r.width * 100; }
+        var arrastando = false, id = null, inicio = null;
+        caixa.addEventListener('pointerdown', function (e) {
+          if (e.button !== undefined && e.button !== 0) return;
+          inicio = { x: e.clientX, y: e.clientY };
+          id = e.pointerId;
+          // Mouse e caneta arrastam na hora; no toque, decide pelo primeiro movimento.
+          if (e.pointerType !== 'touch' || e.target.closest('[data-pega]')) {
+            arrastando = true;
+            caixa.setPointerCapture(id);
+            if (window.gsap && quadro.demo) gsap.killTweensOf(quadro.demo);
+            pintar(deX(e.clientX));
+            pega.focus({ preventScroll: true });
+          }
+        });
+        caixa.addEventListener('pointermove', function (e) {
+          if (e.pointerId !== id) return;
+          if (!arrastando && inicio && e.pointerType === 'touch') {
+            var dx = Math.abs(e.clientX - inicio.x), dy = Math.abs(e.clientY - inicio.y);
+            if (dx > 8 && dx > dy) { arrastando = true; caixa.setPointerCapture(id); }
+            else if (dy > 8) { inicio = null; return; }
+          }
+          if (arrastando) pintar(deX(e.clientX));
+        });
+        function soltar(e) {
+          if (e.pointerId !== id) return;
+          if (!arrastando && inicio && e.type === 'pointerup' && e.pointerType === 'touch') pintar(deX(e.clientX)); // toque simples posiciona
+          arrastando = false; id = null; inicio = null;
+        }
+        caixa.addEventListener('pointerup', soltar);
+        caixa.addEventListener('pointercancel', soltar);
+        pega.addEventListener('keydown', function (e) {
+          var passo = { ArrowLeft: -2, ArrowDown: -2, ArrowRight: 2, ArrowUp: 2, PageDown: -10, PageUp: 10 }[e.key];
+          if (passo !== undefined) pintar(quadro.pos + passo);
+          else if (e.key === 'Home') pintar(0);
+          else if (e.key === 'End') pintar(100);
+          else return;
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.gsap && quadro.demo) gsap.killTweensOf(quadro.demo);
+        });
+        pintar(50);
+      }
+
+      /* ---------- N7: progresso com rótulos ---------- */
+      function ligarProgresso() {
+        var barra = document.querySelector('[data-barra]');
+        var fio = barra.querySelector('[data-fio]');
+        var marcas = barra.querySelector('[data-marcas]');
+        var atual = barra.querySelector('[data-atual]');
+        var links = Array.prototype.slice.call(barra.querySelectorAll('[data-rotulos] a'));
+        var secoes = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+        var pedido = false;
+        function posicionarMarcas() {
+          var doc = document.documentElement, max = Math.max(1, doc.scrollHeight - window.innerHeight);
+          marcas.textContent = '';
+          secoes.forEach(function (s) {
+            if (!s) return;
+            var y = s.getBoundingClientRect().top + window.scrollY - barra.offsetHeight;
+            var i = document.createElement('i');
+            i.style.left = Math.min(100, Math.max(0, y / max * 100)).toFixed(2) + '%';
+            marcas.appendChild(i);
+          });
+        }
+        function medir() {
+          pedido = false;
+          var doc = document.documentElement, max = Math.max(1, doc.scrollHeight - window.innerHeight);
+          barra.style.setProperty('--p', Math.min(1, window.scrollY / max).toFixed(4));
+          fio.style.setProperty('--p', Math.min(1, window.scrollY / max).toFixed(4));
+          var ref = barra.offsetHeight + window.innerHeight * 0.25, ativo = -1;
+          secoes.forEach(function (s, i) { if (!s) return; var r = s.getBoundingClientRect(); if (r.top <= ref && r.bottom > ref) ativo = i; });
+          links.forEach(function (a, i) { if (i === ativo) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
+          atual.textContent = ativo >= 0 ? links[ativo].textContent : '';
+        }
+        window.addEventListener('scroll', function () { if (!pedido) { pedido = true; requestAnimationFrame(medir); } }, { passive: true });
+        window.addEventListener('resize', function () { posicionarMarcas(); medir(); });
+        window.addEventListener('load', posicionarMarcas);
+        if (document.fonts) document.fonts.ready.then(posicionarMarcas);
+        posicionarMarcas();
+        medir();
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+            var num = el.querySelector('[data-num]');
+            if (num) num.textContent = String(i + 1).padStart(2, '0');
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) {
+          if (email) a.setAttribute('href', 'mailto:' + email.v);
+        });
+        document.querySelectorAll('[data-ano]').forEach(function (el) {
+          el.textContent = '© ' + new Date().getFullYear();
+        });
+        ligarDivisor();
+        ligarProgresso();
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          // Dica de uso: o divisor passeia uma vez e assenta mostrando mais do app.
+          var demo = quadro.demo = { p: 50 };
+          gsap.timeline({ delay: 0.25 })
+            .to(demo, { p: 26, duration: 0.5, ease: 'power2.inOut', onUpdate: function () { quadro.pinta(demo.p); } })
+            .to(demo, { p: 44, duration: 0.6, ease: 'power3.out', onUpdate: function () { quadro.pinta(demo.p); } });
+          gsap.from('.quadro', { y: 40, duration: 0.9, ease: 'power3.out' });
+          gsap.from('.hero__topo > *', { y: 20, autoAlpha: 0, duration: 0.7, stagger: 0.1, ease: 'power3.out' });
+          gsap.from('.tela', { y: 60, duration: 0.9, stagger: 0.12, ease: 'back.out(1.4)', delay: 0.2 });
+
+          gsap.utils.toArray('.placar, .consequencias, .funcs, .passos, .perfis, .pilares, .pessoas, .apoios').forEach(function (lista) {
+            gsap.from(lista.children, {
+              y: 24, autoAlpha: 0, duration: 0.6, ease: 'power2.out', stagger: 0.07,
+              scrollTrigger: { trigger: lista, start: 'top 86%', once: true }
+            });
+          });
+          // Os números grandes dos tiles contam como etiquetas sendo carimbadas.
+          gsap.utils.toArray('.tile__num').forEach(function (n) {
+            gsap.from(n, { scale: 0.6, transformOrigin: 'left bottom', duration: 0.5, ease: 'back.out(2.2)', scrollTrigger: { trigger: n, start: 'top 90%', once: true } });
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
