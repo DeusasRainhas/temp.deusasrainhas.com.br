@@ -239,7 +239,7 @@
 
   <!-- SEÇÃO: nav (N4 · botão hambúrguer que abre overlay em tela cheia) -->
   <nav data-secao="nav">
-    <button class="menu-botao" type="button" aria-expanded="false" aria-controls="menu-overlay"><span></span></button>
+    <button class="menu-botao" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu-overlay"><span></span></button>
     <div class="overlay" id="menu-overlay" hidden>
       <div class="dr-container overlay__topo"><img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="64" height="64"></div>
       <div class="dr-container overlay__links">
@@ -574,11 +574,11 @@
         /* ---- N4: abrir e fechar o overlay ---- */
         var botao = document.querySelector('.menu-botao');
         var overlay = document.getElementById('menu-overlay');
-        botao.setAttribute('aria-label', DR.valor('marca.alt').v);
         var animarAbertura = null; // definido no matchMedia quando há movimento
         function abrir() {
           overlay.hidden = false;
           botao.setAttribute('aria-expanded', 'true');
+          botao.setAttribute('aria-label', 'Fechar menu');
           document.body.style.overflow = 'hidden';
           if (animarAbertura) animarAbertura();
           var primeiro = overlay.querySelector('a'); if (primeiro) primeiro.focus({ preventScroll: true });
@@ -586,6 +586,7 @@
         function fechar() {
           overlay.hidden = true;
           botao.setAttribute('aria-expanded', 'false');
+          botao.setAttribute('aria-label', 'Abrir menu');
           document.body.style.overflow = '';
         }
         botao.addEventListener('click', function () { if (overlay.hidden) abrir(); else { fechar(); botao.focus(); } });

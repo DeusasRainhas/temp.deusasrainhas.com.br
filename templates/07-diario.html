@@ -140,7 +140,7 @@
     .e-pinado .pista > [data-secao="como-funciona"] { display: flex; flex: none; gap: 0; height: 100%; }
     .e-pinado .pagina {
       display: flex; flex-direction: column; justify-content: center; gap: var(--sp-5);
-      flex: none; width: var(--w, 520px); height: 100%; padding: 96px var(--sp-7) var(--sp-7);
+      flex: none; width: var(--w, 520px); height: 100%; padding: 88px var(--sp-7) 112px; /* base livre para a pílula N2 */
       border-left: 1px dashed var(--linha-forte);
     }
     .e-pinado .pagina::before { position: absolute; top: 40px; left: var(--sp-7); padding: 0; font-size: 30px; }
@@ -152,7 +152,8 @@
     .e-pinado .nota { --w: 420px; }
     .e-pinado .passo { --w: 560px; display: grid; grid-template-columns: minmax(0, 1fr) 170px; align-content: center; }
     .e-pinado .fim { --w: 560px; }
-    .e-pinado .regua { display: block; position: relative; height: 72px; flex: none; border-top: 1px solid var(--linha-forte); background: var(--creme-papel); }
+    /* Régua no topo do quadro pinado: fica longe da pílula N2 e do switcher, que ocupam a base. */
+    .e-pinado .regua { display: block; order: -1; position: relative; height: 64px; flex: none; border-bottom: 1px solid var(--linha-forte); background: var(--creme-papel); }
     .regua__trilho { position: absolute; left: 32px; right: 32px; top: 22px; height: 2px; background: var(--linha-forte); }
     .regua__fill { position: absolute; inset: 0; background: var(--mel); transform-origin: left center; transform: scaleX(0); }
     .regua__marca { position: absolute; top: -5px; width: 2px; height: 12px; background: var(--terra-clara); }

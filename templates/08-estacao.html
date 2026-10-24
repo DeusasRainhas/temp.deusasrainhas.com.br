@@ -15,7 +15,8 @@
        08 Estação · campo · N3 / C6 / R7
        As floradas do ano em quatro blocos de estação. Ao rolar, o fundo da
        página passa pelas temperaturas da marca (creme → véu de mel →
-       superfície → papel → creme) animando variáveis CSS com scrub.
+       superfície → véu petróleo, o inverno frio → creme) animando variáveis
+       CSS com scrub: quente → frio → quente, só com tokens da marca.
        Sem movimento: cada trecho já nasce com o seu fundo (data-tom).
        Nomes dos meses vêm do Intl (pt-BR): são dado de calendário, não cópia.
        - nada de opacity < 1 fora do gsap.matchMedia;
@@ -42,7 +43,7 @@
     [data-tom="creme"] { background: var(--creme); }
     [data-tom="veu"] { background: var(--mel-veu); }
     [data-tom="superficie"] { background: var(--superficie); }
-    [data-tom="papel"] { background: var(--creme-papel); }
+    [data-tom="inverno"] { background: var(--petroleo-veu); }
     main > section[data-tom]:not(:first-child) { padding-top: var(--respiro); }
     html.tons-vivos main > section[data-tom] { background: transparent; }
     html.tons-vivos main > section[data-tom]:not(:first-child) { padding-top: var(--respiro); }
@@ -393,7 +394,7 @@
     </section>
 
     <!-- SEÇÃO: equipe -->
-    <section data-secao="equipe" id="equipe" data-tom="papel">
+    <section data-secao="equipe" id="equipe" data-tom="inverno">
       <div class="dr-container">
         <header class="titulo-secao">
           <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
@@ -423,7 +424,7 @@
     </section>
 
     <!-- SEÇÃO: depoimento -->
-    <section data-secao="depoimento" data-tom="papel">
+    <section data-secao="depoimento" data-tom="inverno">
       <div class="dr-container">
         <figure class="citacao">
           <blockquote><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
@@ -579,8 +580,8 @@
         mm.add('(prefers-reduced-motion: no-preference)', function () {
           var raiz = document.documentElement;
           raiz.classList.add('tons-vivos');
-          var TONS = { creme: '#FFFBE6', veu: '#FDEFC2', superficie: '#F4ECD2', papel: '#FBF6E3' };
-          var ACENTOS = { creme: '#F5C02C', veu: '#D9A521', superficie: '#A1887F', papel: '#2E8B82' };
+          var TONS = { creme: '#FFFBE6', veu: '#FDEFC2', superficie: '#F4ECD2', inverno: '#DCEEEA' }; // --petroleo-veu
+          var ACENTOS = { creme: '#F5C02C', veu: '#D9A521', superficie: '#A1887F', inverno: '#2E8B82' }; // --petroleo-claro
 
           // Efeito principal: a temperatura de cor do fundo muda ao rolar.
           // Cada troca de tom é um trecho com scrub, ancorado no início do trecho seguinte.
