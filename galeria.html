@@ -157,7 +157,7 @@
     linha.appendChild(a);
     var b = el('button', 'gal-fav'); b.type = 'button';
     b.setAttribute('data-gal', 'fav');
-    b.setAttribute('aria-label', 'Favoritar');
+    b.setAttribute('aria-label', 'Favoritar ' + pad(it.n) + ' ' + it.nome);
     b.setAttribute('aria-pressed', 'false');
     b.appendChild(estrela());
     b.addEventListener('click', function () {
