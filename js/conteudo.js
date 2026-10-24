@@ -26,7 +26,7 @@ window.DR_CONTEUDO = (function () {
         url: { v: 'https://play.google.com/store/apps/details?id=com.deusasrainhas.app.v2', provisorio: 'play-store' }
       },
       falar: { texto: 'Falar com a gente', url: whatsappUrl },
-      ios: { texto: 'Em breve no iPhone', url: '#', oculto: true }
+      ios: { texto: 'Em breve no iPhone', url: { v: '#', provisorio: 'app-store' }, oculto: true }
     },
 
     prova: {
@@ -154,12 +154,12 @@ window.DR_CONTEUDO = (function () {
         {
           icone: 'dr-drone',
           titulo: 'Mapeamento com drone',
-          texto: 'Imagens aéreas ajudam a conhecer a florada e o entorno de cada apiário.'
+          texto: 'Mapeamento com drone para conhecer a florada e o entorno de cada apiário.'
         },
         {
           icone: 'dr-clima',
           titulo: 'Sensores na colmeia',
-          texto: 'Temperatura e umidade acompanhadas de perto, para você agir antes que o problema apareça.'
+          texto: 'Sensores na colmeia registram temperatura e umidade para você acompanhar de longe.'
         }
       ]
     },
@@ -192,17 +192,20 @@ window.DR_CONTEUDO = (function () {
         {
           nome: { v: 'Centelha', provisorio: 'apoios' },
           logo: '../img/logos/centelha-negativo.png',
-          alt: 'Programa Centelha (versão para fundo escuro)'
+          alt: 'Programa Centelha',
+          fundo: 'escuro'
         },
         {
           nome: { v: 'FAPEG', provisorio: 'apoios' },
           logo: '../img/logos/fapeg.png',
-          alt: 'FAPEG, Fundação de Amparo à Pesquisa do Estado de Goiás'
+          alt: 'FAPEG, Fundação de Amparo à Pesquisa do Estado de Goiás',
+          fundo: 'claro'
         },
         {
           nome: { v: 'FINEP', provisorio: 'apoios' },
           logo: '../img/logos/finep.png',
-          alt: 'FINEP, Financiadora de Estudos e Projetos'
+          alt: 'FINEP, Financiadora de Estudos e Projetos',
+          fundo: 'claro'
         }
       ]
     },
