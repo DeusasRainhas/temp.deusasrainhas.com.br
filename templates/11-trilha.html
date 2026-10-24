@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="pt-BR" data-template="11">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 11 Trilha</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       11 Trilha · circuito · N2 / C3 / R2
+       Uma única trilha de circuito atravessa a página inteira: nasce no
+       topo do hero, sublinha a manchete, desce pela pista lateral, troca
+       de lado entre seções e termina no botão de enviar do contato. Ela se
+       desenha (stroke-dashoffset) acompanhando o ponto de leitura do scroll;
+       cada cabeça de seção é um terminal ligado à trilha por um ramal.
+       - nada de opacity < 1 fora do gsap.matchMedia;
+       - canto inferior direito livre (pílula do switcher).
+       ================================================================= */
+
+    :root {
+      --respiro: 112px;
+      --pista: 64px;            /* faixa lateral onde corre a trilha */
+      --escuro-texto: #E9E1CB;  /* corpo sobre grafite */
+      --escuro-linha: rgba(255, 251, 230, .14);
+    }
+    @media (max-width: 899px) { :root { --respiro: 72px; --pista: 40px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
+
+    main { position: relative; }
+    main > section { position: relative; padding-block: var(--respiro); scroll-margin-top: 24px; }
+
+    /* Conteúdo sempre acima da trilha; a pista lateral fica livre. */
+    .pista { position: relative; z-index: 2; padding-inline: var(--pista); }
+    @media (max-width: 899px) { .pista { padding-right: 16px; } }
+
+    /* ---------- R2: blocos grafite intercalados com creme ---------- */
+    [data-fundo-secao="escuro"] { background: var(--grafite); color: var(--escuro-texto); }
+    [data-fundo-secao="escuro"] .dr-h2,
+    [data-fundo-secao="escuro"] .dr-h3,
+    [data-fundo-secao="escuro"] .dr-h4 { color: var(--creme); }
+    [data-fundo-secao="escuro"] .dr-body,
+    [data-fundo-secao="escuro"] .dr-body-lg { color: var(--escuro-texto); }
+    [data-fundo-secao="escuro"] .dr-eyebrow { color: var(--mel); }
+    [data-fundo-secao="escuro"] .dr-caption { color: var(--tenue); }
+
+    /* ---------- A trilha (SVG decorativo sobre o main) ---------- */
+    .trilha {
+      position: absolute; inset: 0 0 auto 0; width: 100%; z-index: 1;
+      pointer-events: none; overflow: visible;
+    }
+    .trilha__base { stroke: var(--linha-forte); stroke-width: 1.5; fill: none; }
+    .trilha__base--escuro { stroke: rgba(255, 251, 230, .16); }
+    .trilha__traco { stroke: var(--mel); stroke-width: 2.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .trilha__ramal { fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .trilha__ramal--mel { stroke: var(--mel); }
+    .trilha__ramal--grafite { stroke: var(--grafite); }
+    .trilha__ramal--claro { stroke: var(--terra-clara); }
+    .no { stroke: var(--linha-forte); stroke-width: 2.2; fill: var(--creme); transition: stroke .35s ease, r .35s ease; }
+    .no--escuro { fill: var(--grafite); stroke: rgba(255, 251, 230, .28); }
+    .no.aceso { stroke: var(--mel); }
+    .no--fim { stroke-width: 2.6; }
+    .no--fim.aceso { fill: var(--mel); }
+    .cabeca-luz { fill: var(--creme); stroke: var(--mel); stroke-width: 2.6; }
+    .cabeca-halo { fill: none; stroke: var(--mel); stroke-width: 1.2; stroke-opacity: .5; }
+
+    /* ---------- N2: pílula inferior centralizada ---------- */
+    .pilula {
+      position: fixed; z-index: 60; left: 50%; bottom: 16px; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 2px;
+      padding: 6px 6px 6px 14px; border-radius: var(--r-pill);
+      background: var(--grafite); border: 1px solid rgba(255, 251, 230, .14);
+      box-shadow: var(--sh-lg); overflow: hidden; width: max-content; max-width: calc(100vw - 24px);
+    }
+    .pilula > * { flex: none; }
+    .pilula__coroa { display: grid; place-items: center; padding: 6px 12px 6px 2px; margin-right: 6px; border-right: 1px solid rgba(255, 251, 230, .14); }
+    .pilula__coroa img { width: 34px; height: auto; }
+    .pilula__item {
+      display: inline-flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: var(--r-pill);
+      color: var(--escuro-texto); text-decoration: none; white-space: nowrap;
+      font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
+      transition: color .2s ease, background-color .2s ease;
+    }
+    .pilula__item .dr-icone { width: 18px; height: 18px; flex: none; }
+    .pilula__item:hover, .pilula__item.ativo { color: var(--mel); background: rgba(255, 251, 230, .06); }
+    .pilula .dr-btn { margin-left: 8px; padding: 10px 18px; font-size: var(--fs-small); border-radius: var(--r-pill); white-space: nowrap; }
+    .pilula__progresso { position: absolute; left: 0; top: 0; height: 2px; width: 100%; background: var(--mel); transform-origin: left center; transform: scaleX(0); }
+    /* Só ícone: o rótulo vira sr-only e o link mantém o nome acessível. */
+    @media (max-width: 1099px) {
+      .pilula__item span { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+      .pilula__item { padding: 10px; }
+    }
+    @media (max-width: 599px) {
+      /* No celular a pílula se afasta da pílula do switcher (canto direito). */
+      .pilula { left: 12px; transform: none; padding-left: 10px; }
+      .pilula .dr-btn { display: none; }
+      .pilula__coroa { padding-right: 8px; margin-right: 2px; }
+      .pilula__coroa img { width: 28px; }
+      .pilula__item { padding: 9px; }
+    }
+
+    /* ---------- Hero ---------- */
+    .hero { padding-top: 28px !important; }
+    .hero__topo { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-5); }
+    .marca { display: block; flex: none; }
+    .marca img { width: 64px; height: 64px; }
+    .hero__titulo {
+      margin-top: clamp(32px, 4.5vw, 64px);
+      font-size: clamp(46px, 7.2vw, 104px); line-height: .96; letter-spacing: -.03em;
+      max-width: 11.5ch; text-wrap: balance;
+    }
+    .trilha-ancora { height: 2px; margin-block: clamp(28px, 3vw, 44px); }
+    .hero__baixo { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: var(--sp-7); align-items: start; }
+    .hero__coord { display: grid; gap: var(--sp-2); padding-top: 6px; }
+    .hero__coord span { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .18em; text-transform: uppercase; color: var(--terra); }
+    .hero__baixo .dr-body-lg { font-size: clamp(18px, 1.6vw, 22px); max-width: 40ch; color: var(--corpo); }
+    .acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+    /* Folga para a pílula fixa (≈72px + 16px) nunca cobrir as ações do hero ao rolar até elas. */
+    .hero .acoes { scroll-margin-bottom: 104px; padding-bottom: var(--sp-2); }
+    .hero__foto { margin-top: 104px; position: relative; }
+    .hero__foto img { width: 100%; height: auto; aspect-ratio: 16 / 7; object-fit: cover; border-radius: var(--r-lg); border: var(--bd); background: var(--creme-papel); }
+    .hero__foto figcaption { display: flex; gap: var(--sp-3); align-items: baseline; margin-top: var(--sp-3); }
+    .hero__foto figcaption::before { content: ""; flex: none; width: 24px; height: 2px; background: var(--mel); transform: translateY(-4px); }
+    @media (max-width: 899px) {
+      .hero__baixo { grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); }
+      .hero__foto img { aspect-ratio: 4 / 3; }
+      .marca img { width: 56px; height: 56px; }
+    }
+
+    /* ---------- Cabeça de seção: terminal da trilha ---------- */
+    .cabeca { max-width: 640px; }
+    .cabeca .dr-eyebrow { display: inline-block; margin-bottom: var(--sp-4); }
+    .cabeca .dr-h2 { text-wrap: balance; }
+    .cabeca .intro { margin-top: var(--sp-4); }
+    .cabeca + * { margin-top: var(--sp-8); }
+    [data-lado="dir"] .cabeca { margin-left: auto; text-align: right; }
+    @media (max-width: 899px) {
+      .dr-h2 { font-size: 30px; }
+      .cabeca + * { margin-top: var(--sp-6); }
+      [data-lado="dir"] .cabeca { margin-left: 0; text-align: left; }
+    }
+
+    /* ---------- C3: cards com circuito-canto no canto superior ---------- */
+    .cartoes { display: grid; gap: var(--sp-5); }
+    .cartoes--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .cartoes--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cartao {
+      position: relative; padding: 92px var(--sp-5) var(--sp-6);
+      background: var(--branco) url(../img/padroes/circuito-canto.svg) no-repeat -4px -4px / 104px 104px;
+      border: var(--bd); border-radius: var(--r-lg);
+      transition: border-color .25s ease, transform .25s ease;
+    }
+    .cartao:hover { border-color: var(--linha-forte); }
+    .cartao .dr-icone { position: absolute; top: 26px; right: 24px; color: var(--petroleo); width: 28px; height: 28px; }
+    .cartao .dr-h4 { margin-bottom: var(--sp-2); }
+    [data-fundo-secao="escuro"] .cartao { background-color: #2A2A2A; border-color: var(--escuro-linha); }
+    [data-fundo-secao="escuro"] .cartao .dr-icone { color: var(--mel); }
+    @media (max-width: 1023px) { .cartoes--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 699px) { .cartoes--3, .cartoes--2 { grid-template-columns: minmax(0, 1fr); } .cartao { padding-top: 84px; } }
+
+    /* ---------- Prova ---------- */
+    .placar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .placar li { padding: var(--sp-2) var(--sp-5) var(--sp-2); border-left: 1px solid var(--escuro-linha); }
+    .placar__valor { display: block; font-size: clamp(44px, 5vw, 72px); line-height: 1; color: var(--mel); }
+    .placar__rotulo { display: block; margin-top: var(--sp-4); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; line-height: 1.6; color: var(--escuro-texto); max-width: 18ch; }
+    @media (max-width: 899px) {
+      .placar { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: var(--sp-6); }
+      .placar li { padding-inline: var(--sp-4) 0; }
+    }
+
+    /* ---------- Problema ---------- */
+    .problema { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-8); align-items: end; }
+    .problema__valor { display: block; font-size: clamp(96px, 14vw, 200px); line-height: .85; letter-spacing: -.05em; color: var(--terra-escura); }
+    .problema__texto { margin-top: var(--sp-4); max-width: 30ch; }
+    .problema .cabeca + * { margin-top: 0; }
+    .consequencias { margin-top: var(--sp-8); }
+    .consequencias .cartao { padding-top: 84px; }
+    .consequencias .dr-icone { color: var(--erro); }
+    @media (max-width: 899px) { .problema { grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); } .consequencias { margin-top: var(--sp-6); } }
+
+    /* ---------- Como funciona ---------- */
+    .passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-6); }
+    .passo__num { display: block; font-size: var(--fs-h3); color: var(--mel); }
+    .passo .dr-h4 { margin-block: var(--sp-3) var(--sp-2); }
+    .passo figure { margin-top: var(--sp-5); }
+    .passo img { width: 100%; max-width: 260px; max-height: 420px; object-fit: cover; object-position: top; border-radius: var(--r-lg); border: 1px solid var(--escuro-linha); background: var(--creme-papel); }
+    .passo figcaption { margin-top: var(--sp-3); max-width: 260px; }
+    @media (max-width: 899px) { .passos { grid-template-columns: minmax(0, 1fr); gap: var(--sp-7); } }
+
+    /* ---------- Para quem ---------- */
+    .perfil .dr-h3 { font-family: var(--serif); font-weight: 500; color: var(--terra-escura); margin-bottom: var(--sp-3); }
+
+    /* ---------- Tecnologia ---------- */
+    .tec { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-8); align-items: start; }
+    .tec .cabeca + * { margin-top: 0; }
+    @media (max-width: 1023px) { .tec { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } }
+
+    /* ---------- Equipe ---------- */
+    .pessoas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+    .pessoa { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: var(--sp-4); align-items: center; padding: var(--sp-4); border: var(--bd); border-radius: var(--r-lg); background: var(--branco); }
+    .pessoa img { width: 80px; height: 80px; border-radius: var(--r-md); object-fit: cover; }
+    .pessoa__cargo { margin-top: var(--sp-1); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .08em; text-transform: uppercase; line-height: 1.5; color: var(--terra); }
+    .placa-apoios { margin-top: var(--sp-7); background: var(--grafite); border-radius: var(--r-lg); padding: var(--sp-6); }
+    .apoios { display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: var(--sp-5) var(--sp-7); }
+    .apoio { display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
+    .apoio__logo { display: grid; place-items: center; height: 84px; padding: var(--sp-3) var(--sp-4); border-radius: var(--r-md); }
+    .apoio__logo img { max-height: 60px; width: auto; max-width: 170px; }
+    .apoio[data-fundo="claro"] .apoio__logo { background: var(--creme); }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--mel-claro); }
+    @media (max-width: 899px) { .pessoas { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Depoimento ---------- */
+    .citacao { max-width: 920px; margin-left: auto; text-align: right; }
+    .citacao .dr-quote { font-size: clamp(26px, 3.4vw, 44px); line-height: 1.28; color: var(--creme); text-wrap: balance; }
+    .citacao figcaption { display: inline-flex; align-items: center; gap: var(--sp-4); margin-top: var(--sp-6); text-align: left; }
+    .citacao figcaption img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+    .citacao__nome { font-weight: 700; color: var(--creme); }
+    .citacao__local { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--tenue); }
+    @media (max-width: 899px) { .citacao { text-align: left; } }
+
+    /* ---------- Contato ---------- */
+    .contato { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-8); }
+    .form { display: grid; gap: var(--sp-4); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo input, .campo textarea { font: inherit; color: var(--ink); background: var(--branco); border: var(--bd-forte); border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4); width: 100%; }
+    .campo textarea { min-height: 140px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canais { display: grid; gap: var(--sp-3); }
+    .canal { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-4); align-items: center; padding: var(--sp-4) var(--sp-5); border: var(--bd); border-radius: var(--r-lg); background: var(--branco); }
+    .canal .dr-icone { color: var(--petroleo); }
+    .canal a { font-weight: 600; overflow-wrap: anywhere; text-underline-offset: 4px; }
+    .contato-acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+    @media (max-width: 899px) { .contato { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } }
+
+    /* ---------- Rodapé ---------- */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-8) 132px; }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: var(--pista); color: var(--tenue); }
+    @media (max-width: 767px) { .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); } footer > [data-aviso-provisorio] { padding-inline: var(--pista) 16px; } }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N2 · pílula inferior centralizada, estilo app) -->
+  <nav data-secao="nav" class="pilula">
+    <a class="pilula__coroa" href="#inicio"><img src="../img/logos/coroa-negativa.png" alt="" data-c-alt="marca.alt" width="34" height="25"></a>
+    <a class="pilula__item" href="#funcionalidades"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-colmeia"></use></svg><span data-c="funcionalidades.eyebrow"></span></a>
+    <a class="pilula__item" href="#como-funciona"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-revisao"></use></svg><span data-c="comoFunciona.eyebrow"></span></a>
+    <a class="pilula__item" href="#para-quem"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg><span data-c="paraQuem.eyebrow"></span></a>
+    <a class="pilula__item" href="#contato"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span data-c="contato.eyebrow"></span></a>
+    <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+    <span class="pilula__progresso" aria-hidden="true"></span>
+  </nav>
+
+  <main>
+    <!-- A trilha: um único traço desenhado por stroke-dashoffset, montado em JS a partir das seções -->
+    <svg class="trilha" aria-hidden="true" focusable="false">
+      <g class="trilha__bases"></g>
+      <path class="trilha__traco"></path>
+      <g class="trilha__ramais"></g>
+      <g class="trilha__nos"></g>
+      <g class="trilha__cabeca"><circle class="cabeca-halo" r="12"></circle><circle class="cabeca-luz" r="6"></circle></g>
+    </svg>
+
+    <!-- SEÇÃO: hero (a trilha nasce no topo, sublinha a manchete e desce pela pista) -->
+    <section data-secao="hero" id="inicio" class="hero" data-lado="esq">
+      <div class="dr-container pista">
+        <header class="hero__topo">
+          <a class="marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+          <span class="dr-eyebrow" data-c="hero.eyebrow"></span>
+        </header>
+        <h1 class="dr-display hero__titulo" data-c="hero.titulo"></h1>
+        <div class="trilha-ancora" aria-hidden="true"></div>
+        <div class="hero__baixo">
+          <div class="hero__coord"><span data-c="rodape.endereco"></span></div>
+          <div>
+            <p class="dr-body-lg" data-c="hero.subtitulo"></p>
+            <div class="acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+        <figure class="hero__foto">
+          <img data-c-src="hero.imagem" data-c-alt="hero.imagemAlt" alt="" width="1600" height="1000">
+          <figcaption class="dr-caption" data-c="hero.imagemAlt"></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: prova (bloco grafite, placar em mel) -->
+    <section data-secao="prova" data-fundo-secao="escuro" data-lado="esq">
+      <div class="dr-container pista">
+        <ul class="placar" data-c-lista="prova.stats">
+          <template>
+            <li>
+              <span class="dr-data placar__valor" data-c="valor"></span>
+              <span class="placar__rotulo" data-c="rotulo"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: problema -->
+    <section data-secao="problema" data-lado="esq">
+      <div class="dr-container pista">
+        <div class="problema">
+          <header class="cabeca" data-terminal>
+            <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+            <h2 class="dr-h2" data-c="problema.titulo"></h2>
+          </header>
+          <div>
+            <span class="dr-data problema__valor" data-c="problema.estatistica.valor"></span>
+            <p class="dr-body-lg problema__texto" data-c="problema.estatistica.texto"></p>
+          </div>
+        </div>
+        <ul class="cartoes cartoes--3 consequencias" data-c-lista="problema.consequencias">
+          <template>
+            <li class="cartao">
+              <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+              <p class="dr-body-lg" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades (a trilha cruza para a pista direita) -->
+    <section data-secao="funcionalidades" id="funcionalidades" data-lado="dir">
+      <div class="dr-container pista">
+        <header class="cabeca" data-terminal>
+          <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+          <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+        </header>
+        <ul class="cartoes cartoes--3" data-c-lista="funcionalidades.itens">
+          <template>
+            <li class="cartao">
+              <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona (bloco grafite) -->
+    <section data-secao="como-funciona" id="como-funciona" data-fundo-secao="escuro" data-lado="dir">
+      <div class="dr-container pista">
+        <header class="cabeca" data-terminal>
+          <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+          <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+        </header>
+        <ol class="passos" data-c-lista="comoFunciona.passos">
+          <template>
+            <li class="passo">
+              <span class="dr-data passo__num" data-c="numero"></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <figure>
+                <img data-c-src="imagem" data-c-alt="alt" alt="">
+                <figcaption class="dr-caption" data-c="alt"></figcaption>
+              </figure>
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem (volta à pista esquerda) -->
+    <section data-secao="para-quem" id="para-quem" data-lado="esq">
+      <div class="dr-container pista">
+        <header class="cabeca" data-terminal>
+          <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+          <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+        </header>
+        <ul class="cartoes cartoes--3" data-c-lista="paraQuem.perfis">
+          <template>
+            <li class="cartao perfil">
+              <h3 class="dr-h3" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia (bloco grafite) -->
+    <section data-secao="tecnologia" data-fundo-secao="escuro" data-lado="esq">
+      <div class="dr-container pista tec">
+        <header class="cabeca" data-terminal>
+          <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+          <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+          <p class="dr-body-lg intro" data-c="tecnologia.texto"></p>
+        </header>
+        <ul class="cartoes cartoes--2" data-c-lista="tecnologia.pilares">
+          <template>
+            <li class="cartao">
+              <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe (pista direita; apoios numa placa grafite) -->
+    <section data-secao="equipe" id="equipe" data-lado="dir">
+      <div class="dr-container pista">
+        <header class="cabeca" data-terminal>
+          <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+          <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+          <p class="dr-body-lg intro" data-c="equipe.origem"></p>
+        </header>
+        <ul class="pessoas" data-c-lista="equipe.pessoas">
+          <template>
+            <li class="pessoa">
+              <img data-c-src="foto" data-c-alt="alt" alt="" width="80" height="80">
+              <div>
+                <h3 class="dr-h4" data-c="nome"></h3>
+                <p class="pessoa__cargo" data-c="cargo"></p>
+              </div>
+            </li>
+          </template>
+        </ul>
+        <div class="placa-apoios">
+          <ul class="apoios" data-c-lista="equipe.apoios">
+            <template>
+              <li class="apoio">
+                <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+                <span class="apoio__nome" data-c="nome"></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento (bloco grafite, citação alinhada à pista direita) -->
+    <section data-secao="depoimento" data-fundo-secao="escuro" data-lado="dir">
+      <div class="dr-container pista">
+        <figure class="citacao" data-terminal>
+          <blockquote><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+          <figcaption>
+            <img data-c-src="depoimento.foto" alt="" width="56" height="56">
+            <span>
+              <span class="citacao__nome" data-c="depoimento.nome"></span><br>
+              <span class="citacao__local" data-c="depoimento.local"></span>
+            </span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato (a trilha termina no botão de enviar) -->
+    <section data-secao="contato" id="contato" data-lado="esq">
+      <div class="dr-container pista">
+        <header class="cabeca" data-terminal>
+          <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+          <h2 class="dr-h2" data-c="contato.titulo"></h2>
+          <p class="dr-body-lg intro" data-c="contato.texto"></p>
+        </header>
+        <div class="contato">
+          <form class="form" method="post" data-form-contato>
+            <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+            <div class="campo">
+              <label for="f-nome" data-c="contato.form.nome"></label>
+              <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+            </div>
+            <div class="campo">
+              <label for="f-email" data-c="contato.form.email"></label>
+              <input id="f-email" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="campo">
+              <label for="f-msg" data-c="contato.form.mensagem"></label>
+              <textarea id="f-msg" name="mensagem" required></textarea>
+            </div>
+            <button class="dr-btn dr-btn--primario trilha-fim" type="submit" data-c="contato.form.enviar"></button>
+          </form>
+          <div>
+            <ul class="canais">
+              <li class="canal">
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <a data-mailto data-c="contato.email"></a>
+              </li>
+              <li class="canal">
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+              </li>
+              <li class="canal">
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+              </li>
+            </ul>
+            <div class="contato-acoes">
+              <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- SEÇÃO: rodape -->
+  <footer data-secao="rodape">
+    <div class="dr-container pista rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var NS = 'http://www.w3.org/2000/svg';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+      function svgEl(tag, attrs) {
+        var e = document.createElementNS(NS, tag);
+        for (var k in attrs) e.setAttribute(k, attrs[k]);
+        return e;
+      }
+
+      /* ---------- Geometria da trilha ----------
+         Monta uma poligonal ortogonal (só desce ou anda na horizontal), chanfra
+         os cantos a 45° como numa placa e guarda o comprimento acumulado de cada
+         ponto: assim o "ponto de leitura" (um y da página) vira um comprimento. */
+      var T = null; // estado da trilha montada
+
+      function chanfrar(pts, raio) {
+        var out = [pts[0]], cantos = [0];
+        for (var i = 1; i < pts.length - 1; i++) {
+          var a = pts[i - 1], b = pts[i], c = pts[i + 1];
+          var l1 = Math.hypot(b.x - a.x, b.y - a.y), l2 = Math.hypot(c.x - b.x, c.y - b.y);
+          var r = Math.min(raio, l1 / 2, l2 / 2);
+          if (r < 1) { out.push(b); cantos.push(out.length - 1); continue; }
+          out.push({ x: b.x - (b.x - a.x) / l1 * r, y: b.y - (b.y - a.y) / l1 * r });
+          cantos.push(out.length - 1);
+          out.push({ x: b.x + (c.x - b.x) / l2 * r, y: b.y + (c.y - b.y) / l2 * r });
+        }
+        out.push(pts[pts.length - 1]);
+        cantos.push(out.length - 1);
+        return { pts: out, cantos: cantos };
+      }
+
+      function montar() {
+        var main = document.querySelector('main');
+        var svg = document.querySelector('.trilha');
+        var mr = main.getBoundingClientRect();
+        var W = main.clientWidth, H = main.offsetHeight;
+        svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+        svg.style.height = H + 'px';
+        var cont = document.querySelector('[data-secao="hero"] .pista').getBoundingClientRect();
+        var largo = W >= 900;
+        var pistaPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pista')) || 64;
+        var X = { esq: cont.left - mr.left + pistaPx * (largo ? .38 : .42), dir: cont.right - mr.left - pistaPx * .38 };
+        if (!largo) X.dir = X.esq; // no celular a trilha fica sempre à esquerda
+        function rel(el) { var r = el.getBoundingClientRect(); return { top: r.top - mr.top, left: r.left - mr.left, right: r.right - mr.left, bottom: r.bottom - mr.top, h: r.height }; }
+
+        var pts = [], marcas = []; // marcas: { idx, tipo, alvo, escuro }
+        var ancora = rel(document.querySelector('.trilha-ancora'));
+        var yA = ancora.top + 1;
+        // Nasce no topo, pela pista direita, desce até sob a manchete e a sublinha.
+        pts.push({ x: X.dir, y: 0 });
+        if (largo) {
+          // Ramais curtos no trecho que desce pelo hero, como no circuito-canto.
+          [[.3, [[-56, 0], [0, -24]], 'grafite'], [.52, [[44, 0], [0, -28]], 'mel'], [.76, [[-34, 0]], 'grafite']].forEach(function (r) {
+            pts.push({ x: X.dir, y: yA * r[0] });
+            marcas.push({ idx: pts.length - 1, tipo: 'ramo', forma: r[1], cor: r[2] });
+          });
+        }
+        pts.push({ x: X.dir, y: yA });
+        pts.push({ x: X.esq, y: yA });
+        marcas.push({ idx: pts.length - 1, tipo: 'meio' });
+        var lado = 'esq';
+        var secoes = Array.prototype.slice.call(main.querySelectorAll(':scope > section'));
+        secoes.forEach(function (sec, i) {
+          if (i === 0) return;
+          var s = rel(sec);
+          var novo = sec.getAttribute('data-lado') || 'esq';
+          var escuro = sec.getAttribute('data-fundo-secao') === 'escuro';
+          if (novo !== lado && X[novo] !== X[lado]) {
+            var yC = s.top + Math.min(40, s.h * .2);
+            pts.push({ x: X[lado], y: yC });
+            pts.push({ x: X[novo], y: yC });
+            marcas.push({ idx: pts.length - 1, tipo: 'meio', escuro: escuro });
+            lado = novo;
+          }
+          var term = sec.querySelector('[data-terminal]');
+          if (term) {
+            var alvo = term.querySelector('.dr-eyebrow') || term;
+            var t = rel(alvo);
+            var yT = t.top + t.h / 2;
+            pts.push({ x: X[lado], y: yT });
+            marcas.push({ idx: pts.length - 1, tipo: 'terminal', alvo: t, lado: lado, escuro: escuro, largo: largo });
+          }
+        });
+        // Fim: entra no contato e encosta no botão de enviar.
+        var fim = rel(document.querySelector('.trilha-fim'));
+        var yF = fim.top + fim.h / 2;
+        pts.push({ x: X[lado], y: yF });
+        pts.push({ x: fim.left - 14, y: yF });
+        marcas.push({ idx: pts.length - 1, tipo: 'fim' });
+
+        // Limpa pontos repetidos (mesmo lugar) para o chanfro não quebrar.
+        var limpo = [], mapa = [];
+        pts.forEach(function (p, i) {
+          var u = limpo[limpo.length - 1];
+          if (u && Math.abs(u.x - p.x) < .5 && Math.abs(u.y - p.y) < .5) { mapa[i] = limpo.length - 1; return; }
+          limpo.push(p); mapa[i] = limpo.length - 1;
+        });
+        var ch = chanfrar(limpo, 18);
+        var P = ch.pts, acum = [0];
+        for (var i = 1; i < P.length; i++) acum.push(acum[i - 1] + Math.hypot(P[i].x - P[i - 1].x, P[i].y - P[i - 1].y));
+        var total = acum[acum.length - 1];
+        var d = 'M' + P.map(function (p) { return p.x.toFixed(1) + ' ' + p.y.toFixed(1); }).join(' L');
+
+        // Base tênue (em duas cores: sobre creme e sobre grafite) e traço.
+        var bases = svg.querySelector('.trilha__bases');
+        bases.textContent = '';
+        bases.appendChild(svgEl('path', { d: d, class: 'trilha__base' }));
+        secoes.forEach(function (sec) {
+          if (sec.getAttribute('data-fundo-secao') !== 'escuro') return;
+          var s = rel(sec);
+          var id = 'clip-' + sec.getAttribute('data-secao');
+          var cp = svgEl('clipPath', { id: id });
+          cp.appendChild(svgEl('rect', { x: 0, y: s.top, width: W, height: s.h }));
+          bases.appendChild(cp);
+          bases.appendChild(svgEl('path', { d: d, class: 'trilha__base trilha__base--escuro', 'clip-path': 'url(#' + id + ')' }));
+        });
+        var traco = svg.querySelector('.trilha__traco');
+        traco.setAttribute('d', d);
+        traco.style.strokeDasharray = total + ' ' + total;
+
+        // Nós e ramais.
+        var gNos = svg.querySelector('.trilha__nos'), gRam = svg.querySelector('.trilha__ramais');
+        gNos.textContent = ''; gRam.textContent = '';
+        var nos = [];
+        marcas.forEach(function (m) {
+          var k = ch.cantos[mapa[m.idx]];
+          var p = limpo[mapa[m.idx]];
+          var len = acum[k];
+          if (m.tipo === 'meio') {
+            // Via no meio do cruzamento horizontal, entre os dois cantos.
+            var k0 = ch.cantos[mapa[m.idx - 1]], p0 = limpo[mapa[m.idx - 1]];
+            p = { x: (p0.x + p.x) / 2, y: p.y };
+            len = (acum[k0] + acum[k]) / 2;
+          }
+          var no = { len: len, el: null, ramal: null, ramalLen: 0, ponta: null };
+          if (m.tipo === 'ramo') {
+            var dr = 'M' + p.x + ' ' + p.y, cx = p.x, cy = p.y, rlen = 0;
+            m.forma.forEach(function (f) { cx += f[0]; cy += f[1]; rlen += Math.abs(f[0]) + Math.abs(f[1]); dr += ' L' + cx + ' ' + cy; });
+            var rr = svgEl('path', { d: dr, class: 'trilha__ramal trilha__ramal--' + m.cor });
+            rr.style.strokeDasharray = rlen + ' ' + rlen;
+            gRam.appendChild(rr);
+            var pr = svgEl('circle', { cx: cx, cy: cy, r: 4.5, class: 'no' });
+            gNos.appendChild(pr);
+            nos.push({ len: len, el: pr, ramal: rr, ramalLen: rlen, ponta: pr, soRamal: true });
+            return;
+          }
+          if (m.tipo === 'terminal') {
+            // Ramal até a cabeça de seção: mel quando sobe/vai à direita, grafite quando vai à esquerda.
+            var ate = m.lado === 'esq' || !m.largo ? m.alvo.left - 12 : m.alvo.right + 12;
+            var dx = ate - p.x;
+            var ramalD, rl;
+            if (Math.abs(dx) > 24) {
+              ramalD = 'M' + p.x + ' ' + p.y + ' H' + ate;
+              rl = Math.abs(dx);
+            } else {
+              var lateral = m.lado === 'esq' ? -1 : 1;
+              ramalD = 'M' + p.x + ' ' + p.y + ' h' + (16 * lateral) + ' v-22';
+              rl = 38; ate = p.x + 16 * lateral;
+            }
+            var cor = dx >= 0 ? 'mel' : (m.escuro ? 'claro' : 'grafite');
+            var ram = svgEl('path', { d: ramalD, class: 'trilha__ramal trilha__ramal--' + cor });
+            ram.style.strokeDasharray = rl + ' ' + rl;
+            gRam.appendChild(ram);
+            var yP = Math.abs(dx) > 24 ? p.y : p.y - 22;
+            var ponta = svgEl('circle', { cx: ate, cy: yP, r: 4.5, class: 'no' + (m.escuro ? ' no--escuro' : '') });
+            gNos.appendChild(ponta);
+            no.ramal = ram; no.ramalLen = rl; no.ponta = ponta;
+          }
+          var c = svgEl('circle', { cx: p.x, cy: p.y, r: m.tipo === 'fim' ? 7 : 5.5, class: 'no' + (m.escuro ? ' no--escuro' : '') + (m.tipo === 'fim' ? ' no--fim' : '') });
+          gNos.appendChild(c);
+          no.el = c;
+          nos.push(no);
+        });
+
+        T = { P: P, acum: acum, total: total, traco: traco, nos: nos, top: mr.top + window.scrollY,
+              cabeca: svg.querySelector('.trilha__cabeca') };
+      }
+
+      // Comprimento desenhado quando o ponto de leitura está no y (coordenadas do main).
+      function comprimentoAte(y) {
+        var P = T.P, A = T.acum;
+        if (y <= P[0].y) return 0;
+        for (var i = 1; i < P.length; i++) {
+          var a = P[i - 1], b = P[i];
+          if (b.y <= y) continue;              // segmento inteiro acima do ponto
+          if (a.y >= y) return A[i - 1];        // começa abaixo: para aqui
+          return A[i - 1] + (A[i] - A[i - 1]) * (y - a.y) / (b.y - a.y);
+        }
+        return T.total;
+      }
+      function pontoEm(len) {
+        var P = T.P, A = T.acum;
+        for (var i = 1; i < P.length; i++) {
+          if (A[i] >= len) {
+            var f = (len - A[i - 1]) / ((A[i] - A[i - 1]) || 1);
+            return { x: P[i - 1].x + (P[i].x - P[i - 1].x) * f, y: P[i - 1].y + (P[i].y - P[i - 1].y) * f };
+          }
+        }
+        return P[P.length - 1];
+      }
+      function pintar(len) {
+        if (!T) return;
+        len = Math.max(0, Math.min(T.total, len));
+        T.traco.style.strokeDashoffset = T.total - len;
+        T.nos.forEach(function (n) {
+          var aceso = len >= n.len - .5;
+          if (!n.soRamal) n.el.classList.toggle('aceso', aceso);
+          if (n.ramal) {
+            var f = Math.max(0, Math.min(1, (len - n.len) / 90));
+            n.ramal.style.strokeDashoffset = n.ramalLen * (1 - f);
+            n.ponta.classList.toggle('aceso', f >= 1);
+          }
+        });
+        var p = pontoEm(len);
+        T.cabeca.setAttribute('transform', 'translate(' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ')');
+        T.cabeca.style.display = len > 0 && len < T.total ? '' : 'none';
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) { if (email) a.setAttribute('href', 'mailto:' + email.v); });
+        document.querySelectorAll('[data-ano]').forEach(function (el) { el.textContent = '© ' + new Date().getFullYear(); });
+
+        // Item ativo da pílula (não é movimento: só troca a cor).
+        var itens = Array.prototype.slice.call(document.querySelectorAll('.pilula__item'));
+        if ('IntersectionObserver' in window) {
+          var io = new IntersectionObserver(function (es) {
+            es.forEach(function (e) {
+              if (!e.isIntersecting) return;
+              itens.forEach(function (a) { a.classList.toggle('ativo', a.getAttribute('href') === '#' + e.target.id); });
+            });
+          }, { rootMargin: '-45% 0px -50% 0px' });
+          itens.forEach(function (a) { var s = document.querySelector(a.getAttribute('href')); if (s) io.observe(s); });
+        }
+
+        // A trilha existe sempre; sem movimento ela aparece inteira, já desenhada.
+        var movimento = false, render = function () { pintar(T ? T.total : 0); };
+        function remontar() { montar(); render(); }
+        remontar();
+        var agendado = false;
+        var ro = new ResizeObserver(function () {
+          if (agendado) return; agendado = true;
+          requestAnimationFrame(function () { agendado = false; remontar(); if (window.ScrollTrigger) ScrollTrigger.refresh(); });
+        });
+        ro.observe(document.querySelector('main'));
+        if (document.fonts) document.fonts.ready.then(remontar);
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          var intro = { v: 0 };
+          var progresso = document.querySelector('.pilula__progresso');
+          var anterior = render;
+          // O traço segue o ponto de leitura: 62% da altura da janela.
+          render = function () {
+            if (!T) return;
+            var max = document.documentElement.scrollHeight - window.innerHeight;
+            var y = window.scrollY + window.innerHeight * .62 - T.top;
+            var len = window.scrollY >= max - 2 ? T.total : comprimentoAte(y);
+            pintar(len * intro.v);
+            gsap.set(progresso, { scaleX: max > 0 ? window.scrollY / max : 0 });
+          };
+          var pedido = false;
+          function aoRolar() {
+            if (pedido) return; pedido = true;
+            requestAnimationFrame(function () { pedido = false; render(); });
+          }
+          window.addEventListener('scroll', aoRolar, { passive: true });
+          // Abertura: a trilha corre do topo até o ponto de leitura.
+          gsap.to(intro, { v: 1, duration: 1.2, ease: 'power2.inOut', onUpdate: render });
+          gsap.from('.hero__titulo, .hero__baixo', { y: 24, autoAlpha: 0, duration: .9, ease: 'power3.out', stagger: .12 });
+
+          // Cards entram de leve quando a trilha chega à seção.
+          gsap.utils.toArray('.cartoes, .placar, .passos, .pessoas').forEach(function (l) {
+            gsap.from(l.children, {
+              y: 18, autoAlpha: 0, duration: .6, ease: 'power2.out', stagger: .07,
+              scrollTrigger: { trigger: l, start: 'top 82%', once: true }
+            });
+          });
+          render();
+
+          return function () {
+            window.removeEventListener('scroll', aoRolar);
+            render = anterior;
+            render();
+          };
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
