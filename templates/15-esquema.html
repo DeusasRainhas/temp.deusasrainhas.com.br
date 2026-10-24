@@ -100,12 +100,14 @@
     .pontos a::before { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--bp); background: var(--creme-papel); transition: transform .2s ease, border-color .2s ease; }
     .pontos a::after { content: ""; position: absolute; width: 20px; height: 1px; background: transparent; }
     .pontos a.ativo::before { border-color: var(--terra-escura); border-width: 2px; transform: scale(1.35); box-shadow: 0 0 0 3px var(--mel-claro); }
+    /* Rótulo oculto pelo padrão sr-only (mantém o nome acessível); aparece no hover/foco. */
     .pontos a span {
-      display: none; position: absolute; right: 30px; top: 50%; transform: translateY(-50%); white-space: nowrap;
-      padding: 4px 10px; background: var(--grafite); color: var(--creme); border-radius: var(--r-sm);
+      position: absolute; right: 30px; top: 50%; transform: translateY(-50%); white-space: nowrap;
+      width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;
+      background: var(--grafite); color: var(--creme); border-radius: var(--r-sm);
       font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
     }
-    .pontos a:hover span, .pontos a:focus-visible span { display: block; }
+    .pontos a:hover span, .pontos a:focus-visible span { width: auto; height: auto; margin: 0; padding: 4px 10px; overflow: visible; clip: auto; }
 
     /* ---------- Hero: folha de rosto com carimbo ---------- */
     .hero .folha { min-height: min(92vh, 860px); display: grid; grid-template-rows: auto 1fr auto; gap: var(--sp-6); }
@@ -239,14 +241,14 @@
   <!-- SEÇÃO: nav (N6 · pontos laterais, um por seção) -->
   <nav data-secao="nav" class="pontos">
     <a href="#inicio"><span data-c="hero.eyebrow"></span></a>
-    <a href="#prova"><span data-c="prova.stats[1].rotulo"></span></a>
+    <a href="#prova" aria-label="Números"></a>
     <a href="#problema"><span data-c="problema.eyebrow"></span></a>
     <a href="#funcionalidades"><span data-c="funcionalidades.eyebrow"></span></a>
     <a href="#como-funciona"><span data-c="comoFunciona.eyebrow"></span></a>
     <a href="#para-quem"><span data-c="paraQuem.eyebrow"></span></a>
     <a href="#tecnologia"><span data-c="tecnologia.eyebrow"></span></a>
     <a href="#equipe"><span data-c="equipe.eyebrow"></span></a>
-    <a href="#depoimento"><span data-c="depoimento.nome"></span></a>
+    <a href="#depoimento" aria-label="Depoimento"></a>
     <a href="#contato"><span data-c="contato.eyebrow"></span></a>
   </nav>
 

@@ -199,7 +199,7 @@
 
   <!-- SEÇÃO: nav (N4 · hambúrguer que abre overlay em tela cheia) -->
   <nav data-secao="nav">
-    <button class="menu-botao" type="button" aria-expanded="false" aria-controls="menu"><span></span><span></span><span></span></button>
+    <button class="menu-botao" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu"><span></span><span></span><span></span></button>
     <div class="menu" id="menu" hidden>
       <div class="dr-container menu__in">
         <a class="menu__marca" href="#inicio"><img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72"></a>
@@ -543,15 +543,22 @@
         var botao = document.querySelector('.menu-botao');
         var menu = document.getElementById('menu');
         var animarMenu = null;
-        function abrir(sim) {
+        // aria-expanded acompanha o overlay; ao abrir o foco vai ao primeiro link, ao fechar volta ao botão.
+        function abrir(sim, devolverFoco) {
           botao.setAttribute('aria-expanded', sim ? 'true' : 'false');
           document.documentElement.style.overflow = sim ? 'hidden' : '';
-          if (animarMenu) { animarMenu(sim); return; }
-          menu.hidden = !sim;
+          if (animarMenu) animarMenu(sim); else menu.hidden = !sim;
+          if (sim) {
+            var primeiro = menu.querySelector('ol a');
+            if (primeiro) primeiro.focus({ preventScroll: true });
+          } else if (devolverFoco !== false) {
+            botao.focus({ preventScroll: true });
+          }
         }
-        botao.addEventListener('click', function () { abrir(menu.hidden); });
-        menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { abrir(false); }); });
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) { abrir(false); botao.focus(); } });
+        botao.addEventListener('click', function () { abrir(botao.getAttribute('aria-expanded') !== 'true'); });
+        // Ao seguir um link, o foco acompanha a âncora (não volta ao botão).
+        menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { abrir(false, false); }); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && botao.getAttribute('aria-expanded') === 'true') abrir(false); });
 
         /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
         if (!window.gsap || !window.ScrollTrigger) return;

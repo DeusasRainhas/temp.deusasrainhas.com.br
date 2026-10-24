@@ -581,8 +581,10 @@
           var d = caminho(rt.pts, 14);
           svg.appendChild(svgEl('path', { d: d, class: 't-base' }));
           svg.appendChild(svgEl('path', { d: d, class: 't-' + rt.cor }));
-          var u = rt.pts[rt.pts.length - 1], p0 = rt.pts[0];
-          svg.appendChild(svgEl('circle', { cx: p0.x, cy: p0.y, r: 4.5, stroke: rt.cor === 'mel' ? '#F5C02C' : '#202020' }));
+          // Anéis terminais nas duas pontas (fora das bordas dos cartões).
+          var u = rt.pts[rt.pts.length - 1], p0 = rt.pts[0], corNo = rt.cor === 'mel' ? '#F5C02C' : '#202020';
+          svg.appendChild(svgEl('circle', { cx: p0.x, cy: p0.y, r: 4.5, stroke: corNo }));
+          svg.appendChild(svgEl('circle', { cx: u.x, cy: u.y, r: 4.5, stroke: corNo }));
           for (var k = 0; k < (rt.n || 2); k++) {
             var el = antigos[pulsos.length] || document.createElement('span');
             el.className = 'pulso' + (rt.cor === 'grafite' ? ' pulso--grafite' : '');
@@ -608,13 +610,13 @@
           var o = i - (N - 1) / 2;
           var a, b, m;
           if (!vertical) {
-            a = { x: ap.right - c.left, y: ap.top - c.top + ap.height / 2 + o * 30 };
-            b = { x: ce.left - c.left, y: ce.top - c.top + ce.height / 2 + o * 46 };
+            a = { x: ap.right - c.left + 14, y: ap.top - c.top + ap.height / 2 + o * 30 };
+            b = { x: ce.left - c.left - 14, y: ce.top - c.top + ce.height / 2 + o * 46 };
             m = a.x + (b.x - a.x) * (.28 + i * .14);
             rotas.push({ pts: [a, { x: m, y: a.y }, { x: m, y: b.y }, b], cor: i < 2 ? 'mel' : 'grafite', n: 2, dur: 2.6 + i * .35 });
           } else {
-            a = { x: ap.left - c.left + ap.width / 2 + o * 44, y: ap.bottom - c.top };
-            b = { x: ce.left - c.left + ce.width / 2 + o * 30, y: ce.top - c.top };
+            a = { x: ap.left - c.left + ap.width / 2 + o * 44, y: ap.bottom - c.top + 14 };
+            b = { x: ce.left - c.left + ce.width / 2 + o * 30, y: ce.top - c.top - 14 };
             m = a.y + (b.y - a.y) * (.25 + i * .15);
             rotas.push({ pts: [a, { x: a.x, y: m }, { x: b.x, y: m }, b], cor: o > 0 ? 'mel' : 'grafite', n: 1, dur: 2 + i * .3 });
           }
