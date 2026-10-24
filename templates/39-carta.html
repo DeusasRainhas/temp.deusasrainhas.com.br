@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="pt-BR" data-template="39">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 39 Carta</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       39 Carta · mínimo · N0 / C4 / R6
+       O hero é uma carta ao apicultor, em serifa, sobre papel, assinada
+       pela equipe. Cada linha aparece por uma máscara que desliza da
+       esquerda para a direita, como tinta saindo da caneta.
+       Regras que todo template segue:
+       - nada de opacity < 1 fora do gsap.matchMedia (texto "apagado" usa cor);
+       - canto inferior direito livre (pílula do switcher).
+       ================================================================= */
+
+    :root {
+      --nav-h: 76px;
+      --hex-w: 300px;
+      --cartao-pad: clamp(28px, 6vw, 88px);
+    }
+    @media (max-width: 767px) { :root { --nav-h: 68px; --hex-w: min(300px, calc(100vw - 64px)); } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 2px solid var(--petroleo); outline-offset: 2px;
+    }
+
+    /* ---------- N0: barra superior fixa, logo à esquerda, CTA à direita ---------- */
+    .barra {
+      position: sticky; top: 0; z-index: 50; height: var(--nav-h);
+      background: var(--creme); border-bottom: var(--bd);
+    }
+    .barra__linha { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: var(--sp-5); }
+    .marca img { width: 60px; height: 60px; }
+    .barra__acoes { display: flex; align-items: center; gap: var(--sp-5); }
+    .barra__acoes .dr-btn { padding: 10px 18px; font-size: var(--fs-small); }
+    .barra__acoes .dr-btn--link { font-size: var(--fs-small); }
+    @media (max-width: 599px) { .barra__acoes .dr-btn--link { display: none; } }
+
+    /* ---------- Hero: a carta ---------- */
+    [data-secao="hero"] { padding-block: clamp(24px, 4vh, 48px) var(--sp-8); }
+    .folha {
+      position: relative; max-width: 800px; margin-inline: auto;
+      background: var(--creme-papel);
+      padding: clamp(32px, 5.5vw, 72px) clamp(24px, 7vw, 96px) clamp(32px, 5vw, 64px);
+      box-shadow: 0 1px 0 var(--linha), 0 24px 60px -28px rgba(78,52,46,.28);
+      border-radius: 2px;
+    }
+    .folha__topo {
+      display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--sp-2) var(--sp-5);
+      font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--terra);
+      padding-bottom: var(--sp-5); border-bottom: 1px solid var(--linha);
+    }
+    .folha__topo .dr-eyebrow { font-size: 11px; }
+    .carta h1 {
+      margin-top: clamp(24px, 4vh, 40px);
+      font-family: var(--serif); font-weight: 500;
+      font-size: clamp(32px, 4.2vw, 50px); line-height: 1.1; letter-spacing: -.018em;
+      color: var(--terra-escura); text-wrap: balance;
+    }
+    .carta__corpo { margin-top: var(--sp-5); display: grid; gap: var(--sp-4); }
+    .carta__corpo p {
+      font-family: var(--serif); font-size: clamp(18px, 1.55vw, 21px); line-height: 1.6; color: var(--corpo);
+    }
+    .carta__acoes { margin-top: var(--sp-6); display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+    .assinatura {
+      margin-top: clamp(28px, 4vh, 44px); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-4);
+      align-items: center;
+    }
+    .assinatura img { width: 56px; height: 56px; }
+    .assinatura__nome { font-family: var(--serif); font-style: italic; font-size: 28px; line-height: 1.1; color: var(--terra-escura); }
+    .assinatura__equipe {
+      margin-top: var(--sp-1); font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--terra); line-height: 1.6;
+    }
+
+    .anexo { max-width: 800px; margin: var(--sp-7) auto 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--sp-5); align-items: end; }
+    .anexo img { width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; border-radius: var(--r-md); }
+    .anexo figcaption { font-family: var(--serif); font-style: italic; font-size: var(--fs-body-lg); color: var(--terra); }
+    @media (max-width: 599px) { .anexo { grid-template-columns: minmax(0, 1fr); } }
+
+    /* Escrita: a máscara só existe enquanto o movimento está ligado. */
+    .linha { display: block; }
+    .escrevendo .linha {
+      -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--m, 0%) - 4%), transparent calc(var(--m, 0%) + 4%));
+              mask-image: linear-gradient(90deg, #000 calc(var(--m, 0%) - 4%), transparent calc(var(--m, 0%) + 4%));
+    }
+
+    /* ---------- R6: seções como cartões de canto r-xl sobre o creme ---------- */
+    .secao { padding-block: var(--sp-3); scroll-margin-top: calc(var(--nav-h) + 12px); }
+    .cartao {
+      max-width: 1240px; margin-inline: auto; background: var(--creme-papel);
+      border-radius: var(--r-xl); padding: var(--cartao-pad);
+    }
+    .pagina { padding-inline: 16px; }
+    @media (min-width: 768px) { .pagina { padding-inline: 32px; } }
+    .cartao--branco { background: var(--branco); box-shadow: inset 0 0 0 1px var(--linha); }
+
+    .cabeca { max-width: 640px; }
+    .cabeca .dr-eyebrow { margin-bottom: var(--sp-4); }
+    .cabeca h2 {
+      font-family: var(--serif); font-weight: 500;
+      font-size: clamp(30px, 3.4vw, 44px); line-height: 1.12; letter-spacing: -.012em; color: var(--terra-escura);
+      text-wrap: balance;
+    }
+    .cabeca .intro { margin-top: var(--sp-4); font-family: var(--serif); font-size: var(--fs-body-lg); line-height: 1.6; }
+    .cabeca--centro { margin-inline: auto; text-align: center; }
+    .cabeca + * { margin-top: var(--sp-8); }
+    @media (max-width: 767px) { .cabeca + * { margin-top: var(--sp-7); } }
+
+    /* ---------- C4: hexágonos (clip-path), conteúdo centralizado ---------- */
+    .hex {
+      width: var(--hex-w); flex: 0 0 var(--hex-w); align-self: start; aspect-ratio: 1 / 1.1547;
+      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+      background: var(--branco);
+      display: grid; place-content: center; justify-items: center; text-align: center;
+      padding: 0 calc(var(--hex-w) * .12);
+    }
+    .hex .dr-icone { color: var(--petroleo); margin-bottom: var(--sp-3); }
+    .hex .dr-h4 { font-size: 17px; line-height: 1.25; margin-bottom: var(--sp-2); }
+    .hex .dr-body { font-size: 14.5px; line-height: 1.5; }
+    .colmeia { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    /* Desktop largo: favo de verdade, linhas encaixadas com meio hexágono de deslocamento. */
+    @media (min-width: 1100px) {
+      .colmeia--6 { display: grid; grid-template-columns: repeat(7, calc(var(--hex-w) / 2 + 4px)); justify-content: center; gap: 0; }
+      .colmeia--6 > li:nth-child(1) { grid-column: 1 / 3; }
+      .colmeia--6 > li:nth-child(2) { grid-column: 3 / 5; }
+      .colmeia--6 > li:nth-child(3) { grid-column: 5 / 7; }
+      .colmeia--6 > li:nth-child(4) { grid-column: 2 / 4; }
+      .colmeia--6 > li:nth-child(5) { grid-column: 4 / 6; }
+      .colmeia--6 > li:nth-child(6) { grid-column: 6 / 8; }
+      .colmeia--4 { display: grid; grid-template-columns: repeat(5, calc(var(--hex-w) / 2 + 4px)); justify-content: center; gap: 0; }
+      .colmeia--4 > li:nth-child(1) { grid-column: 1 / 3; }
+      .colmeia--4 > li:nth-child(2) { grid-column: 3 / 5; }
+      .colmeia--4 > li:nth-child(3) { grid-column: 2 / 4; }
+      .colmeia--4 > li:nth-child(4) { grid-column: 4 / 6; }
+      .colmeia--6 > li:nth-child(n+4), .colmeia--4 > li:nth-child(n+3) { margin-top: calc(var(--hex-w) * -0.2887 + 8px); }
+    }
+    /* Celular: hexágonos de topo plano, que empilham lado com lado, sem vãos. */
+    @media (max-width: 767px) {
+      .colmeia--6, .colmeia--4 { gap: 6px; }
+      .colmeia--6 .hex, .colmeia--4 .hex {
+        aspect-ratio: 1.1547 / 1;
+        clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+        padding: 0 calc(var(--hex-w) * .15);
+      }
+      .colmeia--6 .hex .dr-icone, .colmeia--4 .hex .dr-icone { margin-bottom: var(--sp-2); }
+    }
+    /* Prova: hexágonos menores, valor em destaque */
+    .colmeia--prova { --hex-w: 220px; }
+    .colmeia--prova .hex { padding: 0 calc(var(--hex-w) * .1); }
+    .stat__valor { font-family: var(--serif); font-weight: 500; font-size: 44px; line-height: 1; color: var(--terra-escura); }
+    .colmeia--prova .dr-small { margin-top: var(--sp-2); color: var(--corpo); }
+    @media (max-width: 599px) {
+      .colmeia--prova { --hex-w: calc((100vw - 32px - 2 * var(--cartao-pad) - 8px) / 2); }
+      .stat__valor { font-size: 30px; }
+      .colmeia--prova .dr-small { font-size: 12.5px; line-height: 1.35; }
+      .colmeia--prova .hex { padding: 0 calc(var(--hex-w) * .08); }
+    }
+
+    /* Problema */
+    .problema { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-8); align-items: start; }
+    .problema__valor { display: block; font-family: var(--serif); font-size: clamp(88px, 10vw, 140px); line-height: .9; color: var(--terra-escura); letter-spacing: -.03em; }
+    .problema__texto { margin-top: var(--sp-4); font-family: var(--serif); font-size: var(--fs-body-lg); line-height: 1.55; max-width: 28ch; color: var(--corpo); }
+    .consequencias { display: grid; gap: var(--sp-5); }
+    .consequencias li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-4); padding-bottom: var(--sp-5); border-bottom: 1px solid var(--linha); }
+    .consequencias .dr-icone { color: var(--terra); margin-top: 3px; }
+    @media (max-width: 899px) { .problema { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } }
+
+    /* Como funciona */
+    .passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-6); }
+    .passo__numero { font-family: var(--serif); font-style: italic; font-size: 40px; color: var(--terra-clara); line-height: 1; }
+    .passo .dr-h4 { margin-block: var(--sp-3) var(--sp-2); }
+    .passo figure { margin-top: var(--sp-5); }
+    .passo img { width: 100%; max-width: 240px; height: auto; max-height: 380px; object-fit: cover; object-position: top; border-radius: var(--r-lg); box-shadow: var(--sh-md); background: var(--branco); }
+    .passo figcaption { margin-top: var(--sp-3); max-width: 240px; }
+    @media (max-width: 899px) { .passos { grid-template-columns: minmax(0, 1fr); gap: var(--sp-7); } }
+
+    /* Para quem */
+    .perfis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-6); }
+    .perfis h3 { font-family: var(--serif); font-weight: 500; font-size: 26px; color: var(--terra-escura); margin-bottom: var(--sp-3); }
+    .perfis p { font-family: var(--serif); font-size: var(--fs-body-lg); line-height: 1.55; }
+    @media (max-width: 899px) { .perfis { grid-template-columns: minmax(0, 1fr); } }
+
+    /* Tecnologia */
+    .tecnologia .cabeca { margin-inline: auto; text-align: center; }
+
+    /* Equipe */
+    .equipe { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-8); }
+    .equipe .cabeca + * { margin-top: 0; }
+    .origem { margin-top: var(--sp-5); font-family: var(--serif); font-size: clamp(19px, 1.6vw, 22px); line-height: 1.55; color: var(--corpo); }
+    .pessoas { display: grid; gap: var(--sp-5); }
+    .pessoa { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
+    .pessoa img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; }
+    .pessoa .dr-h4 { font-family: var(--serif); font-weight: 500; font-size: 22px; color: var(--terra-escura); }
+    .apoios { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin-top: var(--sp-7); padding-top: var(--sp-6); border-top: 1px solid var(--linha); }
+    .apoio { display: grid; justify-items: start; gap: var(--sp-2); }
+    .apoio__logo { display: grid; place-items: center; height: 68px; padding: var(--sp-3) var(--sp-4); border-radius: var(--r-md); background: var(--branco); }
+    .apoio[data-fundo="escuro"] .apoio__logo { background: var(--grafite); }
+    .apoio__logo img { max-height: 44px; width: auto; max-width: 132px; }
+    .apoio__nome { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--terra); }
+    @media (max-width: 899px) { .equipe { grid-template-columns: minmax(0, 1fr); gap: var(--sp-7); } }
+
+    /* Depoimento: um bilhete de resposta */
+    .bilhete { max-width: 760px; margin-inline: auto; text-align: center; }
+    .bilhete blockquote { margin: 0; }
+    .bilhete .dr-quote { font-size: clamp(24px, 2.8vw, 36px); line-height: 1.35; color: var(--terra-escura); text-wrap: balance; }
+    .bilhete figcaption { margin-top: var(--sp-6); display: inline-grid; grid-template-columns: 56px auto; gap: var(--sp-4); align-items: center; text-align: left; }
+    .bilhete img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+    .bilhete__nome { display: block; font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--terra-escura); }
+
+    /* Contato: responder a carta */
+    .contato { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-8); }
+    .form { display: grid; gap: var(--sp-5); }
+    .campo { display: grid; gap: var(--sp-1); }
+    .campo label { font-family: var(--serif); font-style: italic; font-size: var(--fs-body-lg); color: var(--terra); }
+    .campo input, .campo textarea {
+      font-family: var(--serif); font-size: 20px; color: var(--ink);
+      background: transparent; border: 0; border-bottom: 1px solid var(--linha-forte); border-radius: 0;
+      padding: var(--sp-2) 0; width: 100%;
+    }
+    .campo input:focus, .campo textarea:focus { outline: none; border-bottom-color: var(--terra-escura); }
+    .campo textarea {
+      min-height: 160px; resize: vertical; line-height: 40px; border-bottom: 0;
+      background: repeating-linear-gradient(transparent 0 39px, var(--linha-forte) 39px 40px);
+    }
+    .form .dr-btn { justify-self: start; }
+    .canais { display: grid; gap: var(--sp-4); }
+    .canais li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-3); align-items: center; }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-family: var(--serif); font-size: 20px; overflow-wrap: anywhere; text-underline-offset: 4px; }
+    .contato-acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+    @media (max-width: 899px) { .contato { grid-template-columns: minmax(0, 1fr); gap: var(--sp-7); } }
+
+    /* Rodapé */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 104px; margin-top: var(--sp-3); }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) {
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N0 · barra fixa, logo à esquerda, CTA à direita) -->
+  <nav data-secao="nav" class="barra">
+    <div class="dr-container barra__linha">
+      <a class="marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="60" height="60"></a>
+      <div class="barra__acoes">
+        <a class="dr-btn dr-btn--link" href="#contato" data-c="contato.titulo"></a>
+        <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="pagina">
+
+    <!-- SEÇÃO: hero (carta ao apicultor, em serifa, sobre papel, assinada pela equipe) -->
+    <section data-secao="hero" id="inicio">
+      <article class="folha carta">
+        <header class="folha__topo">
+          <span class="dr-eyebrow" data-c="hero.eyebrow"></span>
+          <span><span data-c="rodape.endereco"></span>, <time data-hoje></time></span>
+        </header>
+        <h1 data-escrita data-c="hero.titulo"></h1>
+        <div class="carta__corpo">
+          <p data-escrita data-c="hero.subtitulo"></p>
+          <p data-escrita data-c="equipe.origem"></p>
+        </div>
+        <div class="carta__acoes" data-depois>
+          <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+          <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+          <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+        </div>
+        <footer class="assinatura">
+          <img src="../img/logos/logo-abelha-cor.png" alt="" width="56" height="56">
+          <div>
+            <p class="assinatura__nome" data-escrita data-c="marca.nome"></p>
+            <p class="assinatura__equipe">
+              <span data-c="equipe.pessoas[0].nome"></span> ·
+              <span data-c="equipe.pessoas[1].nome"></span> ·
+              <span data-c="equipe.pessoas[2].nome"></span>
+            </p>
+          </div>
+        </footer>
+      </article>
+      <figure class="anexo">
+        <img data-c-src="hero.imagem" data-c-alt="hero.imagemAlt" alt="" width="1600" height="1000">
+        <figcaption data-c="hero.imagemAlt"></figcaption>
+      </figure>
+    </section>
+
+    <!-- SEÇÃO: prova -->
+    <section data-secao="prova" class="secao">
+      <div class="cartao">
+        <ul class="colmeia colmeia--prova" data-c-lista="prova.stats" data-sobe-filhos>
+          <template>
+            <li class="hex">
+              <span class="stat__valor" data-c="valor"></span>
+              <p class="dr-small" data-c="rotulo"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: problema -->
+    <section data-secao="problema" class="secao">
+      <div class="cartao">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+          <h2 data-escrita data-c="problema.titulo"></h2>
+        </header>
+        <div class="problema">
+          <div>
+            <span class="problema__valor" data-c="problema.estatistica.valor"></span>
+            <p class="problema__texto" data-c="problema.estatistica.texto"></p>
+          </div>
+          <ul class="consequencias" data-c-lista="problema.consequencias" data-sobe-filhos>
+            <template>
+              <li>
+                <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+                <p class="dr-body-lg" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades -->
+    <section data-secao="funcionalidades" class="secao" id="funcionalidades">
+      <div class="cartao">
+        <header class="cabeca cabeca--centro">
+          <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+          <h2 data-escrita data-c="funcionalidades.titulo"></h2>
+        </header>
+        <ul class="colmeia colmeia--6" data-c-lista="funcionalidades.itens" data-sobe-filhos>
+          <template>
+            <li class="hex">
+              <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona -->
+    <section data-secao="como-funciona" class="secao" id="como-funciona">
+      <div class="cartao cartao--branco">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+          <h2 data-escrita data-c="comoFunciona.titulo"></h2>
+        </header>
+        <ol class="passos" data-c-lista="comoFunciona.passos" data-sobe-filhos>
+          <template>
+            <li class="passo">
+              <span class="passo__numero" data-c="numero"></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <figure>
+                <img data-c-src="imagem" data-c-alt="alt" alt="" loading="lazy">
+                <figcaption class="dr-caption" data-c="alt"></figcaption>
+              </figure>
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem -->
+    <section data-secao="para-quem" class="secao" id="para-quem">
+      <div class="cartao">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+          <h2 data-escrita data-c="paraQuem.titulo"></h2>
+        </header>
+        <ul class="perfis" data-c-lista="paraQuem.perfis" data-sobe-filhos>
+          <template>
+            <li>
+              <h3 data-c="titulo"></h3>
+              <p data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia -->
+    <section data-secao="tecnologia" class="secao tecnologia">
+      <div class="cartao">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+          <h2 data-escrita data-c="tecnologia.titulo"></h2>
+          <p class="intro" data-c="tecnologia.texto"></p>
+        </header>
+        <ul class="colmeia colmeia--4" data-c-lista="tecnologia.pilares" data-sobe-filhos>
+          <template>
+            <li class="hex">
+              <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe -->
+    <section data-secao="equipe" class="secao" id="equipe">
+      <div class="cartao cartao--branco">
+        <div class="equipe">
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+            <h2 data-escrita data-c="equipe.titulo"></h2>
+            <p class="origem" data-c="equipe.origem"></p>
+          </header>
+          <div>
+            <ul class="pessoas" data-c-lista="equipe.pessoas" data-sobe-filhos>
+              <template>
+                <li class="pessoa">
+                  <img data-c-src="foto" data-c-alt="alt" alt="" width="72" height="72" loading="lazy">
+                  <div>
+                    <h3 class="dr-h4" data-c="nome"></h3>
+                    <p class="dr-small" data-c="cargo"></p>
+                  </div>
+                </li>
+              </template>
+            </ul>
+            <!-- Centelha só funciona no escuro: placa grafite. -->
+            <ul class="apoios" data-c-lista="equipe.apoios">
+              <template>
+                <li class="apoio">
+                  <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt="" loading="lazy"></span>
+                  <span class="apoio__nome" data-c="nome"></span>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento -->
+    <section data-secao="depoimento" class="secao">
+      <div class="cartao">
+        <figure class="bilhete">
+          <blockquote><p class="dr-quote" data-escrita data-c="depoimento.citacao"></p></blockquote>
+          <figcaption>
+            <img data-c-src="depoimento.foto" alt="" width="56" height="56" loading="lazy">
+            <span>
+              <span class="bilhete__nome" data-c="depoimento.nome"></span>
+              <span class="dr-small" data-c="depoimento.local"></span>
+            </span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" class="secao" id="contato">
+      <div class="cartao cartao--branco">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+          <h2 data-escrita data-c="contato.titulo"></h2>
+          <p class="intro" data-c="contato.texto"></p>
+        </header>
+        <div class="contato">
+          <form class="form" method="post" data-form-contato>
+            <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+            <div class="campo">
+              <label for="f-nome" data-c="contato.form.nome"></label>
+              <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+            </div>
+            <div class="campo">
+              <label for="f-email" data-c="contato.form.email"></label>
+              <input id="f-email" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="campo">
+              <label for="f-msg" data-c="contato.form.mensagem"></label>
+              <textarea id="f-msg" name="mensagem" rows="4" required></textarea>
+            </div>
+            <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+          </form>
+          <div>
+            <ul class="canais">
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <a data-mailto data-c="contato.email"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+              </li>
+            </ul>
+            <div class="contato-acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '../img/icones/sprite-icones.svg#';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+
+      /* Divide um parágrafo em <span class="linha"> (uma por linha renderizada),
+         mantendo o texto inteiro para leitores de tela. Mesmo método do 01. */
+      function dividirLinhas(p) {
+        var texto = p.textContent;
+        p.textContent = '';
+        var palavras = [];
+        texto.split(/(\s+)/).forEach(function (pedaco) {
+          if (!pedaco) return;
+          if (/^\s+$/.test(pedaco)) { p.appendChild(document.createTextNode(' ')); return; }
+          var s = document.createElement('span');
+          s.textContent = pedaco;
+          p.appendChild(s);
+          palavras.push(s);
+        });
+        var grupos = [], topo = null;
+        palavras.forEach(function (s) {
+          var t = s.getBoundingClientRect().top;
+          if (topo === null || Math.abs(t - topo) > 3) grupos.push([]);
+          grupos[grupos.length - 1].push(s.textContent);
+          topo = t;
+        });
+        p.textContent = '';
+        var linhas = grupos.map(function (g) {
+          var l = document.createElement('span');
+          l.className = 'linha';
+          l.setAttribute('aria-hidden', 'true');
+          l.textContent = g.join(' ');
+          p.appendChild(l);
+          return l;
+        });
+        var leitor = document.createElement('span');
+        leitor.className = 'dr-sr-only';
+        leitor.textContent = texto;
+        p.appendChild(leitor);
+        return { linhas: linhas, reverter: function () { p.textContent = texto; } };
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) {
+          if (email) a.setAttribute('href', 'mailto:' + email.v);
+        });
+        document.querySelectorAll('[data-ano]').forEach(function (el) {
+          el.textContent = '© ' + new Date().getFullYear();
+        });
+        document.querySelectorAll('[data-hoje]').forEach(function (el) {
+          var hoje = new Date();
+          el.setAttribute('datetime', hoje.toISOString().slice(0, 10));
+          el.textContent = hoje.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+        });
+
+        /* ---- Movimento: a máscara desliza e a carta se escreve ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function (ctx) {
+          var raiz = document.documentElement;
+          var vivo = true;
+          var divididos = [];
+          var largura = window.innerWidth;
+          var carta = document.querySelector('.carta');
+          var hero = Array.prototype.slice.call(carta.querySelectorAll('[data-escrita]'));
+
+          // Enquanto as fontes não chegam, a carta espera em branco (no máximo 350ms).
+          gsap.set(hero, { autoAlpha: 0 });
+          gsap.set(carta.querySelectorAll('[data-depois]'), { autoAlpha: 0 });
+
+          function escrever(p, opcoes) {
+            var d = dividirLinhas(p);
+            gsap.set(d.linhas, { '--m': '0%' });
+            var tw = gsap.to(d.linhas, Object.assign({ '--m': '108%', ease: 'none' }, opcoes));
+            divididos.push({ d: d, tw: tw });
+            return d;
+          }
+
+          var esperaFontes = Promise.race([
+            document.fonts ? document.fonts.ready : Promise.resolve(),
+            new Promise(function (r) { setTimeout(r, 350); })
+          ]);
+          esperaFontes.then(function () {
+            if (!vivo) return;
+            ctx.add(function () {
+              raiz.classList.add('escrevendo');
+              gsap.set(hero, { autoAlpha: 1 });
+              // Hero: linha após linha, cada uma escrita da esquerda para a direita.
+              // Orçamento fixo de 1,05s para a carta inteira, qualquer que seja o número
+              // de linhas: a captura da miniatura acontece 1,5s depois da carga.
+              var tl = gsap.timeline();
+              var todas = [];
+              hero.forEach(function (p) {
+                var d = dividirLinhas(p);
+                gsap.set(d.linhas, { '--m': '0%' });
+                todas = todas.concat(d.linhas);
+                divididos.push({ d: d, tw: tl });
+              });
+              var dur = 0.26;
+              var passo = todas.length > 1 ? (1.05 - dur) / (todas.length - 1) : 0;
+              todas.forEach(function (l, i) {
+                tl.to(l, { '--m': '108%', duration: dur, ease: 'power1.inOut' }, i * passo);
+              });
+              tl.to(carta.querySelectorAll('[data-depois]'), { autoAlpha: 1, duration: 0.35, ease: 'power1.out' }, 0.6);
+
+              // Resto da página: títulos e a citação se escrevem ao entrar na tela.
+              gsap.utils.toArray('main [data-escrita]').forEach(function (p) {
+                if (carta.contains(p)) return;
+                escrever(p, {
+                  duration: 0.55, stagger: 0.22,
+                  scrollTrigger: { trigger: p, start: 'top 85%', once: true }
+                });
+              });
+            });
+          });
+
+          gsap.utils.toArray('[data-sobe-filhos]').forEach(function (lista) {
+            gsap.from(lista.querySelectorAll(':scope > li'), {
+              autoAlpha: 0, y: 16, duration: 0.6, ease: 'power2.out', stagger: 0.08,
+              scrollTrigger: { trigger: lista, start: 'top 85%', once: true }
+            });
+          });
+
+          // Se a largura mudar, as linhas medidas deixam de valer: volta ao texto corrido.
+          function aoRedimensionar() {
+            if (window.innerWidth === largura) return;
+            largura = window.innerWidth;
+            divididos.forEach(function (x) {
+              if (x.tw.scrollTrigger) x.tw.scrollTrigger.kill();
+              x.tw.progress(1);
+              x.d.reverter();
+            });
+            divididos = [];
+            ScrollTrigger.refresh();
+          }
+          window.addEventListener('resize', aoRedimensionar);
+
+          return function () {
+            vivo = false;
+            window.removeEventListener('resize', aoRedimensionar);
+            raiz.classList.remove('escrevendo');
+            divididos.forEach(function (x) { x.d.reverter(); });
+            divididos = [];
+          };
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
