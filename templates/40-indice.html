@@ -289,7 +289,7 @@
           <li><a href="#contato" data-previa="6"><span class="sumario__nome" data-c="contato.eyebrow"></span><span class="sumario__titulo" data-c="contato.titulo"></span></a></li>
         </ol>
         <figure class="vitrine">
-          <img data-c-src="hero.imagem" data-c-alt="hero.imagemAlt" alt="" width="1600" height="1000" loading="lazy">
+          <img data-c-src="hero.imagem" data-c-alt="hero.imagemAlt" alt="" width="1600" height="1000">
           <figcaption class="dr-caption" data-c="hero.imagemAlt"></figcaption>
         </figure>
       </div>
@@ -301,7 +301,7 @@
         <img data-c-src="depoimento.foto" alt="">
         <img data-c-src="comoFunciona.passos[2].imagem" alt="">
         <img data-c-src="equipe.pessoas[0].foto" alt="">
-        <img src="../img/app/banner_App.png" alt="" loading="lazy">
+        <img data-c-src="depoimento.foto" alt="">
       </div>
     </section>
 
@@ -587,15 +587,49 @@
       }
 
       /* Prévia do sumário. Cursor: segue o ponteiro (com atraso suave se houver movimento).
-         Toque: o primeiro toque num item mostra a prévia ao lado dele; o segundo navega. */
+         Toque: o primeiro toque num item mostra a prévia numa vaga fixa logo abaixo do
+         sumário (nunca sobre os itens nem sobre os CTAs); o segundo toque navega. */
       function ligarPrevia() {
         var previa = document.querySelector('.previa');
         var imgs = previa.querySelectorAll('img');
         var itens = document.querySelectorAll('.sumario a');
         var tocado = null;
         var segueX, segueY;
+        var sumario = document.querySelector('.sumario');
+        // Centro da prévia sempre dentro da janela, com 16px de folga.
+        function preso(x, y) {
+          var w = previa.offsetWidth, h = previa.offsetHeight;
+          return [
+            Math.min(Math.max(x, w / 2 + 16), window.innerWidth - w / 2 - 16),
+            Math.min(Math.max(y, h / 2 + 16), window.innerHeight - h / 2 - 16)
+          ];
+        }
+        // À direita do cursor; perto da borda direita, troca para a esquerda dele.
+        function aoLado(cx) {
+          var w = previa.offsetWidth;
+          return cx + 150 + w / 2 > window.innerWidth - 16 ? cx - 150 : cx + 150;
+        }
         function moverPara(x, y) {
-          if (segueX) { segueX(x); segueY(y); } else { previa.style.left = x + 'px'; previa.style.top = y + 'px'; }
+          previa.style.position = 'fixed';
+          var c = preso(x, y);
+          if (segueX) { segueX(c[0]); segueY(c[1]); } else { previa.style.left = c[0] + 'px'; previa.style.top = c[1] + 'px'; }
+        }
+        // Toque: a prévia sai do fluxo fixo e ocupa a vaga sob o sumário, em coordenadas da página.
+        function naVaga() {
+          var w = previa.offsetWidth, h = previa.offsetHeight;
+          // Alinhada à esquerda do sumário: o canto inferior direito é do switcher.
+          var rs = sumario.getBoundingClientRect();
+          var x = rs.left + w / 2;
+          var y = rs.bottom + window.scrollY + 16 + h / 2;
+          previa.style.position = 'absolute';
+          if (window.gsap) {
+            gsap.killTweensOf(previa, 'x,y');
+            gsap.set(previa, { x: x, y: y });
+          } else { previa.style.left = x + 'px'; previa.style.top = y + 'px'; }
+          var fundo = rs.bottom + 16 + h;   // base da vaga na janela, já com a escala final 1
+          if (fundo > window.innerHeight - 24) {
+            window.scrollBy({ top: fundo - window.innerHeight + 24, behavior: reduzido.matches ? 'auto' : 'smooth' });
+          }
         }
         function escolher(i) {
           imgs.forEach(function (img, k) { img.classList.toggle('ativa', k === i); });
@@ -634,13 +668,13 @@
           a.addEventListener('pointerenter', function (e) {
             if (e.pointerType !== 'mouse') return;
             escolher(i);
-            moverPara(e.clientX + 150, e.clientY);
+            moverPara(aoLado(e.clientX), e.clientY);
             mostrar();
           });
           a.addEventListener('pointermove', function (e) {
             if (e.pointerType !== 'mouse') return;
             // A prévia fica à direita do cursor, para não cobrir o nome do item.
-            moverPara(e.clientX + 150, e.clientY);
+            moverPara(aoLado(e.clientX), e.clientY);
           });
           a.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') esconder(); });
           a.addEventListener('focus', function () {
@@ -658,14 +692,8 @@
               if (tocado) tocado.classList.remove('tocado');
               tocado = a;
               a.classList.add('tocado');
-              var r = a.getBoundingClientRect();
               escolher(i);
-              var w = previa.offsetWidth;
-              // Abaixo do item tocado (ou acima, se não couber), para não cobrir o nome.
-              var h = previa.offsetHeight;
-              var y = r.bottom + 8 + h / 2;
-              if (y + h / 2 > window.innerHeight - 72) y = r.top - 8 - h / 2;
-              moverPara(window.innerWidth - w / 2 - 16, y);
+              naVaga();
               mostrar();
             } else {
               esconder();
@@ -675,7 +703,6 @@
         document.addEventListener('click', function (e) {
           if (tocado && !e.target.closest('.sumario')) esconder();
         });
-        window.addEventListener('scroll', function () { if (tocado) esconder(); }, { passive: true });
       }
 
       document.addEventListener('conteudo:pronto', function () {
