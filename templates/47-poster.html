@@ -27,9 +27,10 @@
       --respiro: var(--sp-9);
       --tinta: var(--terra-escura);
       --tinta-sub: var(--terra);
+      --cartaz-fundo: var(--creme);
     }
     @media (max-width: 1023px) { :root { --nav-h: 68px; --cartaz-w: 48px; --respiro: var(--sp-8); } }
-    body.sobre-escuro { --tinta: var(--creme); --tinta-sub: var(--mel-claro); }
+    body.sobre-escuro { --tinta: var(--creme); --tinta-sub: var(--mel-claro); --cartaz-fundo: var(--grafite); }
 
     h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
     ul, ol { padding: 0; list-style: none; }
@@ -67,7 +68,9 @@
       border-right: 3px solid var(--tinta); pointer-events: none;
       display: flex; align-items: stretch; justify-content: flex-start;
       padding: var(--sp-6) 0 var(--sp-6) var(--sp-6);
-      transition: border-color .3s ease;
+      /* fundo próprio que troca junto com a tinta: o título nunca fica sobre a faixa errada */
+      background: var(--cartaz-fundo);
+      transition: border-color .3s ease, background-color .3s ease;
     }
     .cartaz__titulo {
       writing-mode: vertical-rl; transform: rotate(180deg);

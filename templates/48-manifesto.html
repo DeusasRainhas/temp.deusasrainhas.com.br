@@ -244,13 +244,13 @@
   <nav data-secao="nav" class="trilho">
     <a class="trilho__marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
     <div class="trilho__links">
-      <a href="#problema"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg><span class="trilho__dica" data-c="problema.eyebrow"></span></a>
-      <a href="#funcionalidades"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-favo"></use></svg><span class="trilho__dica" data-c="funcionalidades.eyebrow"></span></a>
-      <a href="#como-funciona"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-revisao"></use></svg><span class="trilho__dica" data-c="comoFunciona.eyebrow"></span></a>
-      <a href="#para-quem"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg><span class="trilho__dica" data-c="paraQuem.eyebrow"></span></a>
-      <a href="#tecnologia"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-drone"></use></svg><span class="trilho__dica" data-c="tecnologia.eyebrow"></span></a>
-      <a href="#equipe"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-rainha"></use></svg><span class="trilho__dica" data-c="equipe.eyebrow"></span></a>
-      <a href="#contato"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="trilho__dica" data-c="contato.eyebrow"></span></a>
+      <a href="#problema"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg><span class="dr-sr-only" data-c="problema.eyebrow"></span><span class="trilho__dica" aria-hidden="true" data-c="problema.eyebrow"></span></a>
+      <a href="#funcionalidades"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-favo"></use></svg><span class="dr-sr-only" data-c="funcionalidades.eyebrow"></span><span class="trilho__dica" aria-hidden="true" data-c="funcionalidades.eyebrow"></span></a>
+      <a href="#como-funciona"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-revisao"></use></svg><span class="dr-sr-only" data-c="comoFunciona.eyebrow"></span><span class="trilho__dica" aria-hidden="true" data-c="comoFunciona.eyebrow"></span></a>
+      <a href="#para-quem"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg><span class="dr-sr-only" data-c="paraQuem.eyebrow"></span><span class="trilho__dica" aria-hidden="true" data-c="paraQuem.eyebrow"></span></a>
+      <a href="#tecnologia"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-drone"></use></svg><span class="dr-sr-only" data-c="tecnologia.eyebrow"></span><span class="trilho__dica" aria-hidden="true" data-c="tecnologia.eyebrow"></span></a>
+      <a href="#equipe"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-rainha"></use></svg><span class="dr-sr-only" data-c="equipe.eyebrow"></span><span class="trilho__dica" aria-hidden="true" data-c="equipe.eyebrow"></span></a>
+      <a href="#contato"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="dr-sr-only" data-c="contato.eyebrow"></span><span class="trilho__dica" aria-hidden="true" data-c="contato.eyebrow"></span></a>
     </div>
     <a class="trilho__cta" data-c-href="cta.baixar.url"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg><span class="dr-sr-only" data-c="cta.baixar.texto"></span></a>
   </nav>
@@ -626,18 +626,18 @@
           var primeiro = gsap.timeline({ delay: 0.15 });
           acender(primeiro, hero[0].palavras, 0.14);
 
-          // Versos 2–4 acendem com a rolagem, com o hero preso na tela enquanto isso.
+          // Versos 2–4 acendem com a rolagem (início em 0,05: em repouso nenhuma palavra fica marcada), com o hero preso na tela enquanto isso.
           var demais = [];
           hero.slice(1).forEach(function (g) { demais = demais.concat(g.palavras); });
           var tlHero = gsap.timeline({
             scrollTrigger: { trigger: '[data-hero]', start: 'top top', end: '+=' + Math.round(window.innerHeight * 1.1), scrub: 0.4, pin: true }
           });
-          acender(tlHero, demais, 0.2);
+          acender(tlHero, demais, 0.2, 0.05);
 
           // Nas seções, cada título e a citação acendem no próprio ritmo de leitura.
           resto.forEach(function (g) {
             var tl = gsap.timeline({ scrollTrigger: { trigger: g.el, start: 'top 85%', end: 'top 45%', scrub: 0.4 } });
-            acender(tl, g.palavras, 0.2);
+            acender(tl, g.palavras, 0.2, 0.05);
           });
 
           // C4: os hexágonos assentam um a um.

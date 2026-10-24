@@ -642,6 +642,16 @@
             definir(g, g.botao.getAttribute('aria-expanded') !== 'true');
           });
         });
+        // Chegada com #ancora (galeria, outra página) ou troca de hash: abre a gaveta e rola até ela.
+        function abrirHash(instantaneo) {
+          var id = decodeURIComponent((location.hash || '').slice(1));
+          if (!id) return;
+          var g = gavetas.filter(function (x) { return x.sec.id === id; })[0];
+          if (!g) return;
+          if (g.botao.getAttribute('aria-expanded') !== 'true') definir(g, true, instantaneo);
+          requestAnimationFrame(function () { g.sec.scrollIntoView({ block: 'start' }); });
+        }
+        window.addEventListener('hashchange', function () { abrirHash(false); });
         // Links para uma seção abrem a gaveta correspondente antes de rolar até ela.
         document.querySelectorAll('a[href^="#"]').forEach(function (a) {
           a.addEventListener('click', function () {
@@ -659,6 +669,7 @@
           // Com movimento: o arquivo começa fechado, exceto a gaveta do hero.
           animar = true;
           gavetas.forEach(function (g, i) { definir(g, i === 0, true); });
+          abrirHash(true);
 
           // As frentes das gavetas entram encaixando, de cima para baixo (≈0,9s).
           gsap.from(gavetas.map(function (g) { return g.botao; }), {
