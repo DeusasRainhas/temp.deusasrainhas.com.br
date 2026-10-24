@@ -8,4 +8,9 @@ def test_fixture_quebrada_falha():
         assert m in r.stdout, r.stdout
 def test_apenas_filtra():
     r = subprocess.run([PY, "scripts/verificar.py", "--templates", "tests/fixtures/templates", "--apenas", "1-1", "--sem-thumbs"], capture_output=True, text=True, cwd=RAIZ)
+    assert r.returncode == 0, r.stdout
     assert "99" not in r.stdout and "01" in r.stdout
+def test_fixtures_boas_passam():
+    r = subprocess.run([PY, "scripts/verificar.py", "--templates", "tests/fixtures/templates", "--apenas", "1-2", "--sem-thumbs"], capture_output=True, text=True, cwd=RAIZ)
+    assert r.returncode == 0, r.stdout
+    assert "OK: 2/2" in r.stdout, r.stdout

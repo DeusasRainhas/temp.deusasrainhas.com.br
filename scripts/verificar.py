@@ -9,6 +9,8 @@ import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from playwright.sync_api import TimeoutError as PlaywrightTimeout
+
 RAIZ = Path(__file__).resolve().parents[1]
 SECOES = ["hero", "prova", "problema", "funcionalidades", "como-funciona",
           "para-quem", "tecnologia", "equipe", "depoimento", "contato", "rodape"]
@@ -39,27 +41,37 @@ def _curto(texto, n=120):
 
 
 def _abrir(page, url):
-    """Navega e espera a hidratação; devolve os slots ainda vazios."""
+    """Navega e espera a hidratação.
+
+    Devolve (hidratou, slots_vazios, erros, requisicoes)."""
     erros, requisicoes = [], []
     page.on("console", lambda m: erros.append(m.text) if m.type == "error" else None)
     page.on("response", lambda r: requisicoes.append((r.url, r.status)) if r.status >= 400 else None)
     page.on("requestfailed", lambda r: requisicoes.append((r.url, r.failure or "falhou")))
+    page.add_init_script(
+        "document.addEventListener('conteudo:pronto', function(){ window.__drPronto = true; });")
     page.goto(url, wait_until="load")
-    page.wait_for_function(PRONTO, timeout=10000)
+    try:
+        page.wait_for_function(
+            "window.__drPronto === true && document.readyState === 'complete'", timeout=10000)
+    except PlaywrightTimeout:
+        return False, [], erros, requisicoes
     vazios = []
-    for _ in range(12):
+    for _ in range(4):
         vazios = page.evaluate(SLOTS_VAZIOS)
         if not vazios:
             break
         page.wait_for_timeout(250)
-    return vazios, erros, requisicoes
+    return True, vazios, erros, requisicoes
 
 
 def verificar_template(page, url, viewport_nome="desktop", thumb=None):
     """Roda as checagens num viewport; devolve a lista de motivos (vazia se ok)."""
     motivos = []
     try:
-        vazios, erros, requisicoes = _abrir(page, url)
+        hidratou, vazios, erros, requisicoes = _abrir(page, url)
+        if not hidratou:
+            motivos.append("hidratacao nao concluiu")
         for caminho in dict.fromkeys(vazios):
             motivos.append(f"slot vazio ou inexistente: {caminho}")
         for nome in SECOES:
@@ -87,10 +99,39 @@ def verificar_template(page, url, viewport_nome="desktop", thumb=None):
     return motivos
 
 
+MEDIR_MOVIMENTO = """() => {
+  const saida = [];
+  const iw = window.innerWidth;
+  document.querySelectorAll('[data-secao]').forEach(sec => {
+    const nome = sec.getAttribute('data-secao');
+    const r = sec.getBoundingClientRect();
+    saida.push({tipo: 'sec', nome, op: parseFloat(getComputedStyle(sec).opacity),
+                left: r.left, right: r.right, altura: r.height, iw});
+    let n = 0;
+    sec.querySelectorAll('*').forEach(el => {
+      if (n >= 5) return;
+      const proprio = Array.from(el.childNodes)
+        .some(c => c.nodeType === 3 && c.nodeValue.trim() !== '');
+      if (!proprio) return;
+      const cs = getComputedStyle(el);
+      const op = parseFloat(cs.opacity);
+      if (op < 0.9 || cs.visibility === 'hidden') {
+        n++;
+        saida.push({tipo: 'el', nome, op, tag: el.localName,
+                    classe: el.classList.length ? el.classList[0] : ''});
+      }
+    });
+  });
+  return saida;
+}"""
+
+
 def verificar_movimento_reduzido(page, url):
     motivos = []
     try:
-        _abrir(page, url)
+        hidratou = _abrir(page, url)[0]
+        if not hidratou:
+            motivos.append("reduced-motion: hidratacao nao concluiu")
         altura = page.evaluate("document.documentElement.scrollHeight")
         y = 0
         while True:
@@ -99,14 +140,15 @@ def verificar_movimento_reduzido(page, url):
             if y >= altura:
                 break
             y += 600
-        medidas = page.evaluate("""() => Array.from(document.querySelectorAll('[data-secao]')).map(el => {
-          const r = el.getBoundingClientRect();
-          return {nome: el.getAttribute('data-secao'), op: parseFloat(getComputedStyle(el).opacity),
-                  left: r.left, right: r.right, iw: window.innerWidth};
-        })""")
-        for m in medidas:
+        page.wait_for_timeout(300)
+        for m in page.evaluate(MEDIR_MOVIMENTO):
+            if m["tipo"] == "el":
+                motivos.append(f"reduced-motion esconde: {m['nome']} {m['tag']}.{m['classe']} opacity={m['op']}")
+                continue
             if m["op"] < 0.9:
                 motivos.append(f"reduced-motion esconde: {m['nome']} opacity={m['op']}")
+            if m["altura"] == 0:
+                motivos.append(f"reduced-motion esconde: {m['nome']} altura=0")
             if m["right"] > m["iw"] + 1 or m["left"] < -1:
                 motivos.append(f"reduced-motion fora da tela: {m['nome']}")
     except Exception as e:  # noqa: BLE001
