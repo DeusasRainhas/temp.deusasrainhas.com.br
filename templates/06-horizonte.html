@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="pt-BR" data-template="06">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 06 Horizonte</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       06 Horizonte · campo · N1 / C2 / R1
+       Foto full-bleed do campo; o título pousa na linha do horizonte.
+       Três camadas (foto, serra, campo) andam em velocidades diferentes
+       com scrub. A foto é o fundo: quando a foto real chegar, basta trocar
+       hero.imagem; a serra e o campo são véus da marca por cima dela.
+       - nada de opacity < 1 fora do gsap.matchMedia;
+       - canto inferior direito livre (pílula do switcher).
+       ================================================================= */
+
+    :root { --trilho: 76px; --barra-h: 64px; --respiro: var(--sp-9); }
+    @media (max-width: 899px) { :root { --trilho: 0px; --respiro: 64px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible {
+      outline: 2px solid var(--petroleo); outline-offset: 2px;
+    }
+    body { overflow-x: clip; }
+    main, footer { margin-left: var(--trilho); }
+
+    /* ---------- R1: faixas alternando creme e papel ---------- */
+    main > section { padding-block: var(--respiro); scroll-margin-top: var(--sp-5); }
+    .faixa--creme { background: var(--creme); }
+    .faixa--papel { background: var(--creme-papel); border-block: 1px solid var(--linha); }
+    @media (max-width: 899px) { main > section { scroll-margin-top: var(--barra-h); } }
+
+    /* ---------- N1: trilho lateral vertical com ícones do sprite ---------- */
+    .trilho {
+      position: fixed; z-index: 60; inset: 0 auto 0 0; width: var(--trilho);
+      display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
+      padding-block: var(--sp-4) var(--sp-5);
+      background: var(--creme); border-right: 1px solid var(--linha);
+    }
+    .trilho__marca img { width: 60px; height: 60px; }
+    .trilho__links { display: flex; flex-direction: column; gap: var(--sp-1); margin-block: auto; }
+    .trilho__link {
+      position: relative; display: grid; place-items: center; width: 48px; height: 48px;
+      border-radius: var(--r-md); color: var(--terra); text-decoration: none;
+      transition: background-color .2s ease, color .2s ease;
+    }
+    .trilho__link:hover, .trilho__link.ativo { background: var(--mel-veu); color: var(--terra-escura); }
+    .trilho__link.ativo::before {
+      content: ""; position: absolute; left: -14px; top: 12px; bottom: 12px; width: 3px;
+      border-radius: 2px; background: var(--mel);
+    }
+    /* Rótulo do ícone: recortado por clip-path (nunca opacity) e aberto no hover/foco. */
+    .trilho__rotulo {
+      position: absolute; left: calc(100% + 14px); top: 50%; transform: translateY(-50%);
+      white-space: nowrap; padding: 6px 12px; border-radius: var(--r-sm);
+      background: var(--grafite); color: var(--creme);
+      font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase;
+      clip-path: inset(0 100% 0 0); transition: clip-path .25s ease; pointer-events: none;
+    }
+    .trilho__link:hover .trilho__rotulo, .trilho__link:focus-visible .trilho__rotulo { clip-path: inset(0 0 0 0); }
+    .trilho__baixar {
+      display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%;
+      background: var(--mel); color: var(--terra-escura); position: relative;
+    }
+    .trilho__baixar:hover { background: var(--mel-escuro); }
+    .trilho__baixar:hover .trilho__rotulo, .trilho__baixar:focus-visible .trilho__rotulo { clip-path: inset(0 0 0 0); }
+    @media (max-width: 899px) {
+      .trilho {
+        inset: 0 0 auto 0; width: auto; height: var(--barra-h); flex-direction: row;
+        padding: 0 var(--sp-4); border-right: 0; border-bottom: 1px solid var(--linha);
+      }
+      .trilho__marca img { width: 52px; height: 52px; }
+      .trilho__links { flex-direction: row; margin: 0 0 0 auto; gap: 0; }
+      .trilho__link { width: 40px; height: 40px; }
+      .trilho__link.ativo::before { left: 10px; right: 10px; top: auto; bottom: -11px; width: auto; height: 3px; }
+      .trilho__rotulo { display: none; }
+      .trilho__baixar { width: 40px; height: 40px; margin-left: var(--sp-2); }
+    }
+    @media (max-width: 379px) { .trilho__link--extra { display: none; } }
+
+    /* ---------- Hero: foto full-bleed e linha do horizonte ---------- */
+    .horizonte {
+      position: relative; overflow: hidden; isolation: isolate;
+      display: grid; grid-template-rows: minmax(0, 1fr) auto;
+      min-height: max(680px, 100svh); padding: 0 !important;
+      background: var(--mel-veu);
+    }
+    .camada { position: absolute; left: 0; right: 0; pointer-events: none; }
+    .camada--foto { top: -12%; bottom: 20%; z-index: -3; }
+    .camada--foto img { width: 100%; height: 100%; object-fit: cover; object-position: center 40%; }
+    /* véu de luz quente: dá o fim de tarde à foto (e ao placeholder) */
+    .camada--foto::after {
+      content: ""; position: absolute; inset: 0;
+      background:
+        radial-gradient(circle at 72% 78%, rgba(251,224,140,.95) 0, rgba(251,224,140,.55) 9%, rgba(253,239,194,0) 30%),
+        linear-gradient(to bottom, rgba(253,239,194,.82), rgba(255,251,230,.10) 55%, rgba(253,239,194,.55));
+    }
+    .sol {
+      position: absolute; left: 72%; top: 70%; width: 132px; height: 132px; margin: -66px 0 0 -66px;
+      border-radius: 50%; background: var(--mel-claro); box-shadow: 0 0 0 18px rgba(251,224,140,.35);
+    }
+    /* A serra divide a célula do céu com o título: fica sempre colada ao horizonte. */
+    .camada--serra { position: relative; grid-row: 1; grid-column: 1; align-self: end; height: clamp(150px, 22vw, 300px); z-index: -2; }
+    .camada--serra svg { position: absolute; bottom: -2px; left: 0; width: 100%; height: 100%; }
+
+    .ceu {
+      grid-row: 1; grid-column: 1; align-self: end; position: relative; width: 100%;
+      padding-top: calc(var(--sp-9) + var(--sp-5)); padding-bottom: clamp(18px, 2.4vw, 34px);
+    }
+    .ceu .dr-eyebrow { display: inline-flex; align-items: center; gap: var(--sp-3); color: var(--terra-escura); }
+    .ceu .dr-eyebrow::before { content: ""; width: 28px; height: 2px; background: var(--terra-escura); }
+    .horizonte h1 {
+      margin-top: var(--sp-4); max-width: 13ch;
+      font-size: clamp(46px, 7.6vw, 118px); line-height: .94; letter-spacing: -.03em; text-wrap: balance;
+    }
+    .campo {
+      grid-row: 2; position: relative; z-index: 1; color: var(--creme);
+      background: var(--terra-escura);
+    }
+    .campo__crista {
+      position: absolute; left: 0; right: 0; bottom: calc(100% - 1px); height: 120px; pointer-events: none;
+    }
+    .campo__crista svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .campo__conteudo {
+      display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--sp-6) var(--sp-8);
+      align-items: end; padding-block: var(--sp-6) var(--sp-7);
+    }
+    .campo__lede { font-size: clamp(18px, 1.6vw, 21px); line-height: 1.55; color: var(--creme); max-width: 44ch; }
+    .acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+    .campo .dr-btn--secundario { color: var(--creme); border-color: rgba(255,251,230,.45); }
+    .campo .dr-btn--secundario:hover { background: rgba(255,251,230,.10); }
+    .legenda-foto {
+      display: flex; gap: var(--sp-3); align-items: baseline; justify-self: end; max-width: 34ch;
+      font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .08em; line-height: 1.6;
+      color: var(--mel-claro); padding-top: var(--sp-3); border-top: 1px solid rgba(255,251,230,.22);
+    }
+    .legenda-foto svg { flex: none; width: 16px; height: 16px; transform: translateY(3px); }
+    @media (max-width: 899px) {
+      .horizonte { min-height: 0; }
+      .camada--foto { top: -46%; bottom: 36%; }
+      .ceu { padding-top: calc(var(--barra-h) + var(--sp-8)); min-height: 400px; }
+      .campo__conteudo { grid-template-columns: minmax(0, 1fr); padding-block: var(--sp-5) var(--sp-7); }
+      .legenda-foto { justify-self: start; }
+      .campo__crista { height: 64px; }
+      .sol { left: 78%; top: 62%; width: 96px; height: 96px; margin: -48px 0 0 -48px; }
+    }
+
+    /* ---------- Cabeça de seção ---------- */
+    .cabeca { max-width: 720px; }
+    .cabeca .dr-eyebrow { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+    .cabeca .dr-eyebrow::before { content: ""; width: 28px; height: 2px; background: var(--mel); }
+    .cabeca + * { margin-top: var(--sp-7); }
+    .intro { margin-top: var(--sp-4); max-width: 52ch; }
+    @media (max-width: 767px) { .dr-h2 { font-size: 30px; } .cabeca + * { margin-top: var(--sp-6); } }
+
+    /* ---------- C2: tiles sólidos em papel com número grande em mono ---------- */
+    .tiles { display: grid; gap: var(--sp-4); }
+    .tile {
+      background: var(--creme-papel); border-radius: var(--r-md); padding: var(--sp-6);
+      box-shadow: inset 0 0 0 1px var(--linha);
+      display: flex; flex-direction: column; gap: var(--sp-3); min-height: 100%;
+    }
+    .tile__num {
+      font-family: var(--mono); font-weight: 500; font-size: clamp(44px, 4.4vw, 64px);
+      line-height: 1; letter-spacing: -.04em; color: var(--terra-escura); font-variant-numeric: tabular-nums;
+    }
+    .tile__rotulo {
+      font-family: var(--mono); font-size: var(--fs-eyebrow); font-weight: 500; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--terra); line-height: 1.6;
+    }
+    .tiles--prova { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .tiles--prova .tile { justify-content: space-between; min-height: 200px; }
+    .tiles--prova .tile__num::after { content: ""; display: block; width: 28px; height: 3px; margin-top: var(--sp-4); background: var(--mel); }
+    .tiles--seis { grid-template-columns: repeat(3, minmax(0, 1fr)); counter-reset: tile; }
+    .tiles--seis .tile { counter-increment: tile; }
+    .tiles--seis .tile__topo { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--sp-5); }
+    .tiles--seis .tile__topo::before { content: counter(tile, decimal-leading-zero); }
+    .tiles--seis .tile__topo::before, .tiles--tres .tile::before {
+      font-family: var(--mono); font-weight: 500; font-size: clamp(44px, 4.4vw, 64px);
+      line-height: 1; letter-spacing: -.04em; color: var(--terra-escura);
+    }
+    .tile .dr-icone { color: var(--petroleo); }
+    .tiles--tres { grid-template-columns: repeat(3, minmax(0, 1fr)); counter-reset: perfil; }
+    .tiles--tres .tile { counter-increment: perfil; padding-top: var(--sp-7); }
+    .tiles--tres .tile::before { content: counter(perfil, upper-alpha); color: var(--petroleo); margin-bottom: var(--sp-5); }
+    .tiles--tres .dr-h3 { font-family: var(--serif); font-weight: 500; color: var(--terra-escura); }
+    @media (max-width: 1023px) { .tiles--seis, .tiles--tres { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 767px) {
+      .tiles--prova { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tiles--prova .tile { min-height: 168px; padding: var(--sp-5); }
+      .tiles--seis, .tiles--tres { grid-template-columns: minmax(0, 1fr); }
+      .tiles--seis .tile, .tiles--tres .tile { padding: var(--sp-5); }
+    }
+
+    /* ---------- Problema ---------- */
+    .problema { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--sp-8); align-items: start; }
+    .problema__valor {
+      display: block; margin-top: var(--sp-7); font-family: var(--serif); font-weight: 500;
+      font-size: clamp(96px, 13vw, 184px); line-height: .82; letter-spacing: -.04em; color: var(--terra-escura);
+    }
+    .problema__valor + p { margin-top: var(--sp-4); max-width: 30ch; }
+    .linhas-campo > li {
+      display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-4);
+      padding-block: var(--sp-5); border-top: 1px solid var(--linha-forte);
+    }
+    .linhas-campo > li:last-of-type { border-bottom: 1px solid var(--linha-forte); }
+    .linhas-campo .dr-icone { color: var(--erro); margin-top: 3px; }
+    @media (max-width: 899px) { .problema { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } }
+
+    /* ---------- Como funciona: telas pousadas numa linha de horizonte ---------- */
+    .passos { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-7); }
+    .passos::before {
+      content: ""; position: absolute; left: 0; right: 0; top: 400px; height: 1px; background: var(--terra-clara);
+    }
+    .passo__tela { height: 400px; display: flex; align-items: flex-end; justify-content: center; }
+    .passo__tela img {
+      width: 200px; height: auto; max-height: 380px; object-fit: cover; object-position: top;
+      border: 6px solid var(--grafite); border-bottom-width: 0; border-radius: 26px 26px 0 0; background: var(--branco);
+    }
+    .passo__corpo { position: relative; padding-top: var(--sp-5); }
+    .passo__corpo::before {
+      content: ""; position: absolute; top: -6px; left: 0; width: 11px; height: 11px; border-radius: 50%;
+      background: var(--mel); box-shadow: 0 0 0 4px var(--creme-papel);
+    }
+    .passo__num { font-size: var(--fs-small); color: var(--petroleo); letter-spacing: .1em; }
+    .passo .dr-h4 { margin-block: var(--sp-2); }
+    .passo .dr-caption { margin-top: var(--sp-3); color: var(--terra); }
+    @media (max-width: 899px) {
+      .passos { grid-template-columns: minmax(0, 1fr); gap: var(--sp-7); }
+      .passos::before { display: none; }
+      .passo__tela { height: auto; border-bottom: 1px solid var(--terra-clara); }
+      .passo__tela img { max-height: 320px; width: 180px; }
+    }
+
+    /* ---------- Tecnologia ---------- */
+    .tec { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: var(--sp-8); }
+    .pilares { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--sp-7); }
+    .pilares > li { padding-block: var(--sp-5) var(--sp-6); border-top: 1px solid var(--linha-forte); }
+    .pilares .dr-icone { color: var(--petroleo); margin-bottom: var(--sp-4); }
+    .pilares .dr-h4 { margin-bottom: var(--sp-2); }
+    @media (max-width: 899px) {
+      .tec { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); }
+      .pilares { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    /* ---------- Equipe ---------- */
+    .origem { margin-top: var(--sp-5); font-family: var(--serif); font-size: clamp(22px, 2.3vw, 30px); line-height: 1.38; color: var(--terra); max-width: 34ch; }
+    .pessoas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+    .pessoa img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: var(--r-md); background: var(--creme-papel); }
+    .pessoa .dr-h4 { margin-top: var(--sp-4); }
+    .pessoa__cargo { margin-top: var(--sp-1); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .1em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    .apoios {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--sp-5) var(--sp-8);
+      margin-top: var(--sp-8); padding: var(--sp-6); border-radius: var(--r-md); background: var(--grafite);
+    }
+    .apoio { display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
+    .apoio__logo { display: grid; place-items: center; height: 84px; padding: var(--sp-3) var(--sp-4); border-radius: var(--r-sm); }
+    .apoio__logo img { max-height: 60px; width: auto; max-width: 170px; }
+    .apoio[data-fundo="claro"] .apoio__logo { background: var(--creme); }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--mel-claro); }
+    @media (max-width: 767px) {
+      .pessoas { grid-template-columns: minmax(0, 1fr); }
+      .pessoa { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
+      .pessoa .dr-h4 { margin-top: 0; }
+    }
+
+    /* ---------- Depoimento: foto + citação ---------- */
+    .depo { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-8); align-items: center; }
+    .depo__foto { position: relative; overflow: hidden; border-radius: var(--r-md); }
+    .depo__foto img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; }
+    .depo__foto::after {
+      content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 26%;
+      background: var(--terra-escura); clip-path: polygon(0 40%, 22% 18%, 48% 34%, 74% 8%, 100% 30%, 100% 100%, 0 100%);
+    }
+    .depo .dr-quote { font-size: clamp(26px, 3vw, 40px); line-height: 1.28; color: var(--terra-escura); text-wrap: balance; }
+    .depo figcaption { margin-top: var(--sp-6); padding-top: var(--sp-4); border-top: 1px solid var(--linha-forte); }
+    .depo__nome { display: block; font-weight: 700; color: var(--ink); }
+    .depo__local { display: block; margin-top: var(--sp-1); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); }
+    @media (max-width: 899px) { .depo { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } .depo__foto { max-width: 420px; } }
+
+    /* ---------- Contato ---------- */
+    .contato { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--sp-8); }
+    .form { display: grid; gap: var(--sp-4); background: var(--creme-papel); padding: var(--sp-6); border-radius: var(--r-md); }
+    .campo-f { display: grid; gap: var(--sp-2); }
+    .campo-f label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo-f input, .campo-f textarea {
+      font: inherit; font-size: var(--fs-body); color: var(--ink); width: 100%;
+      background: var(--branco); border: var(--bd-forte); border-radius: var(--r-sm); padding: var(--sp-3) var(--sp-4);
+    }
+    .campo-f textarea { min-height: 132px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canais > li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-4); align-items: center; padding-block: var(--sp-4); border-top: 1px solid var(--linha-forte); }
+    .canais > li:last-child { border-bottom: 1px solid var(--linha-forte); }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-weight: 600; font-size: var(--fs-body-lg); overflow-wrap: anywhere; text-underline-offset: 4px; }
+    @media (max-width: 899px) { .contato { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } .form { padding: var(--sp-5); } }
+
+    /* ---------- Rodapé ---------- */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 96px; }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) {
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N1 · trilho lateral vertical com ícones do sprite; vira barra no topo abaixo de 900px) -->
+  <nav data-secao="nav" class="trilho">
+    <a class="trilho__marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="60" height="60"></a>
+    <div class="trilho__links">
+      <a class="trilho__link" href="#funcionalidades"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-colmeia"></use></svg><span class="trilho__rotulo" data-c="funcionalidades.eyebrow"></span></a>
+      <a class="trilho__link" href="#como-funciona"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-revisao"></use></svg><span class="trilho__rotulo" data-c="comoFunciona.eyebrow"></span></a>
+      <a class="trilho__link" href="#para-quem"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg><span class="trilho__rotulo" data-c="paraQuem.eyebrow"></span></a>
+      <a class="trilho__link trilho__link--extra" href="#tecnologia"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-drone"></use></svg><span class="trilho__rotulo" data-c="tecnologia.eyebrow"></span></a>
+      <a class="trilho__link" href="#equipe"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-rainha"></use></svg><span class="trilho__rotulo" data-c="equipe.eyebrow"></span></a>
+      <a class="trilho__link" href="#contato"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="trilho__rotulo" data-c="contato.eyebrow"></span></a>
+    </div>
+    <a class="trilho__baixar" data-c-href="cta.baixar.url">
+      <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>
+      <span class="trilho__rotulo" data-c="cta.baixar.texto"></span>
+    </a>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (foto full-bleed; título na linha do horizonte; três camadas em parallax) -->
+    <section data-secao="hero" id="inicio" class="horizonte">
+      <div class="camada camada--foto" data-camada="foto">
+        <img data-c-src="hero.imagem" data-c-alt="hero.imagemAlt" alt="" width="1600" height="1000">
+        <span class="sol" aria-hidden="true"></span>
+      </div>
+      <div class="camada camada--serra" data-camada="serra" aria-hidden="true">
+        <svg viewBox="0 0 1440 300" preserveAspectRatio="none">
+          <path fill="#E7DFC8" d="M0 150 C120 110 220 96 330 120 C450 146 520 84 640 70 C760 56 840 118 960 112 C1080 106 1150 60 1260 66 C1350 72 1400 98 1440 104 L1440 300 L0 300 Z"/>
+          <path fill="#D8CBA8" d="M0 214 C140 190 260 170 380 186 C500 202 600 160 720 158 C860 156 940 200 1080 190 C1200 182 1300 150 1440 168 L1440 300 L0 300 Z"/>
+        </svg>
+      </div>
+      <div class="dr-container ceu" data-camada="titulo">
+        <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+        <h1 class="dr-display" data-c="hero.titulo"></h1>
+      </div>
+      <div class="campo" data-camada="campo">
+        <div class="campo__crista" aria-hidden="true">
+          <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
+            <path fill="#4E342E" d="M0 112 C200 108 420 104 640 98 C820 92 940 70 1060 60 C1180 50 1300 56 1440 72 L1440 120 L0 120 Z"/>
+          </svg>
+          <svg viewBox="0 0 1440 120" preserveAspectRatio="xMaxYMax meet">
+            <g fill="#4E342E">
+              <rect x="1092" y="40" width="44" height="28"/><rect x="1088" y="34" width="52" height="8"/>
+              <rect x="1160" y="34" width="44" height="34"/><rect x="1156" y="28" width="52" height="8"/>
+              <rect x="1228" y="38" width="44" height="30"/><rect x="1224" y="32" width="52" height="8"/>
+            </g>
+            <g stroke="#4E342E" stroke-width="2" stroke-linecap="round" fill="none">
+              <path d="M1020 70 l-6 -22 M1026 70 l2 -26 M1032 70 l8 -18 M1300 66 l-4 -20 M1306 66 l3 -24 M1312 66 l7 -16 M1350 70 l-5 -18 M1356 70 l4 -22"/>
+            </g>
+          </svg>
+        </div>
+        <div class="dr-container campo__conteudo">
+          <div>
+            <p class="campo__lede" data-c="hero.subtitulo"></p>
+            <div class="acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+          <p class="legenda-foto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+            <span data-c="hero.imagemAlt"></span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: prova (quatro tiles em papel) -->
+    <section data-secao="prova" class="faixa--creme">
+      <div class="dr-container">
+        <ul class="tiles tiles--prova" data-c-lista="prova.stats">
+          <template>
+            <li class="tile">
+              <span class="tile__num" data-c="valor"></span>
+              <span class="tile__rotulo" data-c="rotulo"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: problema -->
+    <section data-secao="problema" class="faixa--papel">
+      <div class="dr-container problema">
+        <div>
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+            <h2 class="dr-h2" data-c="problema.titulo"></h2>
+          </header>
+          <span class="problema__valor" data-c="problema.estatistica.valor"></span>
+          <p class="dr-body-lg" data-c="problema.estatistica.texto"></p>
+        </div>
+        <ul class="linhas-campo" data-c-lista="problema.consequencias">
+          <template>
+            <li>
+              <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+              <p class="dr-body-lg" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades (seis tiles numerados) -->
+    <section data-secao="funcionalidades" id="funcionalidades" class="faixa--creme">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+          <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+        </header>
+        <ul class="tiles tiles--seis" data-c-lista="funcionalidades.itens">
+          <template>
+            <li class="tile">
+              <div class="tile__topo"><svg class="dr-icone dr-icone--lg" aria-hidden="true"><use data-icone></use></svg></div>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona (telas pousadas na linha do horizonte) -->
+    <section data-secao="como-funciona" id="como-funciona" class="faixa--papel">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+          <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+        </header>
+        <ol class="passos" data-c-lista="comoFunciona.passos">
+          <template>
+            <li class="passo">
+              <div class="passo__tela"><img data-c-src="imagem" data-c-alt="alt" alt="" width="393" height="869"></div>
+              <div class="passo__corpo">
+                <span class="dr-data passo__num" data-c="numero"></span>
+                <h3 class="dr-h4" data-c="titulo"></h3>
+                <p class="dr-body" data-c="texto"></p>
+                <p class="dr-caption" data-c="alt"></p>
+              </div>
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem (três tiles com letra) -->
+    <section data-secao="para-quem" id="para-quem" class="faixa--creme">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+          <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+        </header>
+        <ul class="tiles tiles--tres" data-c-lista="paraQuem.perfis">
+          <template>
+            <li class="tile">
+              <h3 class="dr-h3" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia -->
+    <section data-secao="tecnologia" id="tecnologia" class="faixa--papel">
+      <div class="dr-container tec">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+          <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+          <p class="dr-body-lg intro" data-c="tecnologia.texto"></p>
+        </header>
+        <ul class="pilares" data-c-lista="tecnologia.pilares">
+          <template>
+            <li>
+              <svg class="dr-icone dr-icone--lg" aria-hidden="true"><use data-icone></use></svg>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe (origem, retratos, apoios em placa grafite) -->
+    <section data-secao="equipe" id="equipe" class="faixa--creme">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+          <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+          <p class="origem" data-c="equipe.origem"></p>
+        </header>
+        <ul class="pessoas" data-c-lista="equipe.pessoas">
+          <template>
+            <li class="pessoa">
+              <img data-c-src="foto" data-c-alt="alt" alt="" width="480" height="600">
+              <div>
+                <h3 class="dr-h4" data-c="nome"></h3>
+                <p class="pessoa__cargo" data-c="cargo"></p>
+              </div>
+            </li>
+          </template>
+        </ul>
+        <ul class="apoios" data-c-lista="equipe.apoios">
+          <template>
+            <li class="apoio">
+              <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+              <span class="apoio__nome" data-c="nome"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento (foto com crista de campo + citação) -->
+    <section data-secao="depoimento" class="faixa--papel">
+      <div class="dr-container">
+        <figure class="depo">
+          <div class="depo__foto"><img data-c-src="depoimento.foto" alt="" width="600" height="600"></div>
+          <div>
+            <blockquote><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+            <figcaption>
+              <span class="depo__nome" data-c="depoimento.nome"></span>
+              <span class="depo__local" data-c="depoimento.local"></span>
+            </figcaption>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" id="contato" class="faixa--creme">
+      <div class="dr-container contato">
+        <div>
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+            <h2 class="dr-h2" data-c="contato.titulo"></h2>
+            <p class="dr-body-lg intro" data-c="contato.texto"></p>
+          </header>
+          <ul class="canais">
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <a data-mailto data-c="contato.email"></a>
+            </li>
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+              <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+            </li>
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+            </li>
+          </ul>
+          <div class="acoes">
+            <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+            <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+          </div>
+        </div>
+        <form class="form" method="post" data-form-contato>
+          <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+          <div class="campo-f">
+            <label for="f-nome" data-c="contato.form.nome"></label>
+            <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+          </div>
+          <div class="campo-f">
+            <label for="f-email" data-c="contato.form.email"></label>
+            <input id="f-email" name="email" type="email" autocomplete="email" required>
+          </div>
+          <div class="campo-f">
+            <label for="f-msg" data-c="contato.form.mensagem"></label>
+            <textarea id="f-msg" name="mensagem" required></textarea>
+          </div>
+          <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '../img/icones/sprite-icones.svg#';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) {
+          if (email) a.setAttribute('href', 'mailto:' + email.v);
+        });
+        document.querySelectorAll('[data-ano]').forEach(function (el) {
+          el.textContent = '© ' + new Date().getFullYear();
+        });
+        var baixar = DR.valor('cta.baixar.texto');
+        var botao = document.querySelector('.trilho__baixar');
+        if (botao && baixar) botao.setAttribute('aria-label', baixar.v);
+
+        // Trilho: ícone ativo conforme a seção na tela (sem movimento, roda sempre).
+        var links = Array.prototype.slice.call(document.querySelectorAll('.trilho__link'));
+        if ('IntersectionObserver' in window) {
+          var obs = new IntersectionObserver(function (entradas) {
+            entradas.forEach(function (e) {
+              if (!e.isIntersecting) return;
+              links.forEach(function (a) { a.classList.toggle('ativo', a.getAttribute('href') === '#' + e.target.id); });
+            });
+          }, { rootMargin: '-45% 0px -50% 0px' });
+          links.forEach(function (a) {
+            var alvo = document.querySelector(a.getAttribute('href'));
+            if (alvo) obs.observe(alvo);
+          });
+        }
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          var hero = document.querySelector('.horizonte');
+
+          // Entrada: a luz abre, a serra sobe, o título pousa no horizonte.
+          var entrada = gsap.timeline({ defaults: { ease: 'power3.out' } });
+          entrada
+            .from('[data-camada="foto"] img', { scale: 1.08, duration: 1.4 }, 0)
+            .from('.sol', { yPercent: 60, duration: 1.2 }, 0)
+            .from('[data-camada="serra"]', { yPercent: 18, duration: 1.1 }, 0.05)
+            .from('.ceu > *', { y: 40, autoAlpha: 0, duration: 0.9, stagger: 0.12 }, 0.2)
+            .from('.campo__conteudo > *', { y: 24, autoAlpha: 0, duration: 0.8, stagger: 0.1 }, 0.45);
+
+          // Efeito principal: parallax em três camadas com scrub.
+          var tl = gsap.timeline({
+            defaults: { ease: 'none' },
+            scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.6 }
+          });
+          tl.to('[data-camada="foto"]', { yPercent: 26 }, 0)
+            .to('.sol', { yPercent: 70 }, 0)
+            .to('[data-camada="serra"]', { yPercent: 14 }, 0)
+            .to('[data-camada="titulo"]', { yPercent: 22 }, 0)
+            .to('.campo__crista svg:first-child', { scaleY: 1.6, transformOrigin: '50% 100%' }, 0)
+            .to('.campo__crista svg:last-child', { yPercent: -30 }, 0);
+
+          // Tiles C2: os números sobem quando a faixa entra.
+          gsap.utils.toArray('.tiles, .linhas-campo, .pilares, .pessoas').forEach(function (lista) {
+            gsap.from(lista.children, {
+              y: 28, autoAlpha: 0, duration: 0.7, ease: 'power2.out', stagger: 0.08,
+              scrollTrigger: { trigger: lista, start: 'top 85%', once: true }
+            });
+          });
+          // Telas do "como funciona" brotam da linha do horizonte.
+          gsap.utils.toArray('.passo__tela img').forEach(function (img, i) {
+            gsap.from(img, {
+              yPercent: 40, clipPath: 'inset(100% 0 0 0)', duration: 0.9, ease: 'power3.out', delay: i * 0.12,
+              scrollTrigger: { trigger: '.passos', start: 'top 75%', once: true }
+            });
+          });
+          // Foto do depoimento: pequeno parallax interno, eco do hero.
+          gsap.fromTo('.depo__foto img', { yPercent: -6, scale: 1.12 }, {
+            yPercent: 6, scale: 1.12, ease: 'none',
+            scrollTrigger: { trigger: '.depo', start: 'top bottom', end: 'bottom top', scrub: true }
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
