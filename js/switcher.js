@@ -176,7 +176,7 @@ window.DR = window.DR || {};
       var d = e.data;
       if (!d || d.tipo !== 'dr.scrollTo' || typeof d.ratio !== 'number' || !isFinite(d.ratio)) return;
       var max = document.documentElement.scrollHeight - window.innerHeight;
-      window.scrollTo(0, Math.max(0, Math.min(1, d.ratio)) * Math.max(0, max));
+      window.scrollTo({ top: Math.max(0, Math.min(1, d.ratio)) * Math.max(0, max), left: 0, behavior: 'instant' });
     });
     return;
   }
@@ -193,7 +193,7 @@ window.DR = window.DR || {};
       var r = parseFloat(bruto);
       if (isFinite(r)) {
         var max = document.documentElement.scrollHeight - window.innerHeight;
-        window.scrollTo(0, Math.max(0, Math.min(1, r)) * Math.max(0, max));
+        window.scrollTo({ top: Math.max(0, Math.min(1, r)) * Math.max(0, max), left: 0, behavior: 'instant' });
       }
       apagar('sessionStorage', K_SCROLL);
     });
