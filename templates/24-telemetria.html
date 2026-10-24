@@ -65,9 +65,14 @@
     .barra .dr-btn { flex: none; padding: 9px 16px; font-size: var(--fs-small); }
     .barra__atual { display: none; }
     @media (max-width: 1099px) {
-      .trilho__rotulo { visibility: hidden; height: 0; }
-      .trilho { padding-top: 0; }
-      .trilhos { flex-direction: row; align-self: flex-end; margin-bottom: 14px; }
+      /* rótulo some só visualmente (técnica .dr-sr-only): o link mantém o nome acessível */
+      .trilho__rotulo {
+        position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+      }
+      .trilho { padding-block: 11px 10px; } /* área de toque ≥ 24px */
+      .trilho__barra { margin-top: 0; }
+      .trilhos { flex-direction: row; align-self: flex-end; margin-bottom: 2px; }
       .barra__atual {
         display: block; position: absolute; left: 50%; top: 14px; transform: translateX(-50%);
         font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--petroleo);
@@ -90,10 +95,8 @@
     /* Legenda/leitura do gráfico: os quatro números de prova */
     .leituras { border-top: 2px solid var(--ink); }
     .leitura { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: var(--sp-3); align-items: baseline; padding-block: var(--sp-3); border-bottom: var(--bd); }
-    .leitura::before { content: ""; width: 22px; height: 0; border-top: 2.5px solid var(--petroleo); transform: translateY(-4px); }
-    .leitura:nth-child(2)::before { border-top-style: dashed; border-top-color: var(--terra-clara); }
-    .leitura:nth-child(3)::before { border-top-color: var(--mel-escuro); }
-    .leitura:nth-child(4)::before { border-top-style: dotted; border-top-color: var(--petroleo-claro); }
+    /* marcador neutro: os números não são legenda das curvas decorativas */
+    .leitura::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--linha-forte); justify-self: start; transform: translateY(-2px); }
     .leitura__rotulo { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
     .leitura__valor { font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; font-size: 28px; line-height: 1; color: var(--ink); letter-spacing: -.02em; }
     @media (max-width: 899px) { .hero__grade { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } }

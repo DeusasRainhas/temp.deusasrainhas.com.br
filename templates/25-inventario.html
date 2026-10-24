@@ -184,6 +184,8 @@
     }
 
     .linhas { padding-block: var(--sp-2) var(--sp-5); }
+    .grupo__intro { max-width: 62ch; margin-top: var(--sp-4); padding-inline: var(--sp-3); }
+    @media (max-width: 767px) { .grupo__intro { padding-inline: 0; } }
     .registro {
       counter-increment: item;
       display: grid; grid-template-columns: 56px 24px minmax(0, 4fr) minmax(0, 7fr) 92px; gap: var(--sp-4); align-items: start;
@@ -430,6 +432,7 @@
             </div>
             <span class="grupo__conta" data-conta></span>
           </header>
+          <p class="grupo__intro dr-body-lg" data-c="tecnologia.texto"></p>
           <ul class="linhas" data-c-lista="tecnologia.pilares">
             <template>
               <li class="registro">
