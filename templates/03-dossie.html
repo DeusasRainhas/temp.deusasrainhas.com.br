@@ -724,8 +724,8 @@
           tl.from('.anexo', { autoAlpha: 0, rotation: 7, y: 30, duration: 0.6, ease: 'power3.out' }, 0.4);
           tl.from('[data-carimbo]', { scale: 1.8, autoAlpha: 0, duration: 0.3, ease: 'power4.in' }, 0.95);
 
-          // Cada folha sobe ao entrar; as linhas da tabela entram e as sparklines se traçam.
-          gsap.utils.toArray('main > section:not(.capa-dossie)').forEach(function (sec) {
+          // Cada folha sobe ao entrar (a folha de números, logo abaixo da capa, fica parada para aparecer na primeira tela); as linhas da tabela entram e as sparklines se traçam.
+          gsap.utils.toArray('main > section:not(.capa-dossie):not(.folha--anexa)').forEach(function (sec) {
             gsap.from(sec, { y: 40, duration: 0.7, ease: 'power3.out', scrollTrigger: { trigger: sec, start: 'top 92%', once: true } });
           });
           gsap.utils.toArray('.tabela, .achados, .anexos, .perfis, .fichas-pessoa').forEach(function (lista) {

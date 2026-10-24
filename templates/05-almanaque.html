@@ -106,6 +106,8 @@
       font-family: var(--mono); font-weight: 700; font-size: 22px;
     }
     .ficha .dr-icone { color: var(--petroleo); }
+    /* O formulário nunca depende de animação: ficha fixa, sem verso nem flip. */
+    .ficha--estatica { perspective: none; }
 
     /* ---------- Hero: página de abertura do almanaque ---------- */
     main > section[data-secao="hero"] { padding-top: var(--sp-6); }
@@ -215,12 +217,13 @@
     .pessoa__linha { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
     .pessoa img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 1px solid var(--linha-forte); }
     .pessoa p { margin-top: 4px; font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
-    .apoios { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
-    .apoio { display: inline-flex; align-items: center; gap: var(--sp-3); padding: 8px 20px 8px 8px; border: 1px solid var(--linha-forte); border-radius: var(--r-pill); background: var(--branco); }
-    .apoio__logo { display: grid; place-items: center; height: 56px; padding: 6px 16px; border-radius: var(--r-pill); background: var(--creme); }
-    .apoio[data-fundo="escuro"] .apoio__logo { background: var(--grafite); }
+    /* Faixa grafite: a logo do Centelha é negativa e só funciona no escuro. */
+    .apoios { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); margin-top: var(--sp-6); padding: var(--sp-5); background: var(--grafite); border-radius: var(--r-lg); }
+    .apoio { display: inline-flex; align-items: center; gap: var(--sp-3); padding: 8px 20px 8px 8px; border: 1px solid var(--grafite-suave); border-radius: var(--r-pill); }
+    .apoio__logo { display: grid; place-items: center; height: 56px; padding: 6px 16px; border-radius: var(--r-pill); }
+    .apoio[data-fundo="claro"] .apoio__logo { background: var(--creme); }
     .apoio__logo img { max-height: 40px; width: auto; max-width: 120px; }
-    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .18em; text-transform: uppercase; color: var(--terra); }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .18em; text-transform: uppercase; color: var(--mel-claro); }
 
     /* Depoimento (grafite) */
     .citacao { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; max-width: 900px; margin-inline: auto; }
@@ -525,7 +528,7 @@
             </li>
           </template>
         </ul>
-        <!-- Centelha só funciona no escuro: a pílula dele ganha placa grafite -->
+        <!-- Apoios numa faixa grafite (Centelha é negativa); logos de fundo claro ganham placa creme -->
         <ul class="apoios" data-c-lista="equipe.apoios">
           <template>
             <li class="apoio">
@@ -565,7 +568,7 @@
           <p class="dr-body-lg" data-c="contato.texto"></p>
         </header>
         <div class="contato-grade">
-          <div class="ficha" data-ficha>
+          <div class="ficha ficha--estatica">
             <div class="ficha__in">
               <div class="frente">
                 <form class="form" method="post" data-form-contato>
@@ -585,7 +588,6 @@
                   <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
                 </form>
               </div>
-              <div class="verso" aria-hidden="true"></div>
             </div>
           </div>
           <div>
