@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="pt-BR" data-template="08">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 08 Estação</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       08 Estação · campo · N3 / C6 / R7
+       As floradas do ano em quatro blocos de estação. Ao rolar, o fundo da
+       página passa pelas temperaturas da marca (creme → véu de mel →
+       superfície → véu petróleo, o inverno frio → creme) animando variáveis
+       CSS com scrub: quente → frio → quente, só com tokens da marca.
+       Sem movimento: cada trecho já nasce com o seu fundo (data-tom).
+       Nomes dos meses vêm do Intl (pt-BR): são dado de calendário, não cópia.
+       - nada de opacity < 1 fora do gsap.matchMedia;
+       - canto inferior direito livre (pílula do switcher).
+       ================================================================= */
+
+    :root {
+      --nav-h: 76px; --respiro: 128px;
+      --fundo: var(--creme);          /* animada pelo GSAP */
+      --acento: var(--mel);           /* traços decorativos acompanham a estação */
+    }
+    @media (max-width: 767px) { :root { --nav-h: 64px; --respiro: 80px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
+    body { background: var(--fundo); overflow-x: clip; }
+
+    /* R7: scroll contínuo; só a tipografia marca a mudança. Fundos estáticos por trecho
+       (sem JS ou com movimento reduzido); com movimento, a página inteira muda de tom. */
+    main > section { padding-block: var(--respiro) 0; scroll-margin-top: var(--nav-h); }
+    main > section:last-child { padding-bottom: var(--respiro); }
+    [data-tom="creme"] { background: var(--creme); }
+    [data-tom="veu"] { background: var(--mel-veu); }
+    [data-tom="superficie"] { background: var(--superficie); }
+    [data-tom="inverno"] { background: var(--petroleo-veu); }
+    main > section[data-tom]:not(:first-child) { padding-top: var(--respiro); }
+    html.tons-vivos main > section[data-tom] { background: transparent; }
+    html.tons-vivos main > section[data-tom]:not(:first-child) { padding-top: var(--respiro); }
+
+    /* ---------- N3: barra que se oculta ao descer e reaparece ao subir ---------- */
+    .barra {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 60; height: var(--nav-h);
+      background: color-mix(in srgb, var(--fundo) 92%, transparent); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--linha); transition: transform .35s ease;
+    }
+    .barra.oculta { transform: translateY(-100%); }
+    .barra__in { display: flex; align-items: center; gap: var(--sp-5); height: 100%; }
+    .barra__marca img { width: 60px; height: 60px; }
+    .barra__links { display: flex; gap: var(--sp-5); margin-left: var(--sp-5); }
+    .barra__links a { font-size: var(--fs-small); font-weight: 600; color: var(--terra-escura); text-decoration: none; padding-block: 6px; border-bottom: 2px solid transparent; }
+    .barra__links a:hover { border-bottom-color: var(--acento); }
+    .ano { display: flex; align-items: center; gap: 3px; margin-left: auto; }
+    .ano__seg { width: 28px; height: 6px; border-radius: 3px; background: var(--linha-forte); position: relative; overflow: hidden; }
+    .ano__seg i { position: absolute; inset: 0; background: var(--terra); transform-origin: left; transform: scaleX(0); }
+    .ano__mes { min-width: 7ch; margin-left: var(--sp-2); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; color: var(--terra); }
+    .barra .dr-btn { padding: 10px 18px; font-size: var(--fs-small); }
+    @media (max-width: 1023px) { .barra__links { display: none; } }
+    @media (max-width: 767px) {
+      .barra__marca img { width: 52px; height: 52px; }
+      .ano__seg { width: 16px; }
+      .ano__mes { display: none; }
+      .barra__in { gap: var(--sp-3); }
+    }
+
+    /* ---------- Hero: quatro blocos de estação ---------- */
+    .hero { padding-top: calc(var(--nav-h) + var(--sp-8)) !important; }
+    .hero__topo { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-7); align-items: end; }
+    .hero .dr-eyebrow { color: var(--terra); }
+    .hero h1 { margin-top: var(--sp-4); font-size: clamp(46px, 6.4vw, 96px); line-height: .96; letter-spacing: -.028em; text-wrap: balance; }
+    .hero__lede { font-size: var(--fs-body-lg); line-height: 1.6; color: var(--corpo); max-width: 40ch; }
+    .acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+    .estacoes {
+      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin-top: var(--sp-8);
+      border-radius: var(--r-xl); overflow: hidden; box-shadow: var(--sh-md);
+    }
+    .estacao { position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 360px; padding: var(--sp-5); }
+    .estacao:nth-child(1) { background: var(--mel-veu); }
+    .estacao:nth-child(2) { background: var(--mel-claro); }
+    .estacao:nth-child(3) { background: var(--superficie); }
+    .estacao:nth-child(4) { background: var(--petroleo-veu); }
+    .estacao__meses { font-family: var(--mono); font-size: var(--fs-eyebrow); font-weight: 500; letter-spacing: .16em; text-transform: uppercase; color: var(--terra-escura); }
+    .estacoes { counter-reset: estacao; }
+    .estacao { counter-increment: estacao; }
+    .estacao__num::before { content: counter(estacao); }
+    .estacao__num { position: absolute; top: var(--sp-4); right: var(--sp-5); font-family: var(--serif); font-size: 56px; line-height: 1; color: var(--terra-escura); }
+    .estacao svg.flor { width: 100%; height: 180px; }
+    .estacao__barras { display: flex; align-items: flex-end; gap: 4px; height: 36px; }
+    .estacao__barras i { flex: 1; border-radius: 2px 2px 0 0; background: var(--terra-escura); }
+    .estacao:nth-child(4) .estacao__barras i { background: var(--petroleo); }
+    .eixo { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); margin-top: var(--sp-4); }
+    .eixo span { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--terra); border-left: 1px solid var(--linha-forte); padding: 6px 0 0 6px; }
+    @media (max-width: 899px) {
+      .hero__topo { grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); }
+      .estacoes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .estacao { min-height: 260px; }
+      .estacao svg.flor { height: 120px; }
+      .eixo { grid-template-columns: repeat(6, minmax(0, 1fr)); row-gap: var(--sp-2); }
+    }
+    .estacao__meses { padding-right: 52px; line-height: 1.7; }
+    @media (max-width: 767px) { .estacao__num { font-size: 36px; right: var(--sp-4); } .estacao { padding: var(--sp-4); } .estacao__meses { padding-right: 36px; font-size: 11px; letter-spacing: .1em; } }
+
+    /* ---------- Tipografia de seção (R7) ---------- */
+    .titulo-secao { max-width: 900px; }
+    .titulo-secao .dr-eyebrow { margin-bottom: var(--sp-4); color: var(--terra); }
+    .titulo-secao .dr-h2 { font-size: clamp(36px, 4.6vw, 64px); line-height: 1.04; letter-spacing: -.02em; text-wrap: balance; }
+    .titulo-secao + * { margin-top: var(--sp-8); }
+    .intro { margin-top: var(--sp-5); max-width: 52ch; }
+    @media (max-width: 767px) { .titulo-secao .dr-h2 { font-size: 34px; } .titulo-secao + * { margin-top: var(--sp-6); } }
+
+    /* ---------- Prova: números soltos na tipografia ---------- */
+    .numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-6); }
+    .numeros__valor { display: block; font-family: var(--serif); font-weight: 500; font-size: clamp(54px, 6vw, 88px); line-height: 1; letter-spacing: -.03em; color: var(--terra-escura); }
+    .numeros__rotulo { display: block; margin-top: var(--sp-3); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; color: var(--terra); line-height: 1.6; }
+    @media (max-width: 767px) { .numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: var(--sp-6); } }
+
+    /* ---------- Problema ---------- */
+    .problema { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-8); align-items: start; }
+    .problema__valor { font-family: var(--serif); font-style: italic; font-size: clamp(110px, 15vw, 220px); line-height: .8; letter-spacing: -.05em; color: var(--terra-escura); }
+    .problema__texto { margin-top: var(--sp-4); font-family: var(--serif); font-size: clamp(22px, 2.2vw, 28px); line-height: 1.35; color: var(--terra); max-width: 22ch; }
+    .problema ul > li { font-family: var(--serif); font-size: clamp(22px, 2.2vw, 28px); line-height: 1.35; color: var(--ink); padding-block: var(--sp-4); }
+    .problema ul > li + li { margin-top: var(--sp-2); }
+    .problema ul > li::before { content: ""; display: block; width: 32px; height: 3px; margin-bottom: var(--sp-4); background: var(--acento); }
+    @media (max-width: 899px) { .problema { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } }
+
+    /* ---------- C6: cards com --sh-md e tilt 3D sutil no hover ---------- */
+    .cards { display: grid; gap: var(--sp-5); perspective: 900px; }
+    .card {
+      background: var(--branco); border-radius: var(--r-lg); box-shadow: var(--sh-md); padding: var(--sp-6);
+      transform-style: preserve-3d; transition: box-shadow .25s ease; will-change: transform;
+    }
+    .card:hover { box-shadow: var(--sh-lg); }
+    .card .dr-icone { color: var(--petroleo); margin-bottom: var(--sp-5); }
+    .card .dr-h4 { margin-bottom: var(--sp-2); }
+    .cards--seis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .cards--quatro { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cards--tres { grid-template-columns: repeat(3, minmax(0, 1fr)); counter-reset: perfil; }
+    .cards--tres .card { counter-increment: perfil; }
+    .cards--tres .card::before { content: counter(perfil, decimal-leading-zero); display: block; margin-bottom: var(--sp-6); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .18em; color: var(--petroleo); }
+    .cards--tres .dr-h3 { font-family: var(--serif); font-weight: 500; color: var(--terra-escura); margin-bottom: var(--sp-3); }
+    @media (max-width: 1023px) { .cards--seis, .cards--tres { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 767px) { .cards--seis, .cards--tres, .cards--quatro { grid-template-columns: minmax(0, 1fr); } .card { padding: var(--sp-5); } }
+
+    /* ---------- Como funciona ---------- */
+    .passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-7); align-items: start; }
+    .passo__num { font-family: var(--serif); font-size: 64px; line-height: 1; color: var(--terra-escura); }
+    .passo .dr-h4 { margin-block: var(--sp-3) var(--sp-2); }
+    .passo figure { margin-top: var(--sp-5); }
+    .passo img { width: 100%; max-width: 230px; height: auto; max-height: 420px; object-fit: cover; object-position: top; border-radius: var(--r-lg); box-shadow: var(--sh-lg); background: var(--branco); }
+    .passo figcaption { margin-top: var(--sp-3); max-width: 230px; color: var(--terra); }
+    @media (max-width: 899px) { .passos { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Tecnologia ---------- */
+    .tec { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: var(--sp-8); align-items: start; }
+    .tec .titulo-secao + * { margin-top: 0; }
+    @media (max-width: 899px) { .tec { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } }
+
+    /* ---------- Equipe ---------- */
+    .origem { margin-top: var(--sp-5); font-family: var(--serif); font-size: clamp(22px, 2.3vw, 30px); line-height: 1.38; color: var(--terra); max-width: 36ch; }
+    .pessoas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); perspective: 900px; }
+    .pessoa { padding: var(--sp-4); }
+    .pessoa img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: var(--r-md); }
+    .pessoa .dr-h4 { margin-top: var(--sp-4); }
+    .pessoa__cargo { margin-top: var(--sp-1); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .1em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    .apoios { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--sp-5) var(--sp-8); margin-top: var(--sp-7); padding: var(--sp-6); border-radius: var(--r-lg); background: var(--grafite); }
+    .apoio { display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
+    .apoio__logo { display: grid; place-items: center; height: 84px; padding: var(--sp-3) var(--sp-4); border-radius: var(--r-sm); }
+    .apoio__logo img { max-height: 60px; width: auto; max-width: 170px; }
+    .apoio[data-fundo="claro"] .apoio__logo { background: var(--creme); }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--mel-claro); }
+    @media (max-width: 767px) { .pessoas { grid-template-columns: minmax(0, 1fr); } .pessoa { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: var(--sp-4); align-items: center; } .pessoa .dr-h4 { margin-top: 0; } }
+
+    /* ---------- Depoimento ---------- */
+    .citacao { max-width: 980px; }
+    .citacao .dr-quote { font-size: clamp(30px, 4vw, 56px); line-height: 1.18; color: var(--terra-escura); letter-spacing: -.01em; text-wrap: balance; }
+    .citacao figcaption { display: flex; align-items: center; gap: var(--sp-4); margin-top: var(--sp-7); }
+    .citacao figcaption img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; }
+    .citacao__nome { display: block; font-weight: 700; color: var(--ink); }
+    .citacao__local { display: block; font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); }
+
+    /* ---------- Contato ---------- */
+    .contato { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--sp-8); align-items: start; }
+    .contato .titulo-secao + * { margin-top: var(--sp-6); }
+    .form { display: grid; gap: var(--sp-4); }
+    .campo-f { display: grid; gap: var(--sp-2); }
+    .campo-f label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo-f input, .campo-f textarea { font: inherit; font-size: var(--fs-body); color: var(--ink); width: 100%; background: var(--creme); border: var(--bd-forte); border-radius: var(--r-sm); padding: var(--sp-3) var(--sp-4); }
+    .campo-f textarea { min-height: 132px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canais > li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-4); align-items: center; padding-block: var(--sp-3); }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-weight: 600; font-size: var(--fs-body-lg); overflow-wrap: anywhere; text-underline-offset: 4px; }
+    @media (max-width: 899px) { .contato { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } }
+
+    /* ---------- Rodapé ---------- */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 96px; }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) { .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); } footer > [data-aviso-provisorio] { padding-inline: 16px; } }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N3 · barra que se oculta ao descer e reaparece ao subir; marcador do ano à direita) -->
+  <nav data-secao="nav" class="barra">
+    <div class="dr-container barra__in">
+      <a class="barra__marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="60" height="60"></a>
+      <div class="barra__links">
+        <a href="#funcionalidades" data-c="funcionalidades.eyebrow"></a>
+        <a href="#como-funciona" data-c="comoFunciona.eyebrow"></a>
+        <a href="#para-quem" data-c="paraQuem.eyebrow"></a>
+        <a href="#equipe" data-c="equipe.eyebrow"></a>
+        <a href="#contato" data-c="contato.eyebrow"></a>
+      </div>
+      <div class="ano" aria-hidden="true">
+        <span class="ano__seg"><i></i></span><span class="ano__seg"><i></i></span><span class="ano__seg"><i></i></span><span class="ano__seg"><i></i></span>
+        <span class="ano__mes" data-mes-atual></span>
+      </div>
+      <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (floradas do ano em quatro blocos de estação) -->
+    <section data-secao="hero" id="inicio" class="hero" data-tom="creme">
+      <div class="dr-container">
+        <div class="hero__topo">
+          <div>
+            <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+            <h1 class="dr-display" data-c="hero.titulo"></h1>
+          </div>
+          <div>
+            <p class="hero__lede" data-c="hero.subtitulo"></p>
+            <div class="acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+
+        <ol class="estacoes" aria-hidden="true">
+          <li class="estacao" data-meses="8,9,10">
+            <span class="estacao__meses"></span><span class="estacao__num"></span>
+            <svg class="flor" viewBox="0 0 200 180"><g fill="none" stroke="#4E342E" stroke-width="1.8" stroke-linecap="round"><path d="M100 170 V96"/><path d="M100 140 C84 132 76 120 74 108 M100 128 C116 120 124 110 126 98"/></g><g fill="#F5C02C" stroke="#4E342E" stroke-width="1.8"><circle cx="100" cy="62" r="18"/><circle cx="100" cy="30" r="16"/><circle cx="130" cy="52" r="16"/><circle cx="120" cy="88" r="16"/><circle cx="80" cy="88" r="16"/><circle cx="70" cy="52" r="16"/></g><circle cx="100" cy="62" r="10" fill="#4E342E"/></svg>
+            <span class="estacao__barras"><i style="height:40%"></i><i style="height:62%"></i><i style="height:88%"></i></span>
+          </li>
+          <li class="estacao" data-meses="11,0,1">
+            <span class="estacao__meses"></span><span class="estacao__num"></span>
+            <svg class="flor" viewBox="0 0 200 180"><g fill="none" stroke="#4E342E" stroke-width="1.8" stroke-linecap="round"><path d="M70 170 V92 M130 170 V70 M100 170 V110"/></g><g fill="#FFFBE6" stroke="#4E342E" stroke-width="1.8"><circle cx="70" cy="80" r="14"/><circle cx="130" cy="56" r="18"/><circle cx="100" cy="98" r="12"/></g><g fill="#D9A521"><circle cx="70" cy="80" r="5"/><circle cx="130" cy="56" r="7"/><circle cx="100" cy="98" r="4"/></g></svg>
+            <span class="estacao__barras"><i style="height:100%"></i><i style="height:86%"></i><i style="height:70%"></i></span>
+          </li>
+          <li class="estacao" data-meses="2,3,4">
+            <span class="estacao__meses"></span><span class="estacao__num"></span>
+            <svg class="flor" viewBox="0 0 200 180"><g fill="none" stroke="#4E342E" stroke-width="1.8" stroke-linecap="round"><path d="M100 170 V40"/><path d="M100 60 l-18 -10 M100 80 l18 -10 M100 100 l-18 -10 M100 120 l18 -10 M100 140 l-18 -10"/></g><g fill="#A1887F"><circle cx="80" cy="49" r="5"/><circle cx="120" cy="69" r="5"/><circle cx="80" cy="89" r="5"/><circle cx="120" cy="109" r="5"/><circle cx="80" cy="129" r="5"/><circle cx="100" cy="36" r="6"/></g></svg>
+            <span class="estacao__barras"><i style="height:54%"></i><i style="height:42%"></i><i style="height:30%"></i></span>
+          </li>
+          <li class="estacao" data-meses="5,6,7">
+            <span class="estacao__meses"></span><span class="estacao__num"></span>
+            <svg class="flor" viewBox="0 0 200 180"><g fill="none" stroke="#4E342E" stroke-width="1.8" stroke-linecap="round"><path d="M100 170 V120 C100 100 92 90 80 82 M100 120 C102 98 112 86 126 78 M80 82 l-14 -16 M80 82 l-4 -22 M126 78 l6 -22 M126 78 l18 -12"/></g><g fill="#F5C02C" stroke="#4E342E" stroke-width="1.6"><circle cx="64" cy="62" r="11"/><circle cx="76" cy="54" r="11"/><circle cx="134" cy="52" r="11"/><circle cx="148" cy="62" r="11"/></g></svg>
+            <span class="estacao__barras"><i style="height:22%"></i><i style="height:36%"></i><i style="height:58%"></i></span>
+          </li>
+        </ol>
+        <div class="eixo" aria-hidden="true" data-eixo></div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: prova (números soltos) -->
+    <section data-secao="prova" data-tom="creme">
+      <div class="dr-container">
+        <ul class="numeros" data-c-lista="prova.stats">
+          <template>
+            <li>
+              <span class="numeros__valor" data-c="valor"></span>
+              <span class="numeros__rotulo" data-c="rotulo"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: problema -->
+    <section data-secao="problema" data-tom="creme">
+      <div class="dr-container">
+        <header class="titulo-secao">
+          <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+          <h2 class="dr-h2" data-c="problema.titulo"></h2>
+        </header>
+        <div class="problema">
+          <div>
+            <p class="problema__valor" data-c="problema.estatistica.valor"></p>
+            <p class="problema__texto" data-c="problema.estatistica.texto"></p>
+          </div>
+          <ul data-c-lista="problema.consequencias">
+            <template><li data-c="texto"></li></template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades (cards com sombra e tilt) -->
+    <section data-secao="funcionalidades" id="funcionalidades" data-tom="veu">
+      <div class="dr-container">
+        <header class="titulo-secao">
+          <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+          <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+        </header>
+        <ul class="cards cards--seis" data-c-lista="funcionalidades.itens">
+          <template>
+            <li class="card" data-tilt>
+              <svg class="dr-icone dr-icone--lg" aria-hidden="true"><use data-icone></use></svg>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona -->
+    <section data-secao="como-funciona" id="como-funciona" data-tom="veu">
+      <div class="dr-container">
+        <header class="titulo-secao">
+          <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+          <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+        </header>
+        <ol class="passos" data-c-lista="comoFunciona.passos">
+          <template>
+            <li class="passo">
+              <span class="passo__num" data-c="numero"></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <figure>
+                <img data-c-src="imagem" data-c-alt="alt" alt="" width="393" height="869">
+                <figcaption class="dr-caption" data-c="alt"></figcaption>
+              </figure>
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem -->
+    <section data-secao="para-quem" id="para-quem" data-tom="superficie">
+      <div class="dr-container">
+        <header class="titulo-secao">
+          <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+          <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+        </header>
+        <ul class="cards cards--tres" data-c-lista="paraQuem.perfis">
+          <template>
+            <li class="card" data-tilt>
+              <h3 class="dr-h3" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia -->
+    <section data-secao="tecnologia" data-tom="superficie">
+      <div class="dr-container tec">
+        <header class="titulo-secao">
+          <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+          <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+          <p class="dr-body-lg intro" data-c="tecnologia.texto"></p>
+        </header>
+        <ul class="cards cards--quatro" data-c-lista="tecnologia.pilares">
+          <template>
+            <li class="card" data-tilt>
+              <svg class="dr-icone dr-icone--lg" aria-hidden="true"><use data-icone></use></svg>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe -->
+    <section data-secao="equipe" id="equipe" data-tom="inverno">
+      <div class="dr-container">
+        <header class="titulo-secao">
+          <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+          <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+          <p class="origem" data-c="equipe.origem"></p>
+        </header>
+        <ul class="pessoas" data-c-lista="equipe.pessoas">
+          <template>
+            <li class="card pessoa" data-tilt>
+              <img data-c-src="foto" data-c-alt="alt" alt="" width="480" height="480">
+              <div>
+                <h3 class="dr-h4" data-c="nome"></h3>
+                <p class="pessoa__cargo" data-c="cargo"></p>
+              </div>
+            </li>
+          </template>
+        </ul>
+        <ul class="apoios" data-c-lista="equipe.apoios">
+          <template>
+            <li class="apoio">
+              <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+              <span class="apoio__nome" data-c="nome"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento -->
+    <section data-secao="depoimento" data-tom="inverno">
+      <div class="dr-container">
+        <figure class="citacao">
+          <blockquote><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+          <figcaption>
+            <img data-c-src="depoimento.foto" alt="" width="64" height="64">
+            <span>
+              <span class="citacao__nome" data-c="depoimento.nome"></span>
+              <span class="citacao__local" data-c="depoimento.local"></span>
+            </span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" id="contato" data-tom="creme">
+      <div class="dr-container contato">
+        <div>
+          <header class="titulo-secao">
+            <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+            <h2 class="dr-h2" data-c="contato.titulo"></h2>
+            <p class="dr-body-lg intro" data-c="contato.texto"></p>
+          </header>
+          <ul class="canais">
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <a data-mailto data-c="contato.email"></a>
+            </li>
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+              <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+            </li>
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+            </li>
+          </ul>
+          <div class="acoes">
+            <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+            <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+          </div>
+        </div>
+        <form class="card form" method="post" data-form-contato>
+          <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+          <div class="campo-f">
+            <label for="f-nome" data-c="contato.form.nome"></label>
+            <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+          </div>
+          <div class="campo-f">
+            <label for="f-email" data-c="contato.form.email"></label>
+            <input id="f-email" name="email" type="email" autocomplete="email" required>
+          </div>
+          <div class="campo-f">
+            <label for="f-msg" data-c="contato.form.mensagem"></label>
+            <textarea id="f-msg" name="mensagem" required></textarea>
+          </div>
+          <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '../img/icones/sprite-icones.svg#';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+      function mes(i) {
+        return new Date(2026, i, 1).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) { if (email) a.setAttribute('href', 'mailto:' + email.v); });
+        document.querySelectorAll('[data-ano]').forEach(function (el) { el.textContent = '© ' + new Date().getFullYear(); });
+
+        // Calendário: meses de cada estação e eixo do ano (de setembro a agosto, a safra).
+        document.querySelectorAll('.estacao').forEach(function (e) {
+          var ms = e.getAttribute('data-meses').split(',').map(Number);
+          e.querySelector('.estacao__meses').textContent = ms.map(mes).join(' · ');
+        });
+        var eixo = document.querySelector('[data-eixo]');
+        [8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7].forEach(function (m) {
+          var s = document.createElement('span'); s.textContent = mes(m); eixo.appendChild(s);
+        });
+
+        // N3: some ao descer, volta ao subir (só classe; a transição some no movimento reduzido).
+        var barra = document.querySelector('.barra');
+        var ultimo = window.scrollY;
+        window.addEventListener('scroll', function () {
+          var y = window.scrollY;
+          if (Math.abs(y - ultimo) < 6) return;
+          barra.classList.toggle('oculta', y > ultimo && y > 160);
+          ultimo = y;
+        }, { passive: true });
+        barra.addEventListener('focusin', function () { barra.classList.remove('oculta'); });
+
+        // Marcador do ano na barra: segmento da estação conforme a posição da página.
+        var segs = Array.prototype.slice.call(document.querySelectorAll('.ano__seg i'));
+        var rotuloMes = document.querySelector('[data-mes-atual]');
+        var ordem = [8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7];
+        function marcarAno() {
+          var max = document.documentElement.scrollHeight - window.innerHeight;
+          var p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+          segs.forEach(function (s, i) { s.style.transform = 'scaleX(' + Math.min(1, Math.max(0, p * 4 - i)) + ')'; });
+          rotuloMes.textContent = mes(ordem[Math.min(11, Math.floor(p * 12))]);
+        }
+        marcarAno();
+        window.addEventListener('scroll', marcarAno, { passive: true });
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          var raiz = document.documentElement;
+          raiz.classList.add('tons-vivos');
+          var TONS = { creme: '#FFFBE6', veu: '#FDEFC2', superficie: '#F4ECD2', inverno: '#DCEEEA' }; // --petroleo-veu
+          var ACENTOS = { creme: '#F5C02C', veu: '#D9A521', superficie: '#A1887F', inverno: '#2E8B82' }; // --petroleo-claro
+
+          // Efeito principal: a temperatura de cor do fundo muda ao rolar.
+          // Cada troca de tom é um trecho com scrub, ancorado no início do trecho seguinte.
+          var secoes = Array.prototype.slice.call(document.querySelectorAll('main > section[data-tom]'));
+          gsap.set(raiz, { '--fundo': TONS.creme, '--acento': ACENTOS.creme });
+          var anterior = 'creme';
+          secoes.forEach(function (s) {
+            var tom = s.getAttribute('data-tom');
+            if (tom === anterior) return;
+            gsap.fromTo(raiz, { '--fundo': TONS[anterior], '--acento': ACENTOS[anterior] }, {
+              '--fundo': TONS[tom], '--acento': ACENTOS[tom], ease: 'none', immediateRender: false,
+              scrollTrigger: { trigger: s, start: 'top 85%', end: 'top 25%', scrub: true }
+            });
+            anterior = tom;
+          });
+
+          // Entrada do hero: as estações brotam da esquerda para a direita.
+          gsap.from('.hero__topo > *', { y: 30, autoAlpha: 0, duration: 0.8, ease: 'power3.out', stagger: 0.12 });
+          gsap.from('.estacao', { clipPath: 'inset(100% 0 0 0)', duration: 0.9, ease: 'power3.inOut', stagger: 0.12, delay: 0.2 });
+          gsap.from('.estacao .flor', { yPercent: 20, duration: 1.1, ease: 'power3.out', stagger: 0.12, delay: 0.35 });
+          gsap.from('.estacao__barras i', { scaleY: 0, transformOrigin: 'bottom', duration: 0.6, ease: 'power2.out', stagger: 0.04, delay: 0.6 });
+
+          // Títulos de seção: R7 deixa a tipografia marcar a passagem.
+          gsap.utils.toArray('.titulo-secao').forEach(function (t) {
+            gsap.from(t.children, { y: 36, autoAlpha: 0, duration: 0.8, ease: 'power3.out', stagger: 0.1, scrollTrigger: { trigger: t, start: 'top 85%', once: true } });
+          });
+          gsap.utils.toArray('.cards, .pessoas, .numeros, .passos').forEach(function (l) {
+            gsap.from(l.children, { y: 40, autoAlpha: 0, duration: 0.7, ease: 'power2.out', stagger: 0.08, scrollTrigger: { trigger: l, start: 'top 85%', once: true } });
+          });
+
+          return function () { raiz.classList.remove('tons-vivos'); };
+        });
+
+        // C6: tilt 3D sutil no hover (só ponteiro fino).
+        mm.add('(prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine)', function () {
+          var limpar = [];
+          document.querySelectorAll('[data-tilt]').forEach(function (c) {
+            var rx = gsap.quickTo(c, 'rotationX', { duration: 0.4, ease: 'power2.out' });
+            var ry = gsap.quickTo(c, 'rotationY', { duration: 0.4, ease: 'power2.out' });
+            function mover(e) {
+              var r = c.getBoundingClientRect();
+              var x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+              ry(x * 8); rx(-y * 8);
+            }
+            function sair() { rx(0); ry(0); }
+            c.addEventListener('pointermove', mover);
+            c.addEventListener('pointerleave', sair);
+            limpar.push(function () { c.removeEventListener('pointermove', mover); c.removeEventListener('pointerleave', sair); gsap.set(c, { rotationX: 0, rotationY: 0 }); });
+          });
+          return function () { limpar.forEach(function (f) { f(); }); };
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
