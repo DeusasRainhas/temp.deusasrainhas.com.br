@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="pt-BR" data-template="14">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 14 Sinal</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       14 Sinal · circuito · N5 / C9 / R1
+       Os dados saem do apiário e chegam ao celular: trilhas de circuito
+       ligam a colmeia à tela do app e pacotes de dados (pulsos) correm por
+       elas via offset-path. O mesmo sinal liga os três passos do "como
+       funciona" e marca o progresso no índice lateral.
+       - nada de opacity < 1 fora do gsap.matchMedia;
+       - sem movimento os pulsos ficam parados ao longo das trilhas;
+       - canto inferior direito livre (pílula do switcher).
+       ================================================================= */
+
+    :root { --indice: 256px; --respiro: 104px; --topo: 0px; }
+    @media (max-width: 1099px) { :root { --indice: 0px; --topo: 68px; } }
+    @media (max-width: 899px) { :root { --respiro: 64px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
+    body { padding-top: var(--topo); }
+    main, footer[data-secao="rodape"] { margin-left: var(--indice); }
+    main > section { padding-block: var(--respiro); scroll-margin-top: var(--topo); }
+
+    /* ---------- R1: faixas alternando creme e creme-papel ---------- */
+    main > section:nth-of-type(even) { background: var(--creme-papel); border-block: var(--bd); }
+
+    /* ---------- N5: índice em coluna fixa à esquerda, com progresso ---------- */
+    .indice {
+      position: fixed; z-index: 60; left: 0; top: 0; bottom: 0; width: var(--indice);
+      display: flex; flex-direction: column; gap: var(--sp-6);
+      padding: var(--sp-5) var(--sp-5) var(--sp-5) var(--sp-6);
+      background: var(--creme); border-right: var(--bd);
+    }
+    .indice__marca img { width: 64px; height: 64px; }
+    .indice__lista { position: relative; display: grid; gap: 2px; padding-left: 26px; }
+    .indice__trilha { position: absolute; left: 0; top: 0; width: 20px; height: 100%; overflow: visible; }
+    .indice__trilha path { fill: none; stroke: var(--linha-forte); stroke-width: 1.5; }
+    .indice__trilha .feito { stroke: var(--mel); stroke-width: 2.2; }
+    .indice__lista a {
+      display: grid; gap: 6px; padding: 8px 0; text-decoration: none;
+      font-family: var(--mono); font-size: 11.5px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--suave); transition: color .2s ease;
+    }
+    .indice__lista a:hover, .indice__lista a.ativo { color: var(--terra-escura); }
+    .indice__barra { display: block; height: 2px; background: var(--linha); position: relative; overflow: hidden; }
+    .indice__barra i { position: absolute; inset: 0; background: var(--petroleo); transform-origin: left center; transform: scaleX(0); }
+    .indice .dr-btn { margin-top: auto; padding: 10px 16px; font-size: var(--fs-small); align-self: flex-start; }
+    .pulso-indice { position: absolute; left: 0; top: 0; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--mel); background: var(--creme); offset-rotate: 0deg; offset-anchor: center; offset-distance: calc(var(--d, 0) * 1%); }
+    .indice__topo { display: none; }
+    @media (max-width: 1099px) {
+      .indice {
+        bottom: auto; right: 0; width: auto; height: var(--topo); flex-direction: row; align-items: center; gap: var(--sp-4);
+        padding: 0 16px; border-right: 0; border-bottom: var(--bd);
+      }
+      .indice__marca img { width: 52px; height: 52px; }
+      .indice__lista { display: none; }
+      .indice .dr-btn { margin: 0 0 0 auto; }
+      .indice__topo { display: block; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--linha); }
+      .indice__topo i { position: absolute; inset: 0; background: var(--petroleo); transform-origin: left center; transform: scaleX(0); }
+    }
+
+    /* ---------- Pulsos (offset-path) ---------- */
+    .pulso {
+      position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none;
+      width: 18px; height: 6px; border-radius: 3px; background: var(--mel);
+      offset-rotate: auto; offset-anchor: center; offset-distance: calc(var(--d, 50) * 1%);
+    }
+    .pulso--grafite { background: var(--creme); border: 1.5px solid var(--petroleo); width: 16px; height: 8px; border-radius: 4px; }
+    .trilhas-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+    .trilhas-svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .trilhas-svg .t-mel { stroke: var(--mel); stroke-width: 2.2; }
+    .trilhas-svg .t-grafite { stroke: var(--grafite); stroke-width: 2.2; }
+    .trilhas-svg .t-base { stroke: var(--linha-forte); stroke-width: 1.5; }
+    .trilhas-svg circle { fill: var(--creme); stroke-width: 2.2; }
+
+    /* ---------- Hero ---------- */
+    .hero { padding-top: clamp(40px, 6vw, 80px) !important; }
+    .hero__topo { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-7); align-items: end; }
+    .hero h1 { font-size: clamp(42px, 5.8vw, 84px); line-height: 1; letter-spacing: -.025em; margin-top: var(--sp-4); text-wrap: balance; }
+    .hero .dr-body-lg { max-width: 40ch; }
+    .acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+    @media (max-width: 899px) { .hero__topo { grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); } }
+
+    .diagrama {
+      position: relative; margin-top: clamp(40px, 5vw, 72px);
+      display: grid; grid-template-columns: 240px minmax(0, 1fr) 220px; align-items: center; min-height: 420px;
+    }
+    .apiario {
+      position: relative; z-index: 1; grid-column: 1; aspect-ratio: 1;
+      display: grid; place-items: center; background: var(--creme-papel);
+      border: 1.5px solid var(--linha-forte); border-radius: var(--r-xl);
+      background-image: radial-gradient(circle, var(--linha-forte) 1px, transparent 1.4px); background-size: 14px 14px;
+    }
+    .apiario__colmeia { width: 104px; height: 104px; color: var(--terra-escura); background: var(--creme); border-radius: 50%; padding: 18px; border: 1.5px solid var(--linha-forte); }
+    .sensor { position: absolute; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--creme); border: 1.5px solid var(--linha-forte); color: var(--petroleo); }
+    .sensor .dr-icone { width: 22px; height: 22px; }
+    .sensor--1 { top: 14%; left: 12%; } .sensor--2 { top: 12%; right: 14%; } .sensor--3 { bottom: 12%; left: 16%; }
+    .celular {
+      position: relative; z-index: 1; grid-column: 3; justify-self: end; width: 210px;
+      padding: 10px; border-radius: 34px; background: var(--grafite); box-shadow: var(--sh-lg);
+    }
+    .celular img { width: 100%; height: 380px; object-fit: cover; object-position: top; border-radius: 26px; background: var(--creme-papel); }
+    .celular__chegada { position: absolute; left: -7px; top: 50%; width: 14px; height: 14px; margin-top: -7px; border-radius: 50%; border: 2px solid var(--mel); background: var(--creme); }
+    @media (max-width: 899px) {
+      .diagrama { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 200px auto; min-height: 0; }
+      .apiario { grid-column: 1; grid-row: 1; aspect-ratio: auto; height: 160px; }
+      .apiario__colmeia { width: 84px; height: 84px; padding: 14px; }
+      .celular { grid-column: 1; grid-row: 3; justify-self: center; width: 190px; }
+      .celular img { height: 300px; }
+      .celular__chegada { left: 50%; top: -7px; margin: 0 0 0 -7px; }
+    }
+
+    /* ---------- Cabeça de seção ---------- */
+    .cabeca { max-width: 720px; }
+    .cabeca .dr-eyebrow { margin-bottom: var(--sp-3); }
+    .cabeca .dr-h2 { text-wrap: balance; }
+    .cabeca .intro { margin-top: var(--sp-4); }
+    .cabeca + * { margin-top: var(--sp-7); }
+    @media (max-width: 899px) { .dr-h2 { font-size: 30px; } .cabeca + * { margin-top: var(--sp-6); } }
+
+    /* ---------- C9: chips e pílulas em fluxo ---------- */
+    .nuvem { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: flex-start; }
+    .pilula {
+      display: inline-flex; align-items: center; gap: var(--sp-3); padding: 10px 20px 10px 10px;
+      border: 1.5px solid var(--linha-forte); border-radius: var(--r-pill); background: var(--creme);
+    }
+    main > section:nth-of-type(even) .pilula, main > section:nth-of-type(even) .pacote { background: var(--branco); }
+    .pilula__icone { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 50%; background: var(--petroleo-veu); color: var(--petroleo); }
+    .pilula__icone .dr-icone { width: 20px; height: 20px; }
+    .pilula--stat { padding: 12px 22px 12px 12px; gap: var(--sp-3); }
+    .pilula--stat .dr-data { display: grid; place-items: center; min-width: 96px; height: 64px; padding-inline: 18px; border-radius: var(--r-pill); background: var(--mel); color: var(--terra-escura); font-size: 30px; }
+    .pilula--stat .rotulo { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; color: var(--terra-escura); max-width: 13ch; line-height: 1.5; }
+    .pilula--alerta .pilula__icone { background: var(--erro-veu); color: var(--erro); }
+    .pilula--alerta p { max-width: 52ch; }
+    .pacote {
+      flex: 1 1 320px; max-width: 520px; padding: 10px 10px var(--sp-5);
+      border: 1.5px solid var(--linha-forte); border-radius: 30px; background: var(--creme);
+    }
+    .pacote__chip { display: inline-flex; align-items: center; gap: var(--sp-3); padding: 0 18px 0 0; }
+    .pacote .dr-h4 { font-size: 18px; }
+    .pacote .dr-body { padding: var(--sp-3) var(--sp-4) 0 var(--sp-4); }
+    .pacote--largo { flex-basis: 420px; }
+    /* Larguras irregulares: os pacotes se arrumam como uma nuvem de tags. */
+    .nuvem > .pacote { flex: 0 1 auto; }
+    .nuvem > .pacote:nth-child(5n+1) { max-width: 400px; }
+    .nuvem > .pacote:nth-child(5n+2) { max-width: 470px; }
+    .nuvem > .pacote:nth-child(5n+3) { max-width: 330px; }
+    .nuvem > .pacote:nth-child(5n+4) { max-width: 440px; }
+    .nuvem > .pacote:nth-child(5n+5) { max-width: 360px; }
+    .tec .nuvem > .pacote:nth-child(odd) { margin-left: var(--sp-7); }
+    @media (max-width: 899px) { .nuvem > .pacote { max-width: none !important; margin-left: 0 !important; } }
+
+    /* ---------- Problema ---------- */
+    .problema { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-7); align-items: center; }
+    .problema__valor { display: block; font-size: clamp(80px, 10vw, 150px); line-height: .85; letter-spacing: -.04em; color: var(--terra-escura); }
+    .problema__texto { margin-top: var(--sp-4); max-width: 30ch; }
+    .problema .cabeca + * { margin-top: var(--sp-6); }
+    .problema .nuvem { flex-direction: column; }
+    @media (max-width: 899px) { .problema { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Como funciona ---------- */
+    .passos { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-6); }
+    .passo { position: relative; z-index: 1; }
+    .passo__num {
+      display: inline-grid; place-items: center; width: 64px; height: 64px; border-radius: 50%;
+      background: var(--creme); border: 2px solid var(--mel); color: var(--terra-escura); font-size: 20px; position: relative; z-index: 3;
+    }
+    .passo .dr-h4 { margin-block: var(--sp-4) var(--sp-2); }
+    .passo figure { margin-top: var(--sp-5); }
+    .passo img { width: 100%; max-width: 250px; max-height: 400px; object-fit: cover; object-position: top; border-radius: var(--r-xl); border: var(--bd); background: var(--creme-papel); }
+    .passo figcaption { margin-top: var(--sp-2); max-width: 250px; }
+    @media (max-width: 899px) { .passos { grid-template-columns: minmax(0, 1fr); gap: var(--sp-7); } .passo { padding-left: 0; } }
+
+    /* ---------- Para quem ---------- */
+    .perfis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+    .perfil .pilula { padding: 12px 24px; }
+    .perfil .dr-h4 { font-family: var(--serif); font-weight: 500; font-size: 22px; color: var(--terra-escura); }
+    .perfil .dr-body { margin-top: var(--sp-4); padding-inline: var(--sp-4); }
+    @media (max-width: 899px) { .perfis { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Tecnologia ---------- */
+    .tec { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--sp-7); align-items: start; }
+    .tec .cabeca + * { margin-top: 0; }
+    @media (max-width: 1023px) { .tec { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Equipe ---------- */
+    .pilula--pessoa { padding: 8px 26px 8px 8px; gap: var(--sp-4); }
+    .pilula--pessoa img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex: none; }
+    .pilula--pessoa .cargo { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--terra); margin-top: 2px; }
+    .origem { max-width: 62ch; margin-top: var(--sp-4); }
+    .apoios-placa { margin-top: var(--sp-7); background: var(--grafite); border-radius: var(--r-pill); padding: var(--sp-4) var(--sp-6); }
+    .apoios { display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: var(--sp-4) var(--sp-6); }
+    .apoio { display: flex; align-items: center; gap: var(--sp-3); }
+    .apoio__logo { display: grid; place-items: center; height: 72px; padding: var(--sp-2) var(--sp-4); border-radius: var(--r-pill); }
+    .apoio__logo img { max-height: 52px; width: auto; max-width: 150px; }
+    .apoio[data-fundo="claro"] .apoio__logo { background: var(--creme); }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--mel-claro); }
+    @media (max-width: 899px) { .apoios-placa { border-radius: var(--r-xl); } .apoio { flex-direction: column; } }
+
+    /* ---------- Depoimento ---------- */
+    .citacao { max-width: 900px; }
+    .citacao .dr-quote { font-size: clamp(26px, 3.2vw, 42px); line-height: 1.3; color: var(--terra-escura); text-wrap: balance; }
+    .citacao figcaption { margin-top: var(--sp-6); }
+    .citacao .pilula img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+    .citacao__nome { font-weight: 700; color: var(--ink); display: block; }
+    .citacao__local { font-family: var(--mono); font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--terra); }
+
+    /* ---------- Contato ---------- */
+    .contato { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-7); }
+    .form { display: grid; gap: var(--sp-4); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo input, .campo textarea { font: inherit; color: var(--ink); background: var(--branco); border: var(--bd-forte); border-radius: 22px; padding: var(--sp-3) var(--sp-5); width: 100%; }
+    .campo textarea { min-height: 140px; resize: vertical; }
+    .form .dr-btn { justify-self: start; border-radius: var(--r-pill); }
+    .canais .pilula a { font-weight: 600; overflow-wrap: anywhere; text-underline-offset: 4px; }
+    .canais .pilula { max-width: 100%; }
+    .contato-acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+    .contato-acoes .dr-btn { border-radius: var(--r-pill); }
+    @media (max-width: 899px) { .contato { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Rodapé ---------- */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 96px; }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) { .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); } footer > [data-aviso-provisorio] { padding-inline: 16px; } }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N5 · índice em coluna fixa à esquerda com seções e progresso) -->
+  <nav data-secao="nav" class="indice">
+    <a class="indice__marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+    <div class="indice__lista">
+      <svg class="indice__trilha" aria-hidden="true" focusable="false"><path class="base"></path><path class="feito"></path></svg>
+      <span class="pulso-indice" aria-hidden="true"></span>
+      <a href="#problema"><span data-c="problema.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a>
+      <a href="#funcionalidades"><span data-c="funcionalidades.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a>
+      <a href="#como-funciona"><span data-c="comoFunciona.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a>
+      <a href="#para-quem"><span data-c="paraQuem.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a>
+      <a href="#tecnologia"><span data-c="tecnologia.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a>
+      <a href="#equipe"><span data-c="equipe.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a>
+      <a href="#contato"><span data-c="contato.eyebrow"></span><span class="indice__barra" aria-hidden="true"><i></i></span></a>
+    </div>
+    <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+    <span class="indice__topo" aria-hidden="true"><i></i></span>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (dados viajando do apiário ao celular) -->
+    <section data-secao="hero" id="inicio" class="hero">
+      <div class="dr-container">
+        <div class="hero__topo">
+          <div>
+            <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+            <h1 class="dr-h1" data-c="hero.titulo"></h1>
+          </div>
+          <div>
+            <p class="dr-body-lg" data-c="hero.subtitulo"></p>
+            <div class="acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+        <!-- Diagrama: colmeia com sensores → trilhas com pulsos → celular -->
+        <div class="diagrama" data-diagrama>
+          <svg class="trilhas-svg" aria-hidden="true" focusable="false"></svg>
+          <div class="apiario" aria-hidden="true">
+            <svg class="dr-icone apiario__colmeia"><use href="#dr-colmeia"></use></svg>
+            <span class="sensor sensor--1"><svg class="dr-icone"><use href="#dr-clima"></use></svg></span>
+            <span class="sensor sensor--2"><svg class="dr-icone"><use href="#dr-abelha"></use></svg></span>
+            <span class="sensor sensor--3"><svg class="dr-icone"><use href="#dr-revisao"></use></svg></span>
+          </div>
+          <figure class="celular">
+            <img src="../img/app/01_dashboard_apiarios.png" data-c-alt="comoFunciona.passos[0].alt" alt="" width="393" height="869">
+            <span class="celular__chegada" aria-hidden="true"></span>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: prova (pílulas de leitura) -->
+    <section data-secao="prova">
+      <div class="dr-container">
+        <ul class="nuvem" data-c-lista="prova.stats">
+          <template>
+            <li class="pilula pilula--stat">
+              <span class="dr-data" data-c="valor"></span>
+              <span class="rotulo" data-c="rotulo"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: problema -->
+    <section data-secao="problema" id="problema">
+      <div class="dr-container problema">
+        <div>
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+            <h2 class="dr-h2" data-c="problema.titulo"></h2>
+          </header>
+          <div>
+            <span class="dr-data problema__valor" data-c="problema.estatistica.valor"></span>
+            <p class="dr-body-lg problema__texto" data-c="problema.estatistica.texto"></p>
+          </div>
+        </div>
+        <ul class="nuvem" data-c-lista="problema.consequencias">
+          <template>
+            <li class="pilula pilula--alerta">
+              <span class="pilula__icone"><svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg></span>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades (pacotes em fluxo) -->
+    <section data-secao="funcionalidades" id="funcionalidades">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+          <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+        </header>
+        <ul class="nuvem" data-c-lista="funcionalidades.itens">
+          <template>
+            <li class="pacote">
+              <span class="pacote__chip">
+                <span class="pilula__icone"><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg></span>
+                <h3 class="dr-h4" data-c="titulo"></h3>
+              </span>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona (o sinal passa de passo em passo) -->
+    <section data-secao="como-funciona" id="como-funciona">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+          <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+        </header>
+        <ol class="passos" data-passos data-c-lista="comoFunciona.passos">
+          <svg class="trilhas-svg" aria-hidden="true" focusable="false"></svg>
+          <template>
+            <li class="passo">
+              <span class="dr-data passo__num" data-c="numero"></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <figure>
+                <img data-c-src="imagem" data-c-alt="alt" alt="">
+                <figcaption class="dr-caption" data-c="alt"></figcaption>
+              </figure>
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem -->
+    <section data-secao="para-quem" id="para-quem">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+          <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+        </header>
+        <ul class="perfis" data-c-lista="paraQuem.perfis">
+          <template>
+            <li class="perfil">
+              <span class="pilula"><h3 class="dr-h4" data-c="titulo"></h3></span>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia -->
+    <section data-secao="tecnologia" id="tecnologia">
+      <div class="dr-container tec">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+          <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+          <p class="dr-body-lg intro" data-c="tecnologia.texto"></p>
+        </header>
+        <ul class="nuvem" data-c-lista="tecnologia.pilares">
+          <template>
+            <li class="pacote pacote--largo">
+              <span class="pacote__chip">
+                <span class="pilula__icone"><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg></span>
+                <h3 class="dr-h4" data-c="titulo"></h3>
+              </span>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe -->
+    <section data-secao="equipe" id="equipe">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+          <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+          <p class="dr-body-lg origem" data-c="equipe.origem"></p>
+        </header>
+        <ul class="nuvem" data-c-lista="equipe.pessoas">
+          <template>
+            <li class="pilula pilula--pessoa">
+              <img data-c-src="foto" data-c-alt="alt" alt="" width="64" height="64">
+              <span>
+                <h3 class="dr-h4" data-c="nome"></h3>
+                <p class="cargo" data-c="cargo"></p>
+              </span>
+            </li>
+          </template>
+        </ul>
+        <div class="apoios-placa">
+          <ul class="apoios" data-c-lista="equipe.apoios">
+            <template>
+              <li class="apoio">
+                <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+                <span class="apoio__nome" data-c="nome"></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento -->
+    <section data-secao="depoimento">
+      <div class="dr-container">
+        <figure class="citacao">
+          <blockquote style="margin: 0"><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+          <figcaption>
+            <span class="pilula">
+              <img data-c-src="depoimento.foto" alt="" width="48" height="48">
+              <span>
+                <span class="citacao__nome" data-c="depoimento.nome"></span>
+                <span class="citacao__local" data-c="depoimento.local"></span>
+              </span>
+            </span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" id="contato">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+          <h2 class="dr-h2" data-c="contato.titulo"></h2>
+          <p class="dr-body-lg intro" data-c="contato.texto"></p>
+        </header>
+        <div class="contato">
+          <form class="form" method="post" data-form-contato>
+            <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+            <div class="campo">
+              <label for="f-nome" data-c="contato.form.nome"></label>
+              <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+            </div>
+            <div class="campo">
+              <label for="f-email" data-c="contato.form.email"></label>
+              <input id="f-email" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="campo">
+              <label for="f-msg" data-c="contato.form.mensagem"></label>
+              <textarea id="f-msg" name="mensagem" required></textarea>
+            </div>
+            <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+          </form>
+          <div>
+            <ul class="nuvem canais">
+              <li class="pilula">
+                <span class="pilula__icone"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
+                <a data-mailto data-c="contato.email"></a>
+              </li>
+              <li class="pilula">
+                <span class="pilula__icone"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></span>
+                <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+              </li>
+              <li class="pilula">
+                <span class="pilula__icone"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></span>
+                <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+              </li>
+            </ul>
+            <div class="contato-acoes">
+              <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- SEÇÃO: rodape -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '#';
+      var NS = 'http://www.w3.org/2000/svg';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+      function svgEl(tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+
+      // Poligonal ortogonal → path com cantos chanfrados a 45°, como numa placa.
+      function caminho(pts, raio) {
+        var d = 'M' + pts[0].x.toFixed(1) + ' ' + pts[0].y.toFixed(1);
+        for (var i = 1; i < pts.length - 1; i++) {
+          var a = pts[i - 1], b = pts[i], c = pts[i + 1];
+          var l1 = Math.hypot(b.x - a.x, b.y - a.y), l2 = Math.hypot(c.x - b.x, c.y - b.y);
+          var r = Math.min(raio, l1 / 2, l2 / 2);
+          if (r < 1) { d += ' L' + b.x.toFixed(1) + ' ' + b.y.toFixed(1); continue; }
+          d += ' L' + (b.x - (b.x - a.x) / l1 * r).toFixed(1) + ' ' + (b.y - (b.y - a.y) / l1 * r).toFixed(1);
+          d += ' L' + (b.x + (c.x - b.x) / l2 * r).toFixed(1) + ' ' + (b.y + (c.y - b.y) / l2 * r).toFixed(1);
+        }
+        var u = pts[pts.length - 1];
+        return d + ' L' + u.x.toFixed(1) + ' ' + u.y.toFixed(1);
+      }
+
+      /* ---------- Trilhas e pulsos ---------- */
+      var redes = []; // { cont, svg, pulsos: [{el, path}] }
+
+      function tracarRede(cont, rotas) {
+        var svg = cont.querySelector(':scope > .trilhas-svg');
+        var r = cont.getBoundingClientRect();
+        svg.setAttribute('viewBox', '0 0 ' + r.width + ' ' + r.height);
+        svg.textContent = '';
+        var antigos = cont.querySelectorAll(':scope > .pulso');
+        var pulsos = [];
+        rotas.forEach(function (rt, i) {
+          var d = caminho(rt.pts, 14);
+          svg.appendChild(svgEl('path', { d: d, class: 't-base' }));
+          svg.appendChild(svgEl('path', { d: d, class: 't-' + rt.cor }));
+          // Anéis terminais nas duas pontas (fora das bordas dos cartões).
+          var u = rt.pts[rt.pts.length - 1], p0 = rt.pts[0], corNo = rt.cor === 'mel' ? '#F5C02C' : '#202020';
+          svg.appendChild(svgEl('circle', { cx: p0.x, cy: p0.y, r: 4.5, stroke: corNo }));
+          svg.appendChild(svgEl('circle', { cx: u.x, cy: u.y, r: 4.5, stroke: corNo }));
+          for (var k = 0; k < (rt.n || 2); k++) {
+            var el = antigos[pulsos.length] || document.createElement('span');
+            el.className = 'pulso' + (rt.cor === 'grafite' ? ' pulso--grafite' : '');
+            el.setAttribute('aria-hidden', 'true');
+            el.style.offsetPath = 'path("' + d + '")';
+            // Posição parada (sem movimento): pulsos distribuídos ao longo da trilha.
+            el.style.setProperty('--d', String(Math.round(((k + .5) / (rt.n || 2)) * 100 * .9 + i * 3) % 100));
+            if (!el.parentNode) cont.appendChild(el);
+            pulsos.push({ el: el, fase: k / (rt.n || 2), dur: rt.dur || 2.8 });
+          }
+        });
+        for (var j = pulsos.length; j < antigos.length; j++) antigos[j].remove();
+        return pulsos;
+      }
+
+      function rotasDiagrama(cont) {
+        var c = cont.getBoundingClientRect();
+        var ap = cont.querySelector('.apiario').getBoundingClientRect();
+        var ce = cont.querySelector('.celular').getBoundingClientRect();
+        var vertical = window.innerWidth < 900;
+        var rotas = [], N = 4;
+        for (var i = 0; i < N; i++) {
+          var o = i - (N - 1) / 2;
+          var a, b, m;
+          if (!vertical) {
+            a = { x: ap.right - c.left + 14, y: ap.top - c.top + ap.height / 2 + o * 30 };
+            b = { x: ce.left - c.left - 14, y: ce.top - c.top + ce.height / 2 + o * 46 };
+            m = a.x + (b.x - a.x) * (.28 + i * .14);
+            rotas.push({ pts: [a, { x: m, y: a.y }, { x: m, y: b.y }, b], cor: i < 2 ? 'mel' : 'grafite', n: 2, dur: 2.6 + i * .35 });
+          } else {
+            a = { x: ap.left - c.left + ap.width / 2 + o * 44, y: ap.bottom - c.top + 14 };
+            b = { x: ce.left - c.left + ce.width / 2 + o * 30, y: ce.top - c.top - 14 };
+            m = a.y + (b.y - a.y) * (.25 + i * .15);
+            rotas.push({ pts: [a, { x: a.x, y: m }, { x: b.x, y: m }, b], cor: o > 0 ? 'mel' : 'grafite', n: 1, dur: 2 + i * .3 });
+          }
+        }
+        return rotas;
+      }
+
+      function rotasPassos(cont) {
+        var c = cont.getBoundingClientRect();
+        var nums = cont.querySelectorAll('.passo__num');
+        if (nums.length < 2) return [];
+        var pts = [];
+        var vertical = window.innerWidth < 900;
+        nums.forEach(function (n, i) {
+          var r = n.getBoundingClientRect();
+          var p = { x: r.left - c.left + r.width / 2, y: r.top - c.top + r.height / 2 };
+          if (i > 0 && !vertical) { var u = pts[pts.length - 1]; if (Math.abs(u.y - p.y) > 1) pts.push({ x: p.x, y: u.y }); }
+          pts.push(p);
+        });
+        // A trilha segue até sair da última etapa (para a direita, ou para baixo no celular).
+        var ul = pts[pts.length - 1];
+        pts.push(vertical ? { x: ul.x, y: c.height } : { x: c.width, y: ul.y });
+        return [{ pts: pts, cor: 'mel', n: 3, dur: 4.2 }];
+      }
+
+      function trilhaIndice() {
+        var lista = document.querySelector('.indice__lista');
+        var svg = lista.querySelector('.indice__trilha');
+        var h = lista.offsetHeight;
+        if (!h) return;
+        var d = 'M8 8 V' + (h - 8);
+        svg.querySelector('.base').setAttribute('d', d);
+        var f = svg.querySelector('.feito'); f.setAttribute('d', d); f.style.strokeDasharray = (h - 16) + ' ' + (h - 16);
+        var pul = lista.querySelector('.pulso-indice');
+        pul.style.offsetPath = 'path("' + d + '")';
+        return h - 16;
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) { if (email) a.setAttribute('href', 'mailto:' + email.v); });
+        document.querySelectorAll('[data-ano]').forEach(function (el) { el.textContent = '© ' + new Date().getFullYear(); });
+
+        /* ---- Trilhas (existem sempre; sem movimento, os pulsos ficam parados) ---- */
+        var diagrama = document.querySelector('[data-diagrama]');
+        var passos = document.querySelector('[data-passos]');
+        var compIndice = 0;
+        var aoMontar = null;
+        function montar() {
+          redes = [
+            { cont: diagrama, pulsos: tracarRede(diagrama, rotasDiagrama(diagrama)) },
+            { cont: passos, pulsos: tracarRede(passos, rotasPassos(passos)) }
+          ];
+          compIndice = trilhaIndice() || 0;
+          progresso();
+          if (aoMontar) aoMontar();
+        }
+
+        /* ---- Índice: seção ativa e progresso de cada seção (estado, não animação) ---- */
+        var links = Array.prototype.slice.call(document.querySelectorAll('.indice__lista a'));
+        var alvos = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+        var barraTopo = document.querySelector('.indice__topo i');
+        function progresso() {
+          var meio = window.innerHeight * .4;
+          var ativo = -1;
+          alvos.forEach(function (sec, i) {
+            if (!sec) return;
+            var r = sec.getBoundingClientRect();
+            var f = Math.max(0, Math.min(1, (meio - r.top) / r.height));
+            links[i].querySelector('.indice__barra i').style.transform = 'scaleX(' + f.toFixed(3) + ')';
+            if (r.top <= meio) ativo = i;
+          });
+          links.forEach(function (a, i) { a.classList.toggle('ativo', i === ativo); });
+          var max = document.documentElement.scrollHeight - window.innerHeight;
+          var g = max > 0 ? Math.min(1, window.scrollY / max) : 0;
+          barraTopo.style.transform = 'scaleX(' + g.toFixed(3) + ')';
+          var lista = document.querySelector('.indice__lista');
+          var feito = lista.querySelector('.indice__trilha .feito');
+          if (compIndice) feito.style.strokeDashoffset = compIndice * (1 - g);
+          lista.querySelector('.pulso-indice').style.setProperty('--d', (g * 100).toFixed(2));
+        }
+        window.addEventListener('scroll', function () { requestAnimationFrame(progresso); }, { passive: true });
+
+        montar();
+        var agendado = false;
+        var ro = new ResizeObserver(function () {
+          if (agendado) return; agendado = true;
+          requestAnimationFrame(function () { agendado = false; montar(); });
+        });
+        ro.observe(diagrama); ro.observe(passos); ro.observe(document.querySelector('.indice__lista'));
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          var tweens = [];
+          var chegada = document.querySelector('.celular__chegada');
+          function piscar() {
+            gsap.fromTo(chegada, { scale: 1.9, backgroundColor: '#F5C02C' }, { scale: 1, backgroundColor: '#FFFBE6', duration: .5, ease: 'power2.out', overwrite: true });
+          }
+          // Cada pulso corre a trilha inteira (offset-distance 0 → 100%) em laço.
+          function animar() {
+            tweens.forEach(function (t) { t.kill(); });
+            tweens = [];
+            redes.forEach(function (rede, ri) {
+              rede.pulsos.forEach(function (p) {
+                var t = gsap.fromTo(p.el, { '--d': 0 }, {
+                  '--d': 100, duration: p.dur, ease: 'none', repeat: -1,
+                  onRepeat: ri === 0 ? piscar : null
+                });
+                t.progress(p.fase);
+                tweens.push(t);
+              });
+            });
+          }
+          aoMontar = animar;
+          animar();
+
+          gsap.from('.hero__topo > *', { y: 22, autoAlpha: 0, duration: .8, ease: 'power3.out', stagger: .12 });
+          gsap.from('.apiario, .celular', { scale: .94, autoAlpha: 0, duration: .8, ease: 'back.out(1.6)', stagger: .2, delay: .2 });
+          gsap.from('[data-diagrama] .trilhas-svg', { clipPath: 'inset(0 100% 0 0)', duration: 1.1, ease: 'power2.inOut', delay: .4 });
+          // Pílulas entram em fluxo, uma atrás da outra.
+          gsap.utils.toArray('.nuvem, .perfis, .passos').forEach(function (l) {
+            gsap.from(l.querySelectorAll(':scope > li'), {
+              y: 14, autoAlpha: 0, scale: .97, duration: .5, ease: 'power2.out', stagger: .07,
+              scrollTrigger: { trigger: l, start: 'top 84%', once: true }
+            });
+          });
+
+          return function () {
+            tweens.forEach(function (t) { t.kill(); });
+            aoMontar = null;
+            montar(); // volta às posições paradas
+          };
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

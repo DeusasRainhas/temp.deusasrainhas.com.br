@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deusas Rainhas · Galeria de templates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<style>
+  [hidden] { display: none !important; }
+  .gal-topo { padding-block: 32px 16px; }
+  .gal-topo img { height: 40px; width: auto; margin-bottom: 24px; }
+  .gal-topo h1 { margin: 8px 0 12px; }
+  .gal-topo p { margin: 0; max-width: 60ch; }
+  .gal-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding-block: 16px; }
+  .gal-barra input[type=search] { flex: 1 1 280px; min-height: 44px; padding: 8px 14px; font: inherit; font-size: var(--fs-body); color: var(--ink); background: var(--superficie); border: var(--bd); border-radius: var(--r-md); }
+  .gal-chips { display: flex; flex-wrap: wrap; gap: 8px; flex-basis: 100%; }
+  .gal-chips button { font: inherit; font-size: var(--fs-small); font-weight: 600; min-height: 36px; padding: 6px 14px; color: var(--terra); background: transparent; border: var(--bd); border-radius: var(--r-pill); cursor: pointer; }
+  .gal-chips button:hover { background: var(--mel-veu); }
+  .gal-chips button[aria-pressed=true] { background: var(--mel); color: var(--terra-escura); border-color: var(--mel-escuro); }
+  .gal-barra label { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-small); color: var(--corpo); min-height: 44px; cursor: pointer; }
+  .gal-barra :focus-visible, .gal-grade :focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
+  .gal-contagem { margin: 0 0 16px; }
+  .gal-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; padding-bottom: 64px; }
+  .gal-card { display: flex; flex-direction: column; gap: 12px; }
+  .gal-thumb { position: relative; display: block; aspect-ratio: 16 / 10; background: var(--creme-papel); border: var(--bd); border-radius: var(--r-lg); overflow: hidden; }
+  .gal-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .gal-thumb:hover { box-shadow: var(--sh-md); }
+  .gal-ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 12px; text-align: center; }
+  .gal-ph .dr-data { font-size: 48px; line-height: 1; }
+  .gal-ph .nome { font-family: var(--serif); font-size: var(--fs-body-lg); color: var(--terra-escura); }
+  .gal-linha { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: start; }
+  .gal-linha .dr-data { font-size: var(--fs-small); padding-top: 3px; }
+  .gal-nome { font-weight: 700; color: var(--ink); text-decoration: none; }
+  .gal-nome:hover { color: var(--petroleo); text-decoration: underline; }
+  .gal-linha .dr-small { grid-column: 2 / 4; }
+  .gal-fav { grid-row: 1; grid-column: 3; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: var(--bd); border-radius: var(--r-pill); color: var(--suave); cursor: pointer; }
+  .gal-fav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+  .gal-fav:hover { background: var(--mel-veu); }
+  .gal-fav[aria-pressed=true] { color: var(--mel-escuro); background: var(--mel-veu); }
+  .gal-fav[aria-pressed=true] svg { fill: currentColor; }
+  .gal-barra .dr-btn { margin-left: auto; }
+</style>
+</head>
+<body>
+<header class="dr-container gal-topo">
+  <img src="img/logos/logo-abelha-cor.png" alt="Deusas Rainhas" height="40">
+  <p class="dr-eyebrow">Protótipos</p>
+  <h1 class="dr-h1">50 templates para escolher</h1>
+  <p class="dr-body">Clique em um card para abrir o template. Use a estrela para marcar favoritos e o botão Comparar para ver dois lado a lado.</p>
+</header>
+<main class="dr-container">
+  <div class="gal-barra" role="search">
+    <input type="search" data-gal="busca" placeholder="Buscar por número, nome, família ou efeito" aria-label="Buscar templates">
+    <label><input type="checkbox" data-gal="so-favoritos"> Só favoritos</label>
+    <a class="dr-btn dr-btn--secundario" data-gal="comparar" href="comparar.html">Comparar</a>
+    <div class="gal-chips" data-gal="chips" role="group" aria-label="Filtrar por família"></div>
+  </div>
+  <p class="dr-caption gal-contagem" data-gal="contagem" aria-live="polite"></p>
+  <section class="gal-grade" data-gal="grade" aria-label="Templates"></section>
+</main>
+<script src="js/catalogo.js"></script>
+<script>
+(function () {
+  var DR = window.DR, CAT = window.DR_CATALOGO, FAM = window.DR_FAMILIAS;
+  var CHAVE = 'dr.favoritos';
+  var $ = function (s) { return document.querySelector('[data-gal=' + s + ']'); };
+  var famNome = {};
+  FAM.forEach(function (f) { famNome[f.id] = f.nome; });
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function norm(s) { return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+
+  function lerFavs() {
+    try {
+      var v = JSON.parse(window.localStorage.getItem(CHAVE));
+      if (!Array.isArray(v)) return [];
+      return v.filter(function (x, i) { return Number.isInteger(x) && x >= 1 && x <= 50 && v.indexOf(x) === i; });
+    } catch (e) { return []; }
+  }
+  function gravarFavs(v) {
+    try { window.localStorage.setItem(CHAVE, JSON.stringify(v)); } catch (e) {}
+  }
+  var favs = lerFavs();
+
+  var NS = 'http://www.w3.org/2000/svg';
+  function estrela() {
+    var s = document.createElementNS(NS, 'svg');
+    s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true');
+    var p = document.createElementNS(NS, 'path');
+    p.setAttribute('d', 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z');
+    s.appendChild(p);
+    return s;
+  }
+  function el(tag, cls, txt) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt != null) e.textContent = txt;
+    return e;
+  }
+
+  function placeholder(it) {
+    var d = el('div', 'gal-ph');
+    d.setAttribute('data-gal', 'placeholder');
+    d.appendChild(el('span', 'dr-data', pad(it.n)));
+    d.appendChild(el('span', 'nome', it.nome));
+    d.appendChild(el('span', 'dr-caption', famNome[it.familia] || it.familia));
+    return d;
+  }
+
+  function montarCard(it) {
+    var href = DR.caminho(it.n), fam = famNome[it.familia] || it.familia;
+    var card = el('article', 'gal-card');
+    card.setAttribute('data-gal', 'card');
+    card.setAttribute('data-n', it.n);
+    card.setAttribute('data-familia', it.familia);
+
+    var area = el('a', 'gal-thumb');
+    area.href = href;
+    area.setAttribute('aria-label', 'Abrir ' + pad(it.n) + ' ' + it.nome);
+    var img = document.createElement('img');
+    img.setAttribute('data-gal', 'thumb');
+    var desk = 'img/thumbs/' + pad(it.n) + '-desktop.webp';
+    var mob = 'img/thumbs/' + pad(it.n) + '-mobile.webp';
+    img.setAttribute('data-mobile', mob);
+    img.alt = ''; img.loading = 'lazy'; img.src = desk;
+    // o placeholder fica sempre por baixo; a imagem o cobre ao carregar
+    var ph = placeholder(it);
+    area.appendChild(ph);
+    area.appendChild(img);
+    img.addEventListener('error', function () { img.hidden = true; ph.hidden = false; });
+    img.addEventListener('load', function () { img.hidden = false; ph.hidden = true; });
+    // miniatura mobile no hover, só se existir
+    var mobOk = null, mobImg = null;
+    function carregarMobile() {
+      if (mobImg) return;
+      mobImg = new Image();
+      mobImg.onload = function () { mobOk = true; if (area.matches(':hover')) img.src = mob; };
+      mobImg.onerror = function () { mobOk = false; };
+      mobImg.src = mob;
+    }
+    area.addEventListener('mouseenter', function () {
+      carregarMobile();
+      if (mobOk) img.src = mob;
+    });
+    area.addEventListener('mouseleave', function () {
+      if (img.getAttribute('src') !== desk) img.src = desk;
+    });
+    card.appendChild(area);
+
+    var linha = el('div', 'gal-linha');
+    linha.appendChild(el('span', 'dr-data', pad(it.n)));
+    var a = el('a', 'gal-nome', it.nome); a.href = href;
+    linha.appendChild(a);
+    var b = el('button', 'gal-fav'); b.type = 'button';
+    b.setAttribute('data-gal', 'fav');
+    b.setAttribute('aria-label', 'Favoritar ' + pad(it.n) + ' ' + it.nome);
+    b.setAttribute('aria-pressed', 'false');
+    b.appendChild(estrela());
+    b.addEventListener('click', function () {
+      var i = favs.indexOf(it.n);
+      if (i >= 0) favs.splice(i, 1); else favs.push(it.n);
+      gravarFavs(favs);
+      b.setAttribute('aria-pressed', String(favs.indexOf(it.n) >= 0));
+      atualizar();
+    });
+    linha.appendChild(b);
+    linha.appendChild(el('span', 'dr-caption', fam));
+    linha.appendChild(el('span', 'dr-small', it.efeito));
+    card.appendChild(linha);
+
+    card._busca = norm([pad(it.n), it.n, it.nome, it.familia, fam, it.efeito].join(' '));
+    card._fav = b;
+    return card;
+  }
+
+  var grade = $('grade'), chips = $('chips'), busca = $('busca'), soFav = $('so-favoritos');
+  var cards = CAT.map(montarCard);
+  cards.forEach(function (c) { grade.appendChild(c); });
+
+  var ativas = {};
+  FAM.forEach(function (f) {
+    var b = el('button', null, f.nome); b.type = 'button';
+    b.setAttribute('data-gal', 'familia'); b.setAttribute('data-id', f.id);
+    b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', function () {
+      ativas[f.id] = !ativas[f.id];
+      b.setAttribute('aria-pressed', String(!!ativas[f.id]));
+      atualizar();
+    });
+    chips.appendChild(b);
+  });
+
+  function atualizar() {
+    var q = norm(busca.value).trim();
+    var algumaFam = Object.keys(ativas).some(function (k) { return ativas[k]; });
+    var visiveis = 0;
+    cards.forEach(function (c) {
+      var n = Number(c.getAttribute('data-n'));
+      var ok = (!q || c._busca.indexOf(q) >= 0) &&
+        (!algumaFam || ativas[c.getAttribute('data-familia')]) &&
+        (!soFav.checked || favs.indexOf(n) >= 0);
+      c.hidden = !ok;
+      if (ok) visiveis++;
+      c._fav.setAttribute('aria-pressed', String(favs.indexOf(n) >= 0));
+    });
+    $('contagem').textContent = visiveis + ' de ' + cards.length + ' templates';
+    var href = 'comparar.html';
+    if (favs.length >= 2) href += '?a=' + favs[favs.length - 1] + '&b=' + favs[favs.length - 2];
+    $('comparar').setAttribute('href', href);
+  }
+
+  busca.addEventListener('input', atualizar);
+  soFav.addEventListener('change', atualizar);
+  atualizar();
+})();
+</script>
+</body>
+</html>

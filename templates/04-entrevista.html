@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="pt-BR" data-template="04">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 04 Entrevista</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       04 Entrevista · editorial · N3 / C7 / R9
+       A página é uma entrevista pingue-pongue: cada seção abre com a
+       fala do entrevistador em serifa itálica (travessão) e segue com a
+       resposta da Deusas Rainhas em sans (marcada pela coroa do sprite).
+       Perguntas e respostas são datilografadas com cursor; o resto entra
+       sem pressa. Blocos de borda 2px terra sem raio (C7), fundo muda
+       por seção (R9), barra que se oculta ao descer (N3).
+       Regras: nada de opacity < 1 fora do gsap.matchMedia (a máquina de
+       escrever só esconde letras depois de entrar no matchMedia); canto
+       inferior direito livre para o switcher.
+       ================================================================= */
+
+    :root { --nav-h: 76px; --respiro: 112px; --recuo: 88px; }
+    @media (max-width: 767px) { :root { --nav-h: 64px; --respiro: 64px; --recuo: 0px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 2px solid var(--petroleo); outline-offset: 2px;
+    }
+    body { padding-top: var(--nav-h); }
+    main > section { padding-block: var(--respiro); scroll-margin-top: var(--sp-4); }
+    .dr-container { max-width: 1120px; }
+
+    /* ---------- R9: o fundo muda por seção (creme, papel, superfície, véu de mel) ---------- */
+    main > section:nth-of-type(4n+1) { background: var(--creme); }
+    main > section:nth-of-type(4n+2) { background: var(--creme-papel); }
+    main > section:nth-of-type(4n+3) { background: var(--superficie); }
+    main > section:nth-of-type(4n+4) { background: var(--mel-veu); }
+
+    /* ---------- N3: barra que se oculta ao descer e volta ao subir ---------- */
+    .barra {
+      position: fixed; z-index: 60; top: 0; left: 0; right: 0; height: var(--nav-h);
+      background: var(--creme); border-bottom: 2px solid var(--terra);
+      transition: transform .35s cubic-bezier(.2,.7,.2,1);
+    }
+    .barra.oculta { transform: translateY(calc(-100% - 2px)); }
+    .barra__in { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: var(--sp-5); }
+    .barra__marca img { width: 64px; height: 64px; }
+    .barra__links { display: flex; gap: var(--sp-5); }
+    .barra__links a {
+      color: var(--terra-escura); text-decoration: none; font-family: var(--serif); font-style: italic; font-size: 18px;
+      padding-block: 4px; border-bottom: 1.5px solid transparent;
+    }
+    .barra__links a:hover { border-bottom-color: var(--terra); }
+    .barra .dr-btn { padding: 10px 18px; font-size: var(--fs-small); border-radius: 0; }
+    @media (max-width: 899px) { .barra__links { display: none; } }
+    @media (max-width: 767px) { .barra__marca img { width: 52px; height: 52px; } }
+
+    /* ---------- Turno de fala: pergunta (serifa itálica) e resposta (sans) ---------- */
+    .pergunta { display: grid; grid-template-columns: var(--recuo) minmax(0, 1fr); align-items: start; }
+    .pergunta::before {
+      content: "\2014"; font-family: var(--serif); font-size: 48px; line-height: 1; color: var(--terra-clara);
+    }
+    .pergunta .dr-eyebrow { grid-column: 2; margin-bottom: var(--sp-3); }
+    .q {
+      grid-column: 2; font-family: var(--serif); font-style: italic; font-weight: 400;
+      font-size: clamp(32px, 4vw, 52px); line-height: 1.12; letter-spacing: -.015em; color: var(--terra-escura);
+      max-width: 22ch;
+    }
+    .resposta { display: grid; grid-template-columns: var(--recuo) minmax(0, 1fr); margin-top: var(--sp-6); }
+    .fala {
+      display: grid; place-items: center; width: 48px; height: 48px; margin-top: 2px;
+      background: var(--terra-escura); color: var(--mel);
+    }
+    .resposta > :not(.fala) { grid-column: 2; }
+    .a { font-family: var(--sans); font-size: clamp(18px, 1.6vw, 21px); line-height: 1.6; color: var(--corpo); max-width: 60ch; }
+    .a + * { margin-top: var(--sp-6); }
+    @media (max-width: 767px) {
+      .pergunta { grid-template-columns: minmax(0, 1fr); }
+      .pergunta::before { font-size: 36px; margin-bottom: var(--sp-2); }
+      .pergunta .dr-eyebrow, .q { grid-column: 1; }
+      .resposta { grid-template-columns: minmax(0, 1fr); }
+      .resposta > :not(.fala) { grid-column: 1; }
+      .fala { width: 40px; height: 40px; margin-bottom: var(--sp-4); }
+    }
+
+    /* Máquina de escrever: letras ocultas (visibility) até a vez delas; cursor terra. */
+    .tw-oculto .tw-c:not(.on) { visibility: hidden; }
+    .tw-c.cursor { position: relative; }
+    .tw-c.cursor::after {
+      content: ""; position: absolute; left: 100%; top: .12em; bottom: .02em; width: .09em; margin-left: .04em;
+      background: var(--mel-escuro); animation: piscar 1s steps(1) infinite;
+    }
+    @keyframes piscar { 50% { background: transparent; } }
+
+    /* ---------- Hero: abertura da entrevista ---------- */
+    main > section[data-secao="hero"] { padding-top: var(--sp-8); }
+    .abertura { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: var(--sp-8); align-items: start; }
+    .linha-fina {
+      display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); align-items: center;
+      padding-bottom: var(--sp-4); margin-bottom: var(--sp-7); border-bottom: 2px solid var(--terra);
+      font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .16em; text-transform: uppercase; color: var(--terra);
+    }
+    .linha-fina .dr-eyebrow { color: var(--petroleo); }
+    .abertura .q { font-size: clamp(44px, 6vw, 84px); line-height: 1.02; letter-spacing: -.025em; max-width: 13ch; }
+    .abertura .pergunta::before { font-size: 72px; }
+    .abertura .a { font-size: clamp(19px, 1.8vw, 23px); }
+    .acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+    .acoes .dr-btn { border-radius: 0; }
+    .retrato { border: 2px solid var(--terra); background: var(--creme-papel); padding: var(--sp-3); margin-top: 48px; }
+    .retrato img { width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; }
+    .retrato figcaption { padding: var(--sp-3) var(--sp-1) 0; color: var(--terra); }
+    @media (max-width: 1023px) {
+      .abertura { grid-template-columns: minmax(0, 1fr); gap: var(--sp-7); }
+      .retrato { margin-top: 0; max-width: 420px; }
+      .retrato img { aspect-ratio: 4 / 3; }
+    }
+    @media (max-width: 767px) {
+      main > section[data-secao="hero"] { padding-top: var(--sp-6); }
+      .linha-fina { margin-bottom: var(--sp-5); }
+      .abertura .q { font-size: 42px; }
+      .abertura .pergunta::before { font-size: 44px; }
+    }
+
+    /* ---------- C7: blocos de borda grossa 2px terra, sem raio ---------- */
+    .blocos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; border: 2px solid var(--terra); background: var(--terra); }
+    .blocos > li { padding: var(--sp-6) var(--sp-5); background: var(--branco); }
+    .blocos .dr-icone { color: var(--petroleo); }
+    .blocos h3 { margin-block: var(--sp-4) var(--sp-2); }
+    .blocos--dois { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .blocos--quatro { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    @media (max-width: 899px) { .blocos, .blocos--quatro { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 599px) { .blocos, .blocos--dois { grid-template-columns: minmax(0, 1fr); } }
+
+    /* Prova: números da conversa */
+    .cifra { display: block; font-family: var(--mono); font-weight: 500; font-size: clamp(36px, 4vw, 52px); line-height: 1; letter-spacing: -.03em; color: var(--terra-escura); }
+    .cifra__rotulo { display: block; margin-top: var(--sp-3); }
+
+    /* Problema */
+    .stat { display: flex; align-items: baseline; gap: var(--sp-5); flex-wrap: wrap; padding: var(--sp-5) var(--sp-6); border: 2px solid var(--terra); background: var(--branco); }
+    .stat strong { font-family: var(--sans); font-weight: 800; font-size: clamp(56px, 7vw, 88px); line-height: 1; letter-spacing: -.04em; color: var(--terra-escura); }
+    .stat p { max-width: 34ch; font-size: var(--fs-body-lg); color: var(--corpo); }
+    .falas > li { padding-block: var(--sp-4); border-bottom: 1px solid var(--linha-forte); }
+    .falas > li:first-child { border-top: 1px solid var(--linha-forte); }
+
+    /* Como funciona */
+    .etapas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; border: 2px solid var(--terra); background: var(--terra); }
+    .etapas > li { display: flex; flex-direction: column; padding: var(--sp-5); background: var(--branco); }
+    .etapas .num { font-family: var(--mono); font-weight: 700; font-size: 32px; line-height: 1; color: var(--petroleo); letter-spacing: -.02em; }
+    .etapas h3 { margin-block: var(--sp-4) var(--sp-2); font-size: var(--fs-h4); }
+    .etapas .a { font-size: var(--fs-body); }
+    .etapas figure { margin-top: auto; padding-top: var(--sp-5); }
+    .etapas img { width: 100%; max-height: 300px; object-fit: cover; object-position: top; border: 2px solid var(--terra); }
+    .etapas figcaption { padding-top: var(--sp-2); color: var(--terra); }
+    @media (max-width: 899px) {
+      .etapas { grid-template-columns: minmax(0, 1fr); }
+      .etapas img { max-width: 260px; }
+    }
+
+    /* Equipe */
+    .pessoas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+    .pessoas > li { border: 2px solid var(--terra); background: var(--branco); }
+    .pessoas img { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-bottom: 2px solid var(--terra); }
+    .pessoas div { padding: var(--sp-4); }
+    .pessoas p { margin-top: 4px; font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    .apoios { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--sp-5) var(--sp-8); margin-top: var(--sp-6); padding: var(--sp-6); background: var(--grafite); border: 2px solid var(--grafite); }
+    .apoio { display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
+    .apoio__logo { display: grid; place-items: center; height: 80px; padding: var(--sp-2) var(--sp-4); }
+    .apoio__logo img { max-height: 60px; width: auto; max-width: 160px; }
+    .apoio[data-fundo="claro"] .apoio__logo { background: var(--creme); }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--mel-claro); }
+    @media (max-width: 767px) { .pessoas { grid-template-columns: minmax(0, 1fr); } .pessoas > li { display: grid; grid-template-columns: 96px minmax(0, 1fr); align-items: center; } .pessoas img { border-bottom: 0; border-right: 2px solid var(--terra); } }
+
+    /* Depoimento: a voz do campo */
+    .voz { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: var(--sp-7); align-items: center; }
+    .voz img { width: 200px; height: 240px; object-fit: cover; border: 2px solid var(--terra); }
+    .voz .dr-eyebrow { margin-bottom: var(--sp-4); }
+    .voz blockquote p { font-family: var(--sans); font-weight: 500; font-size: clamp(24px, 2.8vw, 34px); line-height: 1.35; letter-spacing: -.01em; color: var(--terra-escura); text-wrap: balance; }
+    .voz blockquote p::before { content: "\00AB\00A0"; color: var(--terra-clara); }
+    .voz blockquote p::after { content: "\00A0\00BB"; color: var(--terra-clara); }
+    .voz figcaption { margin-top: var(--sp-5); padding-top: var(--sp-4); border-top: 2px solid var(--terra); display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); align-items: baseline; }
+    .voz__nome { font-weight: 700; color: var(--ink); }
+    .voz__local { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); }
+    @media (max-width: 767px) { .voz { grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); } .voz img { width: 120px; height: 144px; } }
+
+    /* Contato */
+    .contato-grade { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--sp-7); }
+    .form { display: grid; gap: var(--sp-4); padding: var(--sp-6); border: 2px solid var(--terra); background: var(--branco); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo input, .campo textarea {
+      font: inherit; font-size: var(--fs-body); color: var(--ink); width: 100%;
+      background: var(--creme); border: 1.5px solid var(--terra-clara); border-radius: 0; padding: var(--sp-3) var(--sp-4);
+    }
+    .campo textarea { min-height: 128px; resize: vertical; }
+    .form .dr-btn { justify-self: start; border-radius: 0; }
+    .canais > li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-4); align-items: center; padding-block: var(--sp-4); border-bottom: 1px solid var(--linha-forte); }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-weight: 600; font-size: var(--fs-body-lg); overflow-wrap: anywhere; text-underline-offset: 4px; }
+    .contato-acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+    .contato-acoes .dr-btn { border-radius: 0; }
+    @media (max-width: 899px) { .contato-grade { grid-template-columns: minmax(0, 1fr); } .form { padding: var(--sp-5); } }
+
+    /* ---------- Rodapé ---------- */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 96px; border-top: 2px solid var(--terra); }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1120px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) {
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N3 · barra que se oculta ao descer e reaparece ao subir) -->
+  <nav data-secao="nav" class="barra" data-barra>
+    <div class="dr-container barra__in">
+      <a class="barra__marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+      <div class="barra__links">
+        <a href="#problema" data-c="problema.eyebrow"></a>
+        <a href="#funcionalidades" data-c="funcionalidades.eyebrow"></a>
+        <a href="#como-funciona" data-c="comoFunciona.eyebrow"></a>
+        <a href="#equipe" data-c="equipe.eyebrow"></a>
+        <a href="#contato" data-c="contato.eyebrow"></a>
+      </div>
+      <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (abertura: pergunta em serifa itálica, resposta em sans, retrato) -->
+    <section data-secao="hero" id="inicio">
+      <div class="dr-container">
+        <div class="linha-fina">
+          <span class="dr-eyebrow" data-c="hero.eyebrow"></span>
+          <span data-c="rodape.endereco"></span>
+          <time data-hoje></time>
+        </div>
+        <div class="abertura">
+          <div>
+            <div class="pergunta">
+              <h1 class="q" data-maquina data-c="hero.titulo"></h1>
+            </div>
+            <div class="resposta">
+              <span class="fala" aria-hidden="true"><svg class="dr-icone"><use href="#dr-rainha"></use></svg></span>
+              <p class="a" data-maquina data-c="hero.subtitulo"></p>
+              <div class="acoes">
+                <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+                <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+                <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+              </div>
+            </div>
+          </div>
+          <figure class="retrato">
+            <img data-c-src="hero.imagem" data-c-alt="hero.imagemAlt" alt="" width="1600" height="1000">
+            <figcaption class="dr-caption" data-c="hero.imagemAlt"></figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: prova (C7 · quatro blocos de números) -->
+    <section data-secao="prova">
+      <div class="dr-container">
+        <ul class="blocos blocos--quatro" data-c-lista="prova.stats">
+          <template>
+            <li>
+              <span class="cifra" data-c="valor"></span>
+              <span class="dr-body cifra__rotulo" data-c="rotulo"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: problema (pergunta, resposta e consequências) -->
+    <section data-secao="problema" id="problema">
+      <div class="dr-container">
+        <div class="pergunta">
+          <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+          <h2 class="q" data-maquina data-c="problema.titulo"></h2>
+        </div>
+        <div class="resposta">
+          <span class="fala" aria-hidden="true"><svg class="dr-icone"><use href="#dr-rainha"></use></svg></span>
+          <div class="stat">
+            <strong data-c="problema.estatistica.valor"></strong>
+            <p data-maquina data-c="problema.estatistica.texto"></p>
+          </div>
+          <ul class="falas" data-c-lista="problema.consequencias" style="margin-top: var(--sp-6)">
+            <template>
+              <li><p class="a" data-c="texto"></p></li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades (C7 · blocos em três colunas) -->
+    <section data-secao="funcionalidades" id="funcionalidades">
+      <div class="dr-container">
+        <div class="pergunta">
+          <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+          <h2 class="q" data-maquina data-c="funcionalidades.titulo"></h2>
+        </div>
+        <div class="resposta">
+          <span class="fala" aria-hidden="true"><svg class="dr-icone"><use href="#dr-rainha"></use></svg></span>
+          <ul class="blocos" data-c-lista="funcionalidades.itens">
+            <template>
+              <li>
+                <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+                <h3 class="dr-h4" data-c="titulo"></h3>
+                <p class="dr-body" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona (etapas com telas do app) -->
+    <section data-secao="como-funciona" id="como-funciona">
+      <div class="dr-container">
+        <div class="pergunta">
+          <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+          <h2 class="q" data-maquina data-c="comoFunciona.titulo"></h2>
+        </div>
+        <div class="resposta">
+          <span class="fala" aria-hidden="true"><svg class="dr-icone"><use href="#dr-rainha"></use></svg></span>
+          <ol class="etapas" data-c-lista="comoFunciona.passos">
+            <template>
+              <li>
+                <span class="num" data-c="numero"></span>
+                <h3 class="dr-h3" data-c="titulo"></h3>
+                <p class="a" data-c="texto"></p>
+                <figure>
+                  <img data-c-src="imagem" data-c-alt="alt" alt="">
+                  <figcaption class="dr-caption" data-c="alt"></figcaption>
+                </figure>
+              </li>
+            </template>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem (C7 · três blocos) -->
+    <section data-secao="para-quem" id="para-quem">
+      <div class="dr-container">
+        <div class="pergunta">
+          <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+          <h2 class="q" data-maquina data-c="paraQuem.titulo"></h2>
+        </div>
+        <div class="resposta">
+          <span class="fala" aria-hidden="true"><svg class="dr-icone"><use href="#dr-rainha"></use></svg></span>
+          <ul class="blocos" data-c-lista="paraQuem.perfis">
+            <template>
+              <li>
+                <h3 class="dr-h4" data-c="titulo" style="margin-top:0"></h3>
+                <p class="dr-body" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia (resposta datilografada + blocos) -->
+    <section data-secao="tecnologia" id="tecnologia">
+      <div class="dr-container">
+        <div class="pergunta">
+          <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+          <h2 class="q" data-maquina data-c="tecnologia.titulo"></h2>
+        </div>
+        <div class="resposta">
+          <span class="fala" aria-hidden="true"><svg class="dr-icone"><use href="#dr-rainha"></use></svg></span>
+          <p class="a" data-maquina data-c="tecnologia.texto"></p>
+          <ul class="blocos blocos--dois" data-c-lista="tecnologia.pilares">
+            <template>
+              <li>
+                <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+                <h3 class="dr-h4" data-c="titulo"></h3>
+                <p class="dr-body" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe (origem datilografada, pessoas e apoios) -->
+    <section data-secao="equipe" id="equipe">
+      <div class="dr-container">
+        <div class="pergunta">
+          <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+          <h2 class="q" data-maquina data-c="equipe.titulo"></h2>
+        </div>
+        <div class="resposta">
+          <span class="fala" aria-hidden="true"><svg class="dr-icone"><use href="#dr-rainha"></use></svg></span>
+          <p class="a" data-maquina data-c="equipe.origem"></p>
+          <ul class="pessoas" data-c-lista="equipe.pessoas">
+            <template>
+              <li>
+                <img data-c-src="foto" data-c-alt="alt" alt="" width="300" height="300">
+                <div>
+                  <h3 class="dr-h4" data-c="nome"></h3>
+                  <p data-c="cargo"></p>
+                </div>
+              </li>
+            </template>
+          </ul>
+          <!-- Centelha só funciona no escuro; logos de fundo claro ganham placa creme -->
+          <ul class="apoios" data-c-lista="equipe.apoios">
+            <template>
+              <li class="apoio">
+                <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+                <span class="apoio__nome" data-c="nome"></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento (a voz do campo, em sans: quem responde é o apicultor) -->
+    <section data-secao="depoimento">
+      <div class="dr-container">
+        <figure class="voz">
+          <img data-c-src="depoimento.foto" alt="" width="200" height="240">
+          <div>
+            <blockquote style="margin:0"><p data-maquina data-c="depoimento.citacao"></p></blockquote>
+            <figcaption>
+              <span class="voz__nome" data-c="depoimento.nome"></span>
+              <span class="voz__local" data-c="depoimento.local"></span>
+            </figcaption>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato (última pergunta: formulário e canais) -->
+    <section data-secao="contato" id="contato">
+      <div class="dr-container">
+        <div class="pergunta">
+          <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+          <h2 class="q" data-maquina data-c="contato.titulo"></h2>
+        </div>
+        <div class="resposta">
+          <span class="fala" aria-hidden="true"><svg class="dr-icone"><use href="#dr-rainha"></use></svg></span>
+          <p class="a" data-maquina data-c="contato.texto"></p>
+          <div class="contato-grade">
+            <form class="form" method="post" data-form-contato>
+              <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+              <div class="campo">
+                <label for="f-nome" data-c="contato.form.nome"></label>
+                <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+              </div>
+              <div class="campo">
+                <label for="f-email" data-c="contato.form.email"></label>
+                <input id="f-email" name="email" type="email" autocomplete="email" required>
+              </div>
+              <div class="campo">
+                <label for="f-msg" data-c="contato.form.mensagem"></label>
+                <textarea id="f-msg" name="mensagem" required></textarea>
+              </div>
+              <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+            </form>
+            <div>
+              <ul class="canais">
+                <li>
+                  <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  <a data-mailto data-c="contato.email"></a>
+                </li>
+                <li>
+                  <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                  <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+                </li>
+                <li>
+                  <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                  <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+                </li>
+              </ul>
+              <div class="contato-acoes">
+                <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+                <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '#';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+
+      /* Prepara um texto para a máquina de escrever: uma <span> inline por caractere
+         (quebra de linha e kerning ficam praticamente os do texto corrido), o texto
+         inteiro num span para leitores de tela. As letras só somem quando o
+         chamador adiciona .tw-oculto, já dentro do matchMedia. */
+      function prepararMaquina(el) {
+        var texto = el.textContent;
+        el.textContent = '';
+        var vis = document.createElement('span');
+        vis.setAttribute('aria-hidden', 'true');
+        var letras = Array.from(texto).map(function (c) {
+          var s = document.createElement('span');
+          s.className = 'tw-c';
+          s.textContent = c;
+          vis.appendChild(s);
+          return s;
+        });
+        el.appendChild(vis);
+        var leitor = document.createElement('span');
+        leitor.className = 'dr-sr-only';
+        leitor.textContent = texto;
+        el.appendChild(leitor);
+        return { el: el, vis: vis, letras: letras, reverter: function () { el.textContent = texto; } };
+      }
+
+      /* Tween que "datilografa" m em `duracao` segundos com o cursor na última letra. */
+      function digitar(m, duracao, extra) {
+        var estado = { n: 0 }, ultimo = -1, total = m.letras.length;
+        function render() {
+          var k = Math.floor(estado.n);
+          if (k === ultimo) return;
+          for (var i = Math.max(0, ultimo); i < k; i++) m.letras[i].classList.add('on');
+          if (ultimo > 0) m.letras[ultimo - 1].classList.remove('cursor');
+          if (k > 0) m.letras[k - 1].classList.add('cursor');
+          ultimo = k;
+        }
+        return gsap.to(estado, Object.assign({
+          n: total, duration: duracao, ease: 'none', onUpdate: render,
+          onComplete: function () { render(); m.reverter(); }
+        }, extra || {}));
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) {
+          if (email) a.setAttribute('href', 'mailto:' + email.v);
+        });
+        document.querySelectorAll('[data-ano]').forEach(function (el) {
+          el.textContent = '© ' + new Date().getFullYear();
+        });
+        document.querySelectorAll('[data-hoje]').forEach(function (el) {
+          var hoje = new Date();
+          el.setAttribute('datetime', hoje.toISOString().slice(0, 10));
+          el.textContent = hoje.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+        });
+
+        // N3: a barra some ao descer e volta ao subir (é navegação, roda sempre;
+        // com movimento reduzido a transição do base.css já fica instantânea).
+        var barra = document.querySelector('[data-barra]');
+        var yAnterior = window.scrollY, pendente = false;
+        window.addEventListener('scroll', function () {
+          if (pendente) return;
+          pendente = true;
+          requestAnimationFrame(function () {
+            pendente = false;
+            var y = window.scrollY;
+            if (Math.abs(y - yAnterior) < 6) return;
+            barra.classList.toggle('oculta', y > yAnterior && y > 160 && !barra.contains(document.activeElement));
+            yAnterior = y;
+          });
+        }, { passive: true });
+        barra.addEventListener('focusin', function () { barra.classList.remove('oculta'); });
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          var maquinas = [];
+          function preparar(el) {
+            var m = prepararMaquina(el);
+            m.vis.classList.add('tw-oculto');
+            maquinas.push(m);
+            return m;
+          }
+
+          // Abertura: a pergunta datilografa, depois a resposta; termina em ~1,3 s.
+          var q = preparar(document.querySelector('.abertura .q'));
+          var a = preparar(document.querySelector('.abertura .a'));
+          var tl = gsap.timeline();
+          tl.from('.linha-fina', { autoAlpha: 0, y: -8, duration: 0.35, ease: 'power2.out' }, 0);
+          tl.add(digitar(q, Math.min(0.6, q.letras.length * 0.016)), 0.1);
+          tl.from('.abertura .fala', { scale: 0, duration: 0.3, ease: 'back.out(2)' }, 0.65);
+          tl.add(digitar(a, Math.min(0.55, a.letras.length * 0.006)), 0.72);
+          tl.from('.acoes > *, .retrato', { autoAlpha: 0, y: 14, duration: 0.4, ease: 'power2.out', stagger: 0.06 }, 0.85);
+
+          // Demais seções: pergunta e resposta datilografam ao entrar na tela, em sequência.
+          document.querySelectorAll('main > section:not([data-secao="hero"])').forEach(function (sec) {
+            var alvos = Array.prototype.slice.call(sec.querySelectorAll('[data-maquina]'));
+            if (!alvos.length) return;
+            var t = gsap.timeline({ scrollTrigger: { trigger: sec, start: 'top 72%', once: true } });
+            var pos = 0;
+            alvos.forEach(function (el) {
+              var m = preparar(el);
+              var ehPergunta = el.classList.contains('q');
+              var dur = Math.min(ehPergunta ? 0.9 : 1.4, m.letras.length * (ehPergunta ? 0.024 : 0.009));
+              t.add(digitar(m, dur), pos);
+              pos += dur + 0.12;
+            });
+            var fala = sec.querySelector('.fala');
+            if (fala) t.from(fala, { scale: 0, duration: 0.3, ease: 'back.out(2)' }, Math.min(0.5, pos));
+          });
+
+          // Blocos e listas entram sem pressa.
+          gsap.utils.toArray('.blocos, .falas, .etapas, .pessoas, .apoios').forEach(function (lista) {
+            gsap.from(lista.querySelectorAll(':scope > li'), {
+              autoAlpha: 0, y: 18, duration: 0.5, ease: 'power2.out', stagger: 0.07,
+              scrollTrigger: { trigger: lista, start: 'top 85%', once: true }
+            });
+          });
+
+          return function () { maquinas.forEach(function (m) { m.reverter(); }); };
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

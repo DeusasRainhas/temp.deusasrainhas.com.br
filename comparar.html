@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comparar templates · Deusas Rainhas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--creme); font-family: 'Hanken Grotesk', system-ui, sans-serif; }
+  .barra { box-sizing: border-box; min-height: 56px; background: var(--grafite); color: var(--creme); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; padding: 8px 16px; font-size: 14px; }
+  .barra label, .barra legend { color: var(--creme); }
+  .barra .par { display: flex; align-items: center; gap: 8px; }
+  .barra .par span { font-weight: 700; color: var(--mel); }
+  .barra select, .barra button { font: inherit; font-size: 14px; background: var(--grafite-suave); color: var(--creme); border: 1px solid var(--tenue); border-radius: 6px; padding: 6px 10px; min-height: 32px; }
+  .barra button { cursor: pointer; font-weight: 600; }
+  .barra button:hover { background: var(--mel); color: var(--grafite); }
+  .barra a { color: var(--mel); text-decoration: none; font-weight: 600; margin-left: auto; }
+  .barra a:hover { text-decoration: underline; }
+  .barra :focus-visible { outline: 2px solid var(--mel); outline-offset: 2px; }
+  .barra fieldset { border: 0; margin: 0; padding: 0; display: flex; gap: 12px; align-items: center; }
+  .barra fieldset label { display: inline-flex; gap: 4px; align-items: center; cursor: pointer; }
+  .frames { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--linha, var(--tenue)); }
+  .frames iframe { display: block; width: 100%; height: calc(100vh - 56px); border: 0; background: var(--creme); }
+  .frames.fixa { display: flex; flex-wrap: wrap; overflow-x: auto; justify-content: center; gap: 24px; background: var(--creme-papel); }
+  .frames.fixa iframe { flex: none; }
+  @media (max-width: 799px) {
+    .frames:not(.fixa) { grid-template-columns: 1fr; }
+    .frames:not(.fixa) iframe { height: 60vh; }
+  }
+</style>
+</head>
+<body>
+<header class="barra">
+  <div class="par"><span>A</span><select data-cmp="a" aria-label="Template A"></select></div>
+  <div class="par"><span>B</span><select data-cmp="b" aria-label="Template B"></select></div>
+  <button type="button" data-cmp="inverter">Inverter</button>
+  <label><input type="checkbox" data-cmp="sync" checked> Sincronizar scroll</label>
+  <fieldset data-cmp="largura">
+    <legend class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Largura dos quadros</legend>
+    <label><input type="radio" name="largura" value="desktop" checked> Desktop</label>
+    <label><input type="radio" name="largura" value="768"> Tablet 768</label>
+    <label><input type="radio" name="largura" value="390"> Celular 390</label>
+  </fieldset>
+  <a data-cmp="galeria" href="galeria.html">Galeria</a>
+</header>
+<main class="frames" id="frames">
+  <iframe data-cmp="frame-a" title="Template A"></iframe>
+  <iframe data-cmp="frame-b" title="Template B"></iframe>
+</main>
+<script src="js/catalogo.js"></script>
+<script>
+(function () {
+  var DR = window.DR, CAT = window.DR_CATALOGO;
+  var selA = document.querySelector('[data-cmp=a]'), selB = document.querySelector('[data-cmp=b]');
+  var frameA = document.querySelector('[data-cmp=frame-a]'), frameB = document.querySelector('[data-cmp=frame-b]');
+  var sync = document.querySelector('[data-cmp=sync]'), frames = document.getElementById('frames');
+  var a, b, lock = { a: 0, b: 0 };
+
+  function valido(v) {
+    if (typeof v !== 'string' || !/^\d+$/.test(v)) return null;
+    var n = parseInt(v, 10);
+    return n >= 1 && n <= 50 ? n : null;
+  }
+  function prox(n) { return n === 50 ? 1 : n + 1; }
+  function favoritos() {
+    try {
+      var l = JSON.parse(localStorage.getItem('dr.favoritos'));
+      if (!Array.isArray(l)) return [];
+      return l.filter(function (x) { return Number.isInteger(x) && x >= 1 && x <= 50; });
+    } catch (e) { return []; }
+  }
+
+  popularSeletores();
+  function popularSeletores() {
+    window.DR_FAMILIAS.forEach(function (f) {
+      [selA, selB].forEach(function (sel) {
+        var g = document.createElement('optgroup'); g.label = f.nome;
+        CAT.filter(function (i) { return i.familia === f.id; }).forEach(function (i) {
+          var o = document.createElement('option');
+          o.value = i.n; o.textContent = String(i.n).padStart(2, '0') + ' · ' + i.nome;
+          g.appendChild(o);
+        });
+        sel.appendChild(g);
+      });
+    });
+  }
+
+  function resolver() {
+    var p = new URLSearchParams(location.search);
+    var pa = valido(p.get('a')), pb = valido(p.get('b'));
+    if (pa === null && pb === null) {
+      var f = favoritos();
+      if (f.length >= 2) { pa = f[f.length - 2]; pb = f[f.length - 1]; }
+      else { pa = 1; pb = 2; }
+    } else if (pa === null) { pa = pb === 1 ? 50 : pb - 1; }
+    else if (pb === null) { pb = prox(pa); }
+    if (pa === pb) pb = prox(pa);
+    a = pa; b = pb;
+  }
+
+  function aplicar() {
+    selA.value = a; selB.value = b;
+    [[frameA, a], [frameB, b]].forEach(function (par) {
+      var alvo = DR.caminho(par[1]);
+      if (par[0].getAttribute('src') !== alvo) par[0].setAttribute('src', alvo);
+    });
+    history.replaceState(null, '', '?a=' + a + '&b=' + b);
+  }
+
+  function largura(v) {
+    if (v === 'desktop') {
+      frames.classList.remove('fixa');
+      frameA.style.width = frameB.style.width = '';
+    } else {
+      frames.classList.add('fixa');
+      frameA.style.width = frameB.style.width = v + 'px';
+    }
+  }
+
+  selA.addEventListener('change', function () {
+    a = parseInt(selA.value, 10);
+    if (a === b) b = prox(a);
+    aplicar();
+  });
+  selB.addEventListener('change', function () {
+    b = parseInt(selB.value, 10);
+    if (a === b) a = prox(b);
+    aplicar();
+  });
+  function inverter() { var t = a; a = b; b = t; aplicar(); }
+  document.querySelector('[data-cmp=inverter]').addEventListener('click', inverter);
+  document.querySelectorAll('[data-cmp=largura] input').forEach(function (r) {
+    r.addEventListener('change', function () { if (r.checked) largura(r.value); });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var t = e.target && e.target.tagName;
+    if (t === 'INPUT' || t === 'SELECT' || t === 'TEXTAREA') return;
+    if (e.key === 's' || e.key === 'S') { inverter(); }
+    else if (e.key === 'Escape') { location.href = DR.caminho(a); }
+  });
+
+  window.addEventListener('message', function (e) {
+    var d = e.data;
+    if (!d || d.tipo !== 'dr.scroll') return;
+    var wa = frameA.contentWindow, wb = frameB.contentWindow, origem, destino;
+    if (e.source && e.source === wa) { origem = 'a'; destino = wb; }
+    else if (e.source && e.source === wb) { origem = 'b'; destino = wa; }
+    else return;
+    if (!sync.checked) return;
+    if (Date.now() < lock[origem]) return;
+    lock[origem === 'a' ? 'b' : 'a'] = Date.now() + 100;
+    destino.postMessage({ tipo: 'dr.scrollTo', ratio: d.ratio }, '*');
+  });
+
+  resolver();
+  aplicar();
+})();
+</script>
+</body>
+</html>

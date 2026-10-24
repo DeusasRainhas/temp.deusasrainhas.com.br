@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><title>Fixture hidratar</title></head>
+<body>
+  <h1 data-c="hero.titulo"></h1>
+  <a data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+  <p data-c-html="hero.subtitulo"></p>
+  <ul data-c-lista="funcionalidades.itens"><template><li><b data-c="titulo"></b><span data-c="texto"></span></li></template></ul>
+  <span data-c="contato.email"></span>
+  <span data-c="nao.existe"></span>
+  <footer data-secao="rodape"></footer>
+  <script>document.addEventListener('conteudo:pronto', function () { window.pronto = true; });</script>
+  <script src="../../js/conteudo.js"></script>
+  <script src="../../js/hidratar.js"></script>
+</body>
+</html>

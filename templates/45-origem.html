@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="pt-BR" data-template="45">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 45 Origem</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       45 Origem · narrativa · N2 / C7 / R0
+       Mapa do Brasil como hero. O contorno (SVG simplificado, projeção
+       equirretangular feita à mão) aproxima em três paradas: Brasil ->
+       Goiás -> Cocalzinho de Goiás, onde a empresa nasceu. A página segue
+       a ordem da origem: de onde viemos, quem somos, o problema, o app.
+       Efeito: zoom progressivo com scrub (transform no grupo SVG) e o
+       palco pinado (>= 900px). Abaixo de 900px ou com movimento reduzido,
+       o mapa mostra o quadro final (Cocalzinho) e as legendas ficam
+       empilhadas; um mapinha de localização no canto mostra o Brasil.
+       N2: pílula inferior centralizada, estilo app.
+       C7: blocos de borda grossa 2px terra, sem raio. R0: circuito-divisoria.
+       Regras: nada de opacity < 1 fora do gsap.matchMedia; canto inferior
+       direito livre (switcher): no celular a pílula vai para a esquerda.
+       ================================================================= */
+
+    :root { --bloco: 2px solid var(--terra); --respiro: var(--sp-8); }
+    @media (max-width: 767px) { :root { --respiro: 48px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
+
+    /* ---------- N2: pílula inferior ---------- */
+    .pilula {
+      position: fixed; z-index: 60; left: 50%; bottom: 20px; transform: translateX(-50%);
+      display: flex; align-items: center; gap: var(--sp-1); padding: 6px;
+      background: var(--grafite); border-radius: var(--r-pill); box-shadow: var(--sh-lg);
+    }
+    .pilula__coroa { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--creme); }
+    .pilula__coroa img { width: 28px; height: auto; }
+    .pilula__link {
+      display: inline-flex; align-items: center; gap: var(--sp-2); height: 44px; padding: 0 14px; border-radius: var(--r-pill);
+      color: var(--creme); text-decoration: none; font-weight: 600; font-size: var(--fs-small); white-space: nowrap;
+    }
+    .pilula__link .dr-icone { width: 20px; height: 20px; color: var(--mel); }
+    .pilula__link:hover { background: var(--grafite-suave); }
+    .pilula .dr-btn { white-space: nowrap; height: 44px; border-radius: var(--r-pill); padding: 0 18px; font-size: var(--fs-small); margin-left: var(--sp-1); }
+    @media (max-width: 1099px) { .pilula__texto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; } .pilula__link { padding: 0 12px; } }
+    @media (max-width: 767px) {
+      .pilula { left: 12px; bottom: 12px; transform: none; }
+      .pilula .dr-btn { display: none; }
+      .pilula__coroa { width: 40px; height: 40px; }
+      .pilula__link { height: 40px; padding: 0 6px; }
+      .pilula { gap: 2px; }
+    }
+
+    /* ---------- R0 ---------- */
+    .dr-divisoria-circuito { margin: 0; }
+    main > section:not(.origem) { padding-block: var(--respiro); scroll-margin-top: 24px; }
+
+    /* ---------- Hero: o mapa ---------- */
+    .origem { position: relative; }
+    .palco { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-7); align-items: center; padding-block: var(--sp-6) var(--sp-8); }
+    .palco__topo { display: flex; align-items: center; gap: var(--sp-4); grid-column: 1 / -1; }
+    .palco__topo img { width: 64px; height: 64px; }
+    .etapas { display: grid; gap: var(--sp-7); }
+    .etapa .dr-eyebrow { margin-bottom: var(--sp-4); }
+    .etapa h1 { font-size: clamp(42px, 5vw, 68px); text-wrap: balance; }
+    .etapa .dr-body-lg { margin-top: var(--sp-5); max-width: 42ch; }
+    .acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+    .acoes .dr-btn { border-radius: 0; }
+    .etapa--2 .dr-data { display: block; font-size: clamp(88px, 10vw, 140px); line-height: .85; letter-spacing: -.05em; color: var(--terra-escura); }
+    .etapa--2 .rotulo { display: block; margin-top: var(--sp-4); font-family: var(--mono); font-size: 14px; letter-spacing: .16em; text-transform: uppercase; color: var(--terra); }
+    .marcador {
+      display: inline-flex; align-items: center; gap: var(--sp-2); padding: 8px 14px; border: var(--bloco); background: var(--branco);
+      font-family: var(--mono); font-size: var(--fs-eyebrow); font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--terra-escura);
+    }
+    .marcador .dr-icone { width: 18px; height: 18px; color: var(--erro); }
+    .etapa--3 p.dr-body-lg { margin-top: var(--sp-5); max-width: 40ch; font-family: var(--serif); font-size: 26px; line-height: 1.35; color: var(--terra-escura); }
+
+    .quadro { position: relative; border: var(--bloco); background: var(--creme-papel); aspect-ratio: 1 / 1; width: 100%; max-width: 640px; justify-self: end; overflow: hidden; }
+    .quadro > svg.mapa { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .mapa .grade-geo line { stroke: var(--linha-forte); stroke-width: 1; stroke-dasharray: 2 5; vector-effect: non-scaling-stroke; }
+    .mapa .brasil { fill: var(--creme); stroke: var(--terra); stroke-width: 1.6; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+    .mapa .goias { fill: var(--mel-veu); stroke: var(--mel-escuro); stroke-width: 1.6; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+    .mapa .df { fill: var(--superficie); stroke: var(--terra-clara); stroke-width: 1; vector-effect: non-scaling-stroke; }
+    .mapa .caminho { fill: none; stroke: var(--petroleo); stroke-width: 1.4; stroke-dasharray: 4 4; vector-effect: non-scaling-stroke; }
+    .mapa .rio { fill: none; stroke: var(--petroleo-claro); stroke-width: 1.2; vector-effect: non-scaling-stroke; opacity: .7; }
+    .mapa .alvo { fill: var(--mel); stroke: var(--terra-escura); vector-effect: non-scaling-stroke; stroke-width: 1.5; }
+    .mapa .alvo-anel { fill: none; stroke: var(--erro); vector-effect: non-scaling-stroke; stroke-width: 1.5; }
+    .rotulo-pino { position: absolute; left: 50%; top: 50%; transform: translate(calc(-100% - 30px), -50%); pointer-events: none; } /* à esquerda do pino: o DF fica livre à direita */
+    .rotulo-pino .marcador { box-shadow: var(--sh-md); white-space: nowrap; display: inline-flex; }
+    @media (max-width: 599px) { .rotulo-pino { transform: translate(-50%, 26px); } }
+    .localizador { position: absolute; left: 12px; bottom: 12px; width: 92px; height: 92px; border: var(--bloco); background: var(--creme); }
+    .localizador svg { width: 100%; height: 100%; display: block; }
+    .localizador .brasil { fill: var(--creme-papel); stroke: var(--terra); stroke-width: 18; stroke-linejoin: round; }
+    .localizador .goias { fill: var(--mel); stroke: none; }
+    .escala { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 0; }
+    .escala i { display: block; width: 28px; height: 6px; border: 1.5px solid var(--terra-escura); }
+    .escala i:nth-child(odd) { background: var(--terra-escura); }
+    @media (max-width: 899px) {
+      .palco { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); }
+      .quadro { justify-self: stretch; max-width: none; order: -1; }
+      .palco__topo { order: -2; }
+      .etapa--3 p.dr-body-lg { font-size: 22px; }
+    }
+    /* Com movimento e >= 900px as etapas se sobrepõem no palco pinado. */
+    html.mapa-vivo .palco { min-height: 100vh; padding-block: var(--sp-6) 96px; }
+    html.mapa-vivo .etapas { display: grid; grid-template-areas: "e"; }
+    html.mapa-vivo .etapa { grid-area: e; align-self: center; }
+
+    /* ---------- Cabeça de seção ---------- */
+    .cabeca { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-6); align-items: end; border-bottom: var(--bloco); padding-bottom: var(--sp-5); }
+    .cabeca .dr-eyebrow { margin-bottom: var(--sp-3); }
+    .cabeca + * { margin-top: var(--sp-7); }
+    @media (max-width: 899px) { .cabeca { grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); } .dr-h2 { font-size: 30px; } }
+
+    /* ---------- C7: blocos de borda grossa, sem raio ---------- */
+    .blocos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: var(--bloco); border-left: var(--bloco); }
+    .blocos > li { border-right: var(--bloco); border-bottom: var(--bloco); padding: var(--sp-6) var(--sp-5); background: var(--creme); }
+    .blocos--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .blocos--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .blocos .dr-icone { color: var(--petroleo); }
+    .blocos .dr-h4 { margin: var(--sp-4) 0 var(--sp-2); }
+    @media (max-width: 1023px) { .blocos, .blocos--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 639px) { .blocos, .blocos--4, .blocos--2 { grid-template-columns: minmax(0, 1fr); } }
+
+    .bloco-numero .dr-data { display: block; font-size: clamp(40px, 4vw, 56px); line-height: 1; color: var(--terra-escura); }
+    .bloco-numero .rotulo { display: block; margin-top: var(--sp-3); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; color: var(--terra); }
+
+    /* Equipe */
+    .pessoa { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
+    .pessoa img { width: 72px; height: 72px; object-fit: cover; border: var(--bloco); }
+    .pessoa .dr-h4 { margin: 0 !important; font-size: 18px; }
+    .pessoa__cargo { margin-top: var(--sp-1); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .1em; text-transform: uppercase; color: var(--terra); }
+    .apoios { display: flex; flex-wrap: wrap; gap: var(--sp-5) var(--sp-7); align-items: center; margin-top: var(--sp-7); }
+    .apoio { display: flex; align-items: center; gap: var(--sp-3); }
+    .apoio__logo { display: grid; place-items: center; height: 72px; padding: var(--sp-2) var(--sp-4); border: var(--bloco); background: var(--branco); }
+    .apoio__logo img { max-height: 52px; width: auto; max-width: 160px; }
+    .apoio[data-fundo="escuro"] .apoio__logo { background: var(--grafite); border-color: var(--grafite); }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .18em; text-transform: uppercase; color: var(--terra); }
+
+    /* Problema */
+    .problema-grade { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 0; border: var(--bloco); }
+    .problema-grade > div:first-child { padding: var(--sp-6); background: var(--terra-escura); color: var(--creme); }
+    .problema-grade .dr-data { display: block; font-size: clamp(80px, 9vw, 128px); line-height: .85; color: var(--mel); }
+    .problema-grade .estat-texto { margin-top: var(--sp-4); color: var(--creme); font-size: var(--fs-body-lg); line-height: 1.55; }
+    .consequencias > li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-4); padding: var(--sp-5) var(--sp-6); border-bottom: var(--bloco); }
+    .consequencias > li:last-of-type { border-bottom: 0; }
+    .consequencias .dr-icone { color: var(--erro); margin-top: 3px; }
+    @media (max-width: 767px) { .problema-grade { grid-template-columns: minmax(0, 1fr); } .consequencias > li { padding: var(--sp-4); } }
+
+    /* Como funciona */
+    .passo { display: flex; flex-direction: column; }
+    .passo__numero { display: inline-block; align-self: flex-start; padding: 4px 10px; background: var(--terra-escura); color: var(--mel); font-weight: 700; }
+    .passo figure { margin-top: auto; padding-top: var(--sp-5); }
+    .passo img { width: 100%; max-height: 320px; object-fit: cover; object-position: top; border: var(--bloco); background: var(--creme-papel); }
+    .passo figcaption { margin-top: var(--sp-2); }
+
+    .perfil .dr-h3 { font-family: var(--serif); font-weight: 500; color: var(--terra-escura); margin-bottom: var(--sp-3); }
+    .intro { margin-top: var(--sp-3); }
+
+    /* Depoimento */
+    .citacao { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: var(--sp-6); align-items: start; border: var(--bloco); padding: var(--sp-6); background: var(--mel-veu); }
+    .citacao img { width: 160px; height: 160px; object-fit: cover; border: var(--bloco); }
+    .citacao .dr-quote { font-size: clamp(24px, 3vw, 34px); line-height: 1.32; color: var(--terra-escura); }
+    .citacao figcaption { margin-top: var(--sp-5); }
+    .citacao__nome { display: block; font-weight: 700; color: var(--ink); }
+    .citacao__local { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); }
+    @media (max-width: 767px) { .citacao { grid-template-columns: minmax(0, 1fr); padding: var(--sp-5); } .citacao img { width: 96px; height: 96px; } }
+
+    /* Contato */
+    .contato-grade { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); border: var(--bloco); }
+    .contato-grade > * { padding: var(--sp-6); }
+    .contato-grade > :last-child { border-left: var(--bloco); background: var(--creme-papel); }
+    .form { display: grid; gap: var(--sp-4); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo input, .campo textarea {
+      font: inherit; font-size: var(--fs-body); color: var(--ink);
+      background: var(--branco); border: var(--bloco); border-radius: 0; padding: var(--sp-3) var(--sp-4); width: 100%;
+    }
+    .campo textarea { min-height: 140px; resize: vertical; }
+    .form .dr-btn { justify-self: start; border-radius: 0; }
+    .canais { display: grid; gap: var(--sp-4); }
+    .canais li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-3); align-items: center; }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-weight: 600; overflow-wrap: anywhere; text-underline-offset: 3px; }
+    .contato-acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+    .contato-acoes .dr-btn { border-radius: 0; }
+    @media (max-width: 899px) {
+      .contato-grade { grid-template-columns: minmax(0, 1fr); }
+      .contato-grade > * { padding: var(--sp-5); }
+      .contato-grade > :last-child { border-left: 0; border-top: var(--bloco); }
+    }
+
+    /* Rodapé */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 112px; }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) {
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N2 · pílula inferior centralizada, estilo app) -->
+  <nav data-secao="nav" class="pilula">
+    <a class="pilula__coroa" href="#inicio"><img src="../img/logos/coroa-cor.png" alt="" data-c-alt="marca.alt" width="28" height="20"></a>
+    <a class="pilula__link" href="#equipe"><svg class="dr-icone" aria-hidden="true"><use href="#dr-mapa"></use></svg><span class="pilula__texto" data-c="equipe.eyebrow"></span></a>
+    <a class="pilula__link" href="#problema"><svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg><span class="pilula__texto" data-c="problema.eyebrow"></span></a>
+    <a class="pilula__link" href="#funcionalidades"><svg class="dr-icone" aria-hidden="true"><use href="#dr-colmeia"></use></svg><span class="pilula__texto" data-c="funcionalidades.eyebrow"></span></a>
+    <a class="pilula__link" href="#como-funciona"><svg class="dr-icone" aria-hidden="true"><use href="#dr-revisao"></use></svg><span class="pilula__texto" data-c="comoFunciona.eyebrow"></span></a>
+    <a class="pilula__link" href="#contato"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="pilula__texto" data-c="contato.eyebrow"></span></a>
+    <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (mapa do Brasil que aproxima até Cocalzinho de Goiás) -->
+    <section data-secao="hero" id="inicio" class="origem">
+      <div class="dr-container palco">
+        <div class="palco__topo">
+          <img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64">
+        </div>
+        <div class="etapas">
+          <div class="etapa etapa--1">
+            <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+            <h1 class="dr-display" data-c="hero.titulo"></h1>
+            <p class="dr-body-lg" data-c="hero.subtitulo"></p>
+            <div class="acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+          <div class="etapa etapa--2">
+            <span class="dr-data" data-c="prova.stats[2].valor"></span>
+            <span class="rotulo" data-c="prova.stats[2].rotulo"></span>
+          </div>
+          <div class="etapa etapa--3">
+            <span class="marcador">
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span data-c="rodape.endereco"></span>
+            </span>
+            <p class="dr-body-lg" data-c="equipe.origem"></p>
+          </div>
+        </div>
+        <div class="quadro">
+          <svg class="mapa" viewBox="0 0 1000 1000" aria-hidden="true">
+            <g class="camera">
+              <g class="grade-geo"></g>
+              <path class="brasil" d="M332.5 2.5 L352.5 70.0 L400.0 95.0 L437.5 85.0 L475.0 70.0 L500.0 77.5 L537.5 75.0 L560.0 27.5 L575.0 57.5 L600.0 87.5 L587.5 127.5 L620.0 147.5 L637.5 157.5 L675.0 150.0 L737.5 195.0 L775.0 192.5 L812.5 205.0 L850.0 202.5 L887.5 225.0 L925.0 252.5 L970.0 262.5 L980.0 312.5 L975.0 342.5 L957.5 375.0 L925.0 407.5 L887.5 457.5 L875.0 502.5 L875.0 570.0 L855.0 622.5 L842.5 640.0 L825.0 682.5 L800.0 705.0 L770.0 707.5 L732.5 717.5 L692.5 732.5 L652.5 757.5 L637.5 782.5 L635.0 845.0 L607.5 867.5 L587.5 907.5 L560.0 940.0 L537.5 975.0 L512.5 965.0 L510.0 942.5 L462.5 905.0 L450.0 902.5 L410.0 887.5 L440.0 852.5 L455.0 832.5 L485.0 815.0 L505.0 810.0 L505.0 772.5 L485.0 772.5 L492.5 732.5 L465.0 730.0 L460.0 697.5 L402.5 685.0 L405.0 637.5 L407.5 607.5 L395.0 572.5 L395.0 540.0 L345.0 510.0 L337.5 475.0 L302.5 470.0 L262.5 445.0 L217.5 405.0 L185.0 380.0 L135.0 410.0 L87.5 407.5 L85.0 370.0 L40.0 382.5 L20.0 367.5 L5.0 317.5 L25.0 272.5 L50.0 255.0 L102.5 237.5 L110.0 195.0 L115.0 162.5 L105.0 90.0 L145.0 87.5 L167.5 77.5 L177.5 102.5 L210.0 110.0 L230.0 100.0 L247.5 85.0 L250.0 35.0 L282.5 32.5 L315.0 22.5 Z"/>
+              <path class="goias" d="M590.0 455.0 L617.5 462.5 L635.0 465.0 L662.5 460.0 L690.0 455.0 L697.5 480.0 L700.0 505.0 L677.5 515.0 L665.0 532.5 L667.5 557.5 L667.5 580.0 L650.0 592.5 L615.0 597.5 L585.0 615.0 L577.5 622.5 L560.0 612.5 L547.5 600.0 L525.0 582.5 L520.0 565.0 L535.0 537.5 L555.0 507.5 L575.0 482.5 Z"/>
+              <path class="df" d="M643.0 520.0 L667.2 520.0 L667.2 533.8 L643.0 533.8 Z"/>
+              <path class="rio" d="M610 470 C 616 490, 606 505, 618 520 S 612 548, 622 566"/>
+              <path class="rio" d="M590 520 C 604 524, 612 532, 626 530"/>
+              <path class="caminho" d="M630.75 527.25 L 643 526.9"/>
+              <circle class="alvo-anel" cx="630.75" cy="527.25" r="10"/>
+              <circle class="alvo" cx="630.75" cy="527.25" r="5"/>
+            </g>
+          </svg>
+          <div class="rotulo-pino">
+            <span class="marcador">
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span data-c="rodape.endereco"></span>
+            </span>
+          </div>
+          <div class="localizador" aria-hidden="true">
+            <svg viewBox="-20 -20 1040 1040"></svg>
+          </div>
+          <div class="escala" aria-hidden="true"><i></i><i></i><i></i></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="dr-divisoria-circuito" aria-hidden="true"></div>
+
+    <!-- SEÇÃO: equipe (quem começou tudo, em Cocalzinho) -->
+    <section data-secao="equipe" id="equipe">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+            <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+          </div>
+        </header>
+        <ul class="blocos" data-c-lista="equipe.pessoas">
+          <template>
+            <li class="pessoa">
+              <img data-c-src="foto" data-c-alt="alt" alt="" width="72" height="72">
+              <div>
+                <h3 class="dr-h4" data-c="nome"></h3>
+                <p class="pessoa__cargo" data-c="cargo"></p>
+              </div>
+            </li>
+          </template>
+        </ul>
+        <ul class="apoios" data-c-lista="equipe.apoios">
+          <template>
+            <li class="apoio">
+              <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+              <span class="apoio__nome" data-c="nome"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <div class="dr-divisoria-circuito" aria-hidden="true"></div>
+
+    <!-- SEÇÃO: problema -->
+    <section data-secao="problema" id="problema">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+            <h2 class="dr-h2" data-c="problema.titulo"></h2>
+          </div>
+        </header>
+        <div class="problema-grade">
+          <div>
+            <span class="dr-data" data-c="problema.estatistica.valor"></span>
+            <p class="estat-texto" data-c="problema.estatistica.texto"></p>
+          </div>
+          <ul class="consequencias" data-c-lista="problema.consequencias">
+            <template>
+              <li>
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg>
+                <p class="dr-body-lg" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="dr-divisoria-circuito" aria-hidden="true"></div>
+
+    <!-- SEÇÃO: funcionalidades -->
+    <section data-secao="funcionalidades" id="funcionalidades">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+            <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+          </div>
+        </header>
+        <ul class="blocos" data-c-lista="funcionalidades.itens">
+          <template>
+            <li>
+              <svg class="dr-icone dr-icone--lg" aria-hidden="true"><use data-icone></use></svg>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <div class="dr-divisoria-circuito" aria-hidden="true"></div>
+
+    <!-- SEÇÃO: como-funciona -->
+    <section data-secao="como-funciona" id="como-funciona">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+            <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+          </div>
+        </header>
+        <ol class="blocos" data-c-lista="comoFunciona.passos">
+          <template>
+            <li class="passo">
+              <span class="dr-data passo__numero" data-c="numero"></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <figure>
+                <img data-c-src="imagem" data-c-alt="alt" alt="" width="320" height="320">
+                <figcaption class="dr-caption" data-c="alt"></figcaption>
+              </figure>
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <div class="dr-divisoria-circuito" aria-hidden="true"></div>
+
+    <!-- SEÇÃO: tecnologia -->
+    <section data-secao="tecnologia">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+            <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+          </div>
+          <p class="dr-body-lg" data-c="tecnologia.texto"></p>
+        </header>
+        <ul class="blocos blocos--4" data-c-lista="tecnologia.pilares">
+          <template>
+            <li>
+              <svg class="dr-icone dr-icone--lg" aria-hidden="true"><use data-icone></use></svg>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <div class="dr-divisoria-circuito" aria-hidden="true"></div>
+
+    <!-- SEÇÃO: para-quem -->
+    <section data-secao="para-quem" id="para-quem">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+            <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+          </div>
+        </header>
+        <ul class="blocos" data-c-lista="paraQuem.perfis">
+          <template>
+            <li class="perfil">
+              <h3 class="dr-h3" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <div class="dr-divisoria-circuito" aria-hidden="true"></div>
+
+    <!-- SEÇÃO: prova -->
+    <section data-secao="prova">
+      <div class="dr-container">
+        <ul class="blocos blocos--4" data-c-lista="prova.stats">
+          <template>
+            <li class="bloco-numero">
+              <span class="dr-data" data-c="valor"></span>
+              <span class="rotulo" data-c="rotulo"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <div class="dr-divisoria-circuito" aria-hidden="true"></div>
+
+    <!-- SEÇÃO: depoimento -->
+    <section data-secao="depoimento">
+      <div class="dr-container">
+        <figure class="citacao">
+          <img data-c-src="depoimento.foto" alt="" width="160" height="160">
+          <div>
+            <blockquote><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+            <figcaption>
+              <span class="citacao__nome" data-c="depoimento.nome"></span>
+              <span class="citacao__local" data-c="depoimento.local"></span>
+            </figcaption>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <div class="dr-divisoria-circuito" aria-hidden="true"></div>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" id="contato">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+            <h2 class="dr-h2" data-c="contato.titulo"></h2>
+          </div>
+          <p class="dr-body-lg" data-c="contato.texto"></p>
+        </header>
+        <div class="contato-grade">
+          <form class="form" method="post" data-form-contato>
+            <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+            <div class="campo">
+              <label for="f-nome" data-c="contato.form.nome"></label>
+              <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+            </div>
+            <div class="campo">
+              <label for="f-email" data-c="contato.form.email"></label>
+              <input id="f-email" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="campo">
+              <label for="f-msg" data-c="contato.form.mensagem"></label>
+              <textarea id="f-msg" name="mensagem" required></textarea>
+            </div>
+            <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+          </form>
+          <div>
+            <ul class="canais">
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <a data-mailto data-c="contato.email"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+              </li>
+            </ul>
+            <div class="contato-acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="dr-divisoria-circuito" aria-hidden="true"></div>
+
+  <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '#';
+      var SVGNS = 'http://www.w3.org/2000/svg';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+
+      /* Câmera do mapa: três paradas em coordenadas do viewBox (projeção
+         x = (lon + 74) * 25, y = (5,3 - lat) * 25). */
+      var PARADAS = [
+        { x: 492, y: 489, s: 0.94 },        // Brasil inteiro
+        { x: 610, y: 538, s: 4.6 },         // Goiás
+        { x: 630.75, y: 527.25, s: 8 }      // Cocalzinho de Goiás, com a divisa de Goiás e o DF à vista
+      ];
+      var camera, alvo, anel;
+      function porCamera(k) {
+        k = Math.max(0, Math.min(2, k));
+        var i = Math.min(1, Math.floor(k)), t = k - i;
+        var a = PARADAS[i], b = PARADAS[i + 1];
+        // Escala interpolada em log, para o zoom parecer constante; o centro acompanha.
+        var s = Math.exp(Math.log(a.s) + (Math.log(b.s) - Math.log(a.s)) * t);
+        var f = (s - a.s) / (b.s - a.s || 1);
+        var x = a.x + (b.x - a.x) * f, y = a.y + (b.y - a.y) * f;
+        camera.setAttribute('transform', 'translate(500 500) scale(' + s.toFixed(4) + ') translate(' + (-x).toFixed(2) + ' ' + (-y).toFixed(2) + ')');
+        // O alvo mantém tamanho de tela constante.
+        alvo.setAttribute('r', (7 / s).toFixed(3));
+        anel.setAttribute('r', (16 / s).toFixed(3));
+      }
+
+      function montarMapa() {
+        camera = document.querySelector('.camera');
+        alvo = document.querySelector('.mapa .alvo');
+        anel = document.querySelector('.mapa .alvo-anel');
+        // Paralelos e meridianos a cada 5 graus.
+        var g = document.querySelector('.grade-geo');
+        for (var lon = -70; lon <= -35; lon += 5) {
+          var x = (lon + 74) * 25, l = document.createElementNS(SVGNS, 'line');
+          l.setAttribute('x1', x); l.setAttribute('x2', x); l.setAttribute('y1', -200); l.setAttribute('y2', 1200);
+          g.appendChild(l);
+        }
+        for (var lat = 5; lat >= -35; lat -= 5) {
+          var y = (5.3 - lat) * 25, m = document.createElementNS(SVGNS, 'line');
+          m.setAttribute('y1', y); m.setAttribute('y2', y); m.setAttribute('x1', -200); m.setAttribute('x2', 1200);
+          g.appendChild(m);
+        }
+        // Mapinha de localização: o mesmo contorno, com Goiás em mel.
+        var loc = document.querySelector('.localizador svg');
+        loc.innerHTML = '';
+        ['brasil', 'goias'].forEach(function (c) {
+          var p = document.createElementNS(SVGNS, 'path');
+          p.setAttribute('class', c);
+          p.setAttribute('d', document.querySelector('.mapa .' + c).getAttribute('d'));
+          loc.appendChild(p);
+        });
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) {
+          if (email) a.setAttribute('href', 'mailto:' + email.v);
+        });
+        document.querySelectorAll('[data-ano]').forEach(function (el) {
+          el.textContent = '© ' + new Date().getFullYear();
+        });
+        montarMapa();
+        porCamera(2); // quadro final estático: Cocalzinho
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        var raiz = document.documentElement;
+
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          gsap.utils.toArray('.dr-divisoria-circuito').forEach(function (d) {
+            gsap.fromTo(d, { clipPath: 'inset(0 100% 0 0)' }, {
+              clipPath: 'inset(0 0% 0 0)', duration: 1.1, ease: 'power2.inOut',
+              scrollTrigger: { trigger: d, start: 'top 90%', once: true }
+            });
+          });
+          gsap.utils.toArray('.blocos, .apoios, .consequencias').forEach(function (lista) {
+            gsap.from(lista.children, {
+              autoAlpha: 0, y: 18, duration: 0.6, ease: 'power2.out', stagger: 0.07,
+              scrollTrigger: { trigger: lista, start: 'top 85%', once: true }
+            });
+          });
+        });
+
+        // Efeito principal (>= 900px): palco pinado e zoom Brasil -> Goiás -> Cocalzinho com scrub.
+        mm.add('(prefers-reduced-motion: no-preference) and (min-width: 900px)', function () {
+          raiz.classList.add('mapa-vivo');
+          var cam = { k: 0 };
+          porCamera(0);
+          gsap.set(['.etapa--2', '.etapa--3', '.rotulo-pino .marcador'], { autoAlpha: 0 });
+
+          // Entrada (termina em ~1,2s): o mapa surge e o texto chega.
+          gsap.timeline({ defaults: { ease: 'power3.out' } })
+            .from('.etapa--1 > *', { y: 24, autoAlpha: 0, duration: 0.7, stagger: 0.08 })
+            .from('.mapa .brasil', { autoAlpha: 0, scale: 0.92, transformOrigin: '50% 50%', duration: 0.9 }, 0.1)
+            .from('.mapa .goias', { autoAlpha: 0, duration: 0.5 }, 0.6)
+            .from('.mapa .alvo, .mapa .alvo-anel', { autoAlpha: 0, duration: 0.4 }, 0.8);
+
+          var tl = gsap.timeline({
+            defaults: { ease: 'none' },
+            scrollTrigger: { trigger: '.origem', pin: '.palco', start: 'top top', end: '+=200%', scrub: 0.5, invalidateOnRefresh: true }
+          });
+          tl.to(cam, { k: 1, duration: 1, ease: 'power1.inOut', onUpdate: function () { porCamera(cam.k); } }, 0)
+            .to('.etapa--1', { autoAlpha: 0, y: -30, duration: 0.3 }, 0.25)
+            .fromTo('.etapa--2', { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.3 }, 0.6)
+            .to(cam, { k: 2, duration: 1, ease: 'power1.inOut', onUpdate: function () { porCamera(cam.k); } }, 1)
+            .to('.etapa--2', { autoAlpha: 0, y: -30, duration: 0.3 }, 1.25)
+            .fromTo('.etapa--3', { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.3 }, 1.6)
+            .fromTo('.rotulo-pino .marcador', { autoAlpha: 0, x: -10 }, { autoAlpha: 1, x: 0, duration: 0.3 }, 1.7) // anima o filho: o deslocamento do rótulo (CSS) fica intacto
+            .to({}, { duration: 0.2 });
+
+          return function () {
+            raiz.classList.remove('mapa-vivo');
+            porCamera(2);
+          };
+        });
+
+        document.fonts.ready.then(function () { ScrollTrigger.refresh(); });
+      });
+    })();
+  </script>
+</body>
+</html>

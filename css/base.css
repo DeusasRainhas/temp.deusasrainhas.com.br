@@ -1,0 +1,58 @@
+/* Deusas Rainhas — base compartilhada. Usa apenas tokens de tokens.css. */
+
+*, *::before, *::after { box-sizing: border-box; }
+/* [hidden] vence o display de componentes (ex.: .dr-btn é inline-flex). */
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--creme); color: var(--corpo); font-family: var(--sans); }
+img { max-width: 100%; display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.dr-container { max-width: 1200px; margin-inline: auto; padding-inline: 16px; }
+@media (min-width: 768px) { .dr-container { padding-inline: 32px; } }
+
+/* Botões */
+.dr-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-5); border: 1.5px solid transparent; border-radius: var(--r-md);
+  font-family: var(--sans); font-weight: 700; font-size: var(--fs-body); line-height: 1.2;
+  text-decoration: none; cursor: pointer;
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+.dr-btn:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
+.dr-btn--primario { background: var(--mel); color: var(--terra-escura); }
+.dr-btn--primario:hover { background: var(--mel-escuro); }
+.dr-btn--secundario { background: transparent; border: var(--bd-forte); color: var(--terra); }
+.dr-btn--secundario:hover { background: var(--mel-veu); }
+.dr-btn--link { background: none; padding-inline: 0; color: var(--petroleo); text-decoration: underline; text-underline-offset: 3px; }
+.dr-btn--link:hover { color: var(--petroleo-claro); }
+
+/* Ícones (sprite) */
+.dr-icone { width: 24px; height: 24px; stroke: currentColor; fill: none; }
+.dr-icone--sm { width: 16px; height: 16px; }
+.dr-icone--lg { width: 32px; height: 32px; }
+
+/* Padrões. Favo nunca atrás de texto corrido. */
+.dr-fundo-favo-claro { background: var(--creme) url(../img/padroes/favo-claro.svg); }
+.dr-fundo-favo-escuro {
+  background: radial-gradient(ellipse at center, rgba(32,32,32,.0), rgba(32,32,32,.6)), url(../img/padroes/favo-escuro.svg);
+  background-color: var(--grafite);
+}
+.dr-divisoria-circuito {
+  display: block; height: 80px;
+  background: url(../img/padroes/circuito-divisoria.svg) center / 1200px 80px no-repeat;
+}
+
+.dr-sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}

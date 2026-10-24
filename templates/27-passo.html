@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="pt-BR" data-template="27">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 27 Passo</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       27 Passo · app · N6 / C8 / R8
+       Três passos numerados ao lado de um celular, numa folha de grade
+       visível. Com movimento e ≥900px o hero pina: o contador de etapas
+       avança e as telas do celular fazem crossfade.
+       Abaixo de 900px ou com movimento reduzido: tudo empilhado e visível.
+       - nada de opacity < 1 fora do gsap.matchMedia (rótulos ocultos usam clip-path);
+       - canto inferior direito livre (pílula do switcher).
+       ================================================================= */
+
+    :root {
+      --tinta: var(--terra-escura);
+      --grosso: 2px solid var(--tinta);
+      --fino: 1px solid var(--linha-forte);
+      --app-fundo: #FFF8E6; --app-mel: #EBB42E;
+      --folha-w: 1240px;
+    }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
+
+    /* ---------- R8: a página é uma folha de grade com linhas visíveis ---------- */
+    body {
+      background:
+        linear-gradient(90deg, rgba(216,203,168,.35) 1px, transparent 1px) center top / 80px 80px,
+        linear-gradient(0deg, rgba(216,203,168,.35) 1px, transparent 1px) center top / 80px 80px,
+        var(--creme);
+    }
+    .folha { max-width: var(--folha-w); margin-inline: auto; border-inline: var(--grosso); background: var(--creme); }
+    @media (max-width: 1287px) { .folha { margin-inline: 24px; } }
+    @media (max-width: 599px) { .folha { margin-inline: 8px 22px; border-inline-width: 1.5px; } }
+    main > section { border-bottom: var(--grosso); scroll-margin-top: 0; }
+    .celula { padding: var(--sp-6); position: relative; min-width: 0; }
+    @media (max-width: 599px) { .celula { padding: var(--sp-5) var(--sp-4); } }
+    /* Marcas de registro nos cruzamentos da grade */
+    .cruz::before, .cruz::after { content: ""; position: absolute; width: 11px; height: 11px; pointer-events: none;
+      background: linear-gradient(var(--tinta), var(--tinta)) center / 100% 2px no-repeat, linear-gradient(var(--tinta), var(--tinta)) center / 2px 100% no-repeat; }
+    .cruz::before { top: -6.5px; left: -6.5px; }
+    .cruz::after { bottom: -6.5px; right: -6.5px; }
+
+    /* ---------- Topo (marca + CTA) ---------- */
+    .topo { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); border-bottom: var(--grosso); padding: var(--sp-2) var(--sp-5); }
+    .topo__marca img { width: 64px; height: 64px; }
+    .topo__meio { flex: 1; display: flex; justify-content: center; gap: var(--sp-6); }
+    .topo__meio a { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .16em; text-transform: uppercase; color: var(--tinta); text-decoration: none; }
+    .topo__meio a:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--mel); }
+    .topo .dr-btn { padding: 10px 18px; font-size: var(--fs-small); border-radius: 0; border: var(--grosso); }
+    @media (max-width: 899px) { .topo__meio { display: none; } .topo { padding-inline: var(--sp-4); } .topo__marca img { width: 52px; height: 52px; } }
+
+    .dr-btn { border-radius: 0; }
+    .dr-btn--primario { border: var(--grosso); }
+    .dr-btn--secundario { border: var(--grosso); color: var(--tinta); }
+
+    /* ---------- N6: pontos laterais, um por seção ---------- */
+    .pontos { position: fixed; z-index: 70; right: 18px; top: 50%; transform: translateY(-50%); display: grid; gap: 14px; }
+    .pontos a { position: relative; display: block; width: 12px; height: 12px; border: 2px solid var(--tinta); background: var(--creme); transform: rotate(45deg); transition: background-color .2s ease; }
+    .pontos a.ativo { background: var(--mel); }
+    .pontos a:hover { background: var(--mel-claro); }
+    .pontos span {
+      position: absolute; right: 22px; top: 50%; transform: rotate(-45deg) translate(0, -50%); transform-origin: right top;
+      white-space: nowrap; padding: 4px 8px; background: var(--tinta); color: var(--creme);
+      font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+      clip-path: inset(0 0 0 100%); transition: clip-path .25s ease; pointer-events: none;
+    }
+    .pontos a:hover span, .pontos a:focus-visible span { clip-path: inset(0 0 0 0); }
+    @media (max-width: 1287px) { .pontos { right: 6px; } .pontos a { width: 9px; height: 9px; border-width: 1.5px; } }
+    @media (max-width: 599px) { .pontos { right: 7px; gap: 10px; } .pontos a { width: 8px; height: 8px; } }
+
+    /* ---------- O celular ---------- */
+    .fone {
+      --fw: 280px; position: relative; width: var(--fw); flex: none;
+      padding: calc(var(--fw) * .034);
+      background: linear-gradient(150deg, #363636, var(--grafite) 45%, #141414);
+      border-radius: calc(var(--fw) * .16);
+      box-shadow: inset 0 0 0 1.5px #4b4b4b, 12px 12px 0 var(--mel);
+    }
+    .fone__tela { position: relative; overflow: hidden; aspect-ratio: 393 / 869; border-radius: calc(var(--fw) * .125); background: var(--app-fundo); }
+    .fone__tela::after { content: ""; position: absolute; z-index: 9; top: 1.3%; left: 50%; width: 4%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: #0d0d0d; }
+    .camada { position: absolute; inset: 0; background: var(--app-fundo); }
+    .camada img { width: 100%; height: auto; }
+    .camada[data-tela="0"] { z-index: 3; }
+    .pin-passo .camada[data-tela="0"] { z-index: auto; }
+    .tela--curta { padding-top: 30%; }
+    .tela--curta::before { content: ""; position: absolute; inset: 0 0 auto; height: 24%; background: linear-gradient(180deg, var(--app-mel), #F2C547); border-radius: 0 0 18px 18px; }
+    .tela--curta img { position: relative; width: 92%; margin-inline: auto; border-radius: 12px; box-shadow: 0 6px 16px rgba(78,52,46,.16); }
+    .esqueleto { display: none; position: relative; gap: 8px; width: 92%; margin: 7% auto 0; }
+    .tela--curta .esqueleto { display: grid; }
+    .esqueleto i { display: block; height: 0; padding-bottom: 19%; border-radius: 12px; background: #fff; position: relative; box-shadow: 0 2px 6px rgba(78,52,46,.07); }
+    .esqueleto i::before { content: ""; position: absolute; left: 6%; top: 28%; width: 12%; height: 44%; border-radius: 50%; background: var(--mel-veu); }
+    .esqueleto i::after { content: ""; position: absolute; left: 24%; top: 36%; width: 46%; height: 12%; border-radius: 6px; background: var(--linha); }
+    .esqueleto i:nth-child(2)::before, .esqueleto i:nth-child(4)::before { background: var(--sucesso-veu); }
+
+    /* ---------- Hero: grade com título, passos, celular e contador ---------- */
+    .hero { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); }
+    .hero__titulo { grid-column: 1 / 9; grid-row: 1; border-right: var(--fino); border-bottom: var(--grosso); padding-block: var(--sp-6); }
+    .hero__titulo h1 { margin-top: var(--sp-3); font-size: clamp(40px, 5.2vw, 72px); line-height: 1; letter-spacing: -.028em; text-wrap: balance; }
+    .hero__lado { grid-column: 9 / 13; grid-row: 1; border-bottom: var(--grosso); display: flex; flex-direction: column; justify-content: flex-end; gap: var(--sp-5); background: var(--creme-papel); }
+    .acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+    .hero__passos { grid-column: 1 / 6; grid-row: 2; border-right: var(--fino); display: flex; flex-direction: column; gap: 0; padding: 0; }
+    .hero__passos .dr-eyebrow { padding: var(--sp-4) var(--sp-6); border-bottom: var(--fino); }
+    .hero__fone { grid-column: 6 / 10; grid-row: 2; display: grid; place-items: center; border-right: var(--fino);
+      background: radial-gradient(circle, var(--linha-forte) 1.2px, transparent 1.5px) 0 0 / 20px 20px, var(--creme-papel); }
+    .hero__contador { grid-column: 10 / 13; grid-row: 2; display: flex; flex-direction: column; justify-content: space-between; gap: var(--sp-5); }
+
+    /* C8: fichas brancas com eyebrow e dado em destaque */
+    .ficha { background: var(--branco); border: var(--fino); padding: var(--sp-5); position: relative; }
+    .ficha__eyebrow { font-family: var(--mono); font-size: var(--fs-eyebrow); font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--petroleo); }
+    .ficha__dado { display: block; font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--tinta); line-height: 1; }
+    .ficha .dr-h4 { font-size: 19px; }
+
+    .etapas { display: grid; flex: 1; }
+    .etapa { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: var(--sp-4); align-items: start; border: 0; border-bottom: var(--fino); padding: var(--sp-5) var(--sp-6); transition: background-color .3s ease; }
+    .etapa:last-of-type { border-bottom: 0; }
+    .etapa .ficha__dado { font-size: 44px; color: var(--linha-forte); transition: color .3s ease; }
+    .etapa .dr-h4 { margin-bottom: var(--sp-1); }
+    .etapa::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: transparent; transition: background-color .3s ease; }
+    .etapa.ativa { background: var(--mel-veu); }
+    .etapa.ativa .ficha__dado { color: var(--tinta); }
+    .etapa.ativa::before { background: var(--mel); }
+    @media (max-width: 1099px), (prefers-reduced-motion: reduce) { .etapa .ficha__dado { color: var(--tinta); } }
+
+    .contador__rotulo { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--suave); }
+    .contador { display: flex; align-items: flex-end; gap: var(--sp-2); font-family: var(--mono); color: var(--tinta); }
+    .contador__janela { position: relative; display: block; height: 1em; overflow: hidden; font-size: clamp(96px, 10vw, 152px); line-height: 1; font-weight: 500; letter-spacing: -.06em; }
+    .contador__trilho { display: block; }
+    .contador__trilho span { display: block; height: 1em; }
+    .contador__total { font-size: 28px; padding-bottom: .4em; color: var(--terra-clara); }
+    .contador__barra { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .contador__barra i { height: 8px; border: 1.5px solid var(--tinta); background: transparent; }
+    .contador__barra i.on { background: var(--mel); }
+    .contador__titulo { font-weight: 700; color: var(--ink); font-size: var(--fs-body-lg); min-height: 3.2em; }
+
+    @media (max-width: 1099px) {
+      .hero__titulo { grid-column: 1 / 13; border-right: 0; border-bottom: var(--fino); }
+      .hero__lado { grid-column: 1 / 13; grid-row: 2; }
+      .hero__passos { grid-column: 1 / 8; grid-row: 3; }
+      .hero__fone { grid-column: 8 / 13; grid-row: 3; border-right: 0; padding-block: var(--sp-6); }
+      .hero__contador { display: none; }
+    }
+    @media (max-width: 767px) {
+      .hero { display: flex; flex-direction: column; }
+      .hero__passos { border-right: 0; border-top: var(--grosso); order: 4; }
+      .hero__fone { border-top: var(--grosso); }
+      .hero__fone .fone { --fw: 230px; }
+      .etapa { grid-template-columns: 56px minmax(0, 1fr); padding: var(--sp-5) var(--sp-4); }
+      .hero__passos .dr-eyebrow { padding-inline: var(--sp-4); }
+      .etapa .ficha__dado { font-size: 34px; }
+    }
+
+    /* Modo pinado (classe posta pelo JS só com movimento e ≥900px) */
+    .pin-passo .hero { height: calc(100vh - 82px); min-height: 640px; grid-template-rows: auto minmax(0, 1fr); }
+    .pin-passo .hero__fone .fone { --fw: min(300px, calc((100vh - 82px - 260px) * .44)); }
+
+    /* ---------- Cabeça de seção ---------- */
+    .cabeca { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); border-bottom: var(--fino); }
+    .cabeca > div:first-child { border-right: var(--fino); }
+    .cabeca .dr-eyebrow { margin-bottom: var(--sp-3); }
+    .cabeca .dr-h2 { text-wrap: balance; }
+    .cabeca__texto { display: flex; align-items: flex-end; }
+    .cabeca__num { font-family: var(--mono); font-size: 13px; color: var(--terra-clara); }
+    @media (max-width: 899px) { .cabeca { grid-template-columns: minmax(0, 1fr); } .cabeca > div:first-child { border-right: 0; border-bottom: var(--fino); } .dr-h2 { font-size: 30px; } }
+
+    .grade { display: grid; }
+    .grade > * { border-right: var(--fino); border-bottom: var(--fino); }
+    .grade--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grade--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grade--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grade--4 > :nth-child(4n), .grade--3 > :nth-child(3n), .grade--2 > :nth-child(2n) { border-right: 0; }
+    .grade { margin-bottom: -1px; }
+    @media (max-width: 899px) {
+      .grade--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grade--4 > :nth-child(2n) { border-right: 0; }
+      .grade--3, .grade--2 { grid-template-columns: minmax(0, 1fr); }
+      .grade--3 > *, .grade--2 > * { border-right: 0; }
+    }
+    .vao { padding: var(--sp-5); background: var(--creme-papel); }
+    .vao .ficha { height: 100%; }
+
+    /* Prova */
+    .prova .ficha__dado { font-size: clamp(40px, 4.4vw, 60px); margin-top: var(--sp-4); }
+    .prova .ficha { border-top: 6px solid var(--mel); }
+
+    /* Problema */
+    .problema { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+    .problema .ficha__dado { font-size: clamp(88px, 11vw, 160px); letter-spacing: -.05em; margin-block: var(--sp-4); }
+    .problema__lista li { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: var(--sp-4); align-items: start; border-bottom: var(--fino); }
+    .problema__lista li:last-of-type { border-bottom: 0; }
+    .problema__lista .dr-icone { color: var(--erro); }
+    @media (max-width: 899px) { .problema { grid-template-columns: minmax(0, 1fr); } .problema > :first-child { border-right: 0; } }
+
+    /* Funcionalidades, pilares, perfis */
+    .icone-caixa { display: inline-grid; place-items: center; width: 48px; height: 48px; border: var(--grosso); background: var(--mel-veu); color: var(--tinta); margin-bottom: var(--sp-4); }
+    .ficha .dr-h4 + .dr-body { margin-top: var(--sp-2); }
+    .ficha .ficha__eyebrow + .dr-h4 { margin-top: var(--sp-2); }
+
+    /* Tecnologia */
+    .tec { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); }
+    .tec > :first-child { border-right: var(--fino); }
+    .tec .grade--2 > * { border-bottom: var(--fino); }
+    @media (max-width: 899px) { .tec { grid-template-columns: minmax(0, 1fr); } .tec > :first-child { border-right: 0; border-bottom: var(--fino); } }
+
+    /* Equipe */
+    .pessoa { display: flex; align-items: center; gap: var(--sp-4); }
+    .pessoa img { width: 72px; height: 72px; object-fit: cover; border: var(--grosso); flex: none; }
+    .pessoa__cargo { font-size: var(--fs-small); color: var(--suave); margin-top: 2px; }
+    .apoios { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--sp-5) var(--sp-8); background: var(--grafite); padding: var(--sp-6); }
+    .apoio { display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
+    .apoio__logo { display: grid; place-items: center; height: 80px; padding: var(--sp-2) var(--sp-4); }
+    .apoio__logo img { max-height: 60px; width: auto; max-width: 170px; }
+    .apoio[data-fundo="claro"] .apoio__logo { background: var(--creme); }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--mel-claro); }
+
+    /* Depoimento */
+    .depo { grid-template-columns: minmax(0, 3fr) minmax(0, 9fr); }
+    .depo > :first-child { border-right: var(--fino); display: flex; flex-direction: column; justify-content: space-between; gap: var(--sp-5); background: var(--creme-papel); }
+    .depo img { width: 96px; height: 96px; object-fit: cover; border: var(--grosso); }
+    .depo .dr-quote { font-size: clamp(22px, 2.6vw, 34px); color: var(--tinta); line-height: 1.35; }
+    .depo__nome { font-weight: 700; color: var(--ink); }
+    .depo__local { font-size: var(--fs-small); color: var(--suave); }
+    @media (max-width: 767px) { .depo { grid-template-columns: minmax(0, 1fr); } .depo > :first-child { border-right: 0; border-bottom: var(--fino); } }
+
+    /* Contato */
+    .contato { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+    .contato > :first-child { border-right: var(--fino); }
+    .form { display: grid; gap: var(--sp-4); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; color: var(--tinta); }
+    .campo input, .campo textarea { font: inherit; color: var(--ink); background: var(--branco); border: var(--grosso); border-radius: 0; padding: var(--sp-3) var(--sp-4); width: 100%; }
+    .campo textarea { min-height: 130px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canal { display: flex; align-items: center; gap: var(--sp-4); padding: var(--sp-4) 0; border-bottom: var(--fino); }
+    .canal svg { color: var(--petroleo); flex: none; }
+    .canal a { font-weight: 600; overflow-wrap: anywhere; text-underline-offset: 3px; }
+    .contato .acoes { margin-top: var(--sp-5); }
+    @media (max-width: 899px) { .contato { grid-template-columns: minmax(0, 1fr); } .contato > :first-child { border-right: 0; border-bottom: var(--fino); } }
+
+    /* Rodapé */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding: var(--sp-7) var(--sp-6) 96px; }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { margin-top: var(--sp-5); color: var(--tenue); }
+    @media (max-width: 767px) { .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); } footer[data-secao="rodape"] { padding-inline: var(--sp-4); } }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N6 · pontos laterais, um por seção) -->
+  <nav data-secao="nav" class="pontos" aria-label="Seções">
+    <a href="#inicio" data-alvo="inicio"><span data-c="hero.eyebrow"></span></a>
+    <a href="#como-funciona" data-alvo="como-funciona"><span data-c="comoFunciona.eyebrow"></span></a>
+    <a href="#problema" data-alvo="problema"><span data-c="problema.eyebrow"></span></a>
+    <a href="#funcionalidades" data-alvo="funcionalidades"><span data-c="funcionalidades.eyebrow"></span></a>
+    <a href="#para-quem" data-alvo="para-quem"><span data-c="paraQuem.eyebrow"></span></a>
+    <a href="#tecnologia" data-alvo="tecnologia"><span data-c="tecnologia.eyebrow"></span></a>
+    <a href="#equipe" data-alvo="equipe"><span data-c="equipe.eyebrow"></span></a>
+    <a href="#contato" data-alvo="contato"><span data-c="contato.eyebrow"></span></a>
+  </nav>
+
+  <div class="folha">
+    <header class="topo">
+      <a class="topo__marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+      <div class="topo__meio">
+        <a href="#funcionalidades" data-c="funcionalidades.eyebrow"></a>
+        <a href="#como-funciona" data-c="comoFunciona.eyebrow"></a>
+        <a href="#equipe" data-c="equipe.eyebrow"></a>
+        <a href="#contato" data-c="contato.eyebrow"></a>
+      </div>
+      <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+    </header>
+
+    <main>
+
+      <!-- SEÇÃO: hero (três passos numerados ao lado de um celular; contador pinado) -->
+      <section data-secao="hero" id="inicio">
+        <div class="hero">
+          <div class="celula hero__titulo">
+            <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+            <h1 class="dr-display" data-c="hero.titulo"></h1>
+          </div>
+          <div class="celula hero__lado cruz">
+            <p class="dr-body-lg" data-c="hero.subtitulo"></p>
+            <div class="acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+
+          <!-- SEÇÃO: como-funciona (fundida ao hero: os três passos) -->
+          <div class="celula hero__passos" data-secao="como-funciona" id="como-funciona">
+            <p class="dr-eyebrow" data-c="comoFunciona.titulo"></p>
+            <ol class="etapas" data-c-lista="comoFunciona.passos">
+              <template>
+                <li class="ficha etapa">
+                  <span class="ficha__dado" data-c="numero"></span>
+                  <div>
+                    <h2 class="dr-h4" data-c="titulo"></h2>
+                    <p class="dr-body" data-c="texto"></p>
+                  </div>
+                </li>
+              </template>
+            </ol>
+          </div>
+
+          <div class="celula hero__fone">
+            <div class="fone" data-fone>
+              <div class="fone__tela">
+                <div class="camada" data-tela="0"><img data-c-src="comoFunciona.passos[0].imagem" data-c-alt="comoFunciona.passos[0].alt" alt="" width="393" height="869"></div>
+                <div class="camada" data-tela="1"><img data-c-src="comoFunciona.passos[1].imagem" data-c-alt="comoFunciona.passos[1].alt" alt="" width="393" height="869"></div>
+                <div class="camada" data-tela="2"><img data-c-src="comoFunciona.passos[2].imagem" data-c-alt="comoFunciona.passos[2].alt" alt=""><span class="esqueleto" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="celula hero__contador cruz" aria-hidden="true">
+            <p class="contador__rotulo" data-c="comoFunciona.eyebrow"></p>
+            <div>
+              <div class="contador">
+                <span class="contador__janela"><span class="contador__trilho" data-trilho></span></span>
+                <span class="contador__total" data-total></span>
+              </div>
+              <div class="contador__barra" data-barra><i class="on"></i><i></i><i></i></div>
+            </div>
+            <p class="contador__titulo" data-contador-titulo></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SEÇÃO: prova -->
+      <section data-secao="prova">
+        <ul class="grade grade--4 prova" data-c-lista="prova.stats">
+          <template>
+            <li class="vao">
+              <div class="ficha">
+                <p class="ficha__eyebrow" data-c="rotulo"></p>
+                <span class="ficha__dado" data-c="valor"></span>
+              </div>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+      <!-- SEÇÃO: problema -->
+      <section data-secao="problema" id="problema">
+        <div class="grade problema">
+          <div class="celula">
+            <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+            <h2 class="dr-h2" data-c="problema.titulo"></h2>
+            <span class="ficha__dado" data-c="problema.estatistica.valor"></span>
+            <p class="dr-body-lg" data-c="problema.estatistica.texto"></p>
+          </div>
+          <ul class="problema__lista" data-c-lista="problema.consequencias">
+            <template>
+              <li class="celula">
+                <span class="icone-caixa"><svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg></span>
+                <p class="dr-body-lg" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </section>
+
+      <!-- SEÇÃO: funcionalidades -->
+      <section data-secao="funcionalidades" id="funcionalidades">
+        <header class="cabeca">
+          <div class="celula"><p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p></div>
+          <div class="celula cabeca__texto"><h2 class="dr-h2" data-c="funcionalidades.titulo"></h2></div>
+        </header>
+        <ul class="grade grade--3" data-c-lista="funcionalidades.itens">
+          <template>
+            <li class="vao">
+              <div class="ficha">
+                <span class="icone-caixa"><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg></span>
+                <h3 class="dr-h4" data-c="titulo"></h3>
+                <p class="dr-body" data-c="texto"></p>
+              </div>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+      <!-- SEÇÃO: para-quem -->
+      <section data-secao="para-quem" id="para-quem">
+        <header class="cabeca">
+          <div class="celula"><p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p></div>
+          <div class="celula cabeca__texto"><h2 class="dr-h2" data-c="paraQuem.titulo"></h2></div>
+        </header>
+        <ul class="grade grade--3" data-c-lista="paraQuem.perfis">
+          <template>
+            <li class="vao">
+              <div class="ficha">
+                <p class="ficha__eyebrow" data-c="titulo"></p>
+                <p class="dr-body-lg" data-c="texto"></p>
+              </div>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+      <!-- SEÇÃO: tecnologia -->
+      <section data-secao="tecnologia" id="tecnologia">
+        <div class="grade tec">
+          <div class="celula">
+            <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+            <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+            <p class="dr-body-lg" style="margin-top: var(--sp-4)" data-c="tecnologia.texto"></p>
+          </div>
+          <ul class="grade grade--2" data-c-lista="tecnologia.pilares">
+            <template>
+              <li class="vao">
+                <div class="ficha">
+                  <span class="icone-caixa"><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg></span>
+                  <h3 class="dr-h4" data-c="titulo"></h3>
+                  <p class="dr-body" data-c="texto"></p>
+                </div>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </section>
+
+      <!-- SEÇÃO: equipe -->
+      <section data-secao="equipe" id="equipe">
+        <header class="cabeca">
+          <div class="celula"><p class="dr-eyebrow" data-c="equipe.eyebrow"></p><h2 class="dr-h2" data-c="equipe.titulo"></h2></div>
+          <div class="celula cabeca__texto"><p class="dr-body-lg" data-c="equipe.origem"></p></div>
+        </header>
+        <ul class="grade grade--3" data-c-lista="equipe.pessoas">
+          <template>
+            <li class="vao">
+              <div class="ficha pessoa">
+                <img data-c-src="foto" data-c-alt="alt" alt="" width="72" height="72">
+                <div>
+                  <h3 class="dr-h4" data-c="nome"></h3>
+                  <p class="pessoa__cargo" data-c="cargo"></p>
+                </div>
+              </div>
+            </li>
+          </template>
+        </ul>
+        <ul class="apoios" data-c-lista="equipe.apoios">
+          <template>
+            <li class="apoio">
+              <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+              <span class="apoio__nome" data-c="nome"></span>
+            </li>
+          </template>
+        </ul>
+      </section>
+
+      <!-- SEÇÃO: depoimento -->
+      <section data-secao="depoimento">
+        <figure class="grade depo">
+          <figcaption class="celula">
+            <img data-c-src="depoimento.foto" alt="" width="96" height="96">
+            <span><span class="depo__nome" data-c="depoimento.nome"></span><br><span class="depo__local" data-c="depoimento.local"></span></span>
+          </figcaption>
+          <blockquote class="celula" style="margin: 0"><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+        </figure>
+      </section>
+
+      <!-- SEÇÃO: contato -->
+      <section data-secao="contato" id="contato">
+        <header class="cabeca">
+          <div class="celula"><p class="dr-eyebrow" data-c="contato.eyebrow"></p><h2 class="dr-h2" data-c="contato.titulo"></h2></div>
+          <div class="celula cabeca__texto"><p class="dr-body-lg" data-c="contato.texto"></p></div>
+        </header>
+        <div class="grade contato">
+          <form class="celula form" method="post" data-form-contato>
+            <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+            <div class="campo"><label for="f-nome" data-c="contato.form.nome"></label><input id="f-nome" name="nome" type="text" autocomplete="name" required></div>
+            <div class="campo"><label for="f-email" data-c="contato.form.email"></label><input id="f-email" name="email" type="email" autocomplete="email" required></div>
+            <div class="campo"><label for="f-msg" data-c="contato.form.mensagem"></label><textarea id="f-msg" name="mensagem" required></textarea></div>
+            <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+          </form>
+          <div class="celula">
+            <ul>
+              <li class="canal">
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <a data-mailto data-c="contato.email"></a>
+              </li>
+              <li class="canal">
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+              </li>
+              <li class="canal">
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+              </li>
+            </ul>
+            <div class="acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- SEÇÃO: rodape -->
+    <footer data-secao="rodape">
+      <div class="rodape">
+        <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+        <div>
+          <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+          <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+          <p data-c="rodape.endereco"></p>
+        </div>
+        <div>
+          <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+          <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '#';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+
+      function marcarTelas() {
+        document.querySelectorAll('.camada img').forEach(function (img) {
+          function medir() {
+            if (!img.naturalWidth) return;
+            img.closest('.camada').classList.toggle('tela--curta', img.naturalHeight / img.naturalWidth < 1.2);
+          }
+          if (img.complete) medir(); else img.addEventListener('load', medir);
+        });
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Fiação (sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) { if (email) a.setAttribute('href', 'mailto:' + email.v); });
+        document.querySelectorAll('[data-ano]').forEach(function (el) { el.textContent = '© ' + new Date().getFullYear(); });
+        marcarTelas();
+
+        // Contador: números e títulos dos passos vêm do conteúdo.
+        var passos = (DR.valor('comoFunciona.passos') || { v: [] }).v;
+        var trilho = document.querySelector('[data-trilho]');
+        passos.forEach(function (p) { var s = document.createElement('span'); s.textContent = v(p.numero); trilho.appendChild(s); });
+        var total = document.querySelector('[data-total]');
+        if (passos.length) total.textContent = '/' + v(passos[passos.length - 1].numero);
+        var tituloC = document.querySelector('[data-contador-titulo]');
+        if (passos.length) tituloC.textContent = v(passos[0].titulo);
+        var etapas = Array.prototype.slice.call(document.querySelectorAll('.etapa'));
+        var barras = Array.prototype.slice.call(document.querySelectorAll('[data-barra] i'));
+        if (etapas[0]) etapas[0].classList.add('ativa');
+
+        /* ---- N6: ponto ativo (estado) ---- */
+        var pontos = Array.prototype.slice.call(document.querySelectorAll('.pontos a'));
+        var tick = false;
+        function marcarPonto() {
+          tick = false;
+          var ativo = pontos[0];
+          pontos.forEach(function (a) {
+            var alvo = document.getElementById(a.getAttribute('data-alvo'));
+            if (alvo && alvo.getBoundingClientRect().top < window.innerHeight * 0.5) ativo = a;
+          });
+          pontos.forEach(function (a) { a.classList.toggle('ativo', a === ativo); });
+        }
+        window.addEventListener('scroll', function () { if (!tick) { tick = true; requestAnimationFrame(marcarPonto); } }, { passive: true });
+        marcarPonto();
+
+        /* ---- Movimento ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+
+        // Efeito principal: contador de etapas pinado com crossfade das telas.
+        mm.add('(prefers-reduced-motion: no-preference) and (min-width: 1100px)', function () {
+          var raiz = document.documentElement;
+          raiz.classList.add('pin-passo');
+          var telas = gsap.utils.toArray('[data-tela]');
+          var atual = 0;
+          gsap.set(telas, { autoAlpha: 0, scale: 1.04 });
+          gsap.set(telas[0], { autoAlpha: 1, scale: 1 });
+
+          function ir(i) {
+            if (i === atual) return;
+            var dir = i > atual ? 1 : -1;
+            gsap.to(telas[atual], { autoAlpha: 0, scale: 0.97, duration: 0.55, ease: 'power2.inOut', overwrite: true });
+            gsap.fromTo(telas[i], { autoAlpha: 0, scale: 1.04 }, { autoAlpha: 1, scale: 1, duration: 0.55, ease: 'power2.inOut', overwrite: true });
+            gsap.to(trilho, { yPercent: -100 * i / passos.length, duration: 0.6, ease: 'expo.inOut', overwrite: true });
+            gsap.fromTo(tituloC, { y: 14 * dir, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.45, ease: 'power2.out', overwrite: true });
+            tituloC.textContent = v(passos[i].titulo);
+            etapas.forEach(function (e, k) { e.classList.toggle('ativa', k === i); });
+            barras.forEach(function (b, k) { b.classList.toggle('on', k <= i); });
+            atual = i;
+          }
+
+          var st = ScrollTrigger.create({
+            trigger: '[data-secao="hero"]', start: 'top top', end: '+=220%', pin: true, anticipatePin: 1,
+            snap: { snapTo: [0, 0.5, 1], duration: { min: 0.2, max: 0.6 }, delay: 0.1, ease: 'power1.inOut' },
+            onUpdate: function (self) { ir(self.progress < 0.34 ? 0 : self.progress < 0.67 ? 1 : 2); }
+          });
+
+          // Entrada de carga (assenta antes de 1s).
+          gsap.from('.hero__titulo h1, .hero__titulo .dr-eyebrow', { y: 24, autoAlpha: 0, duration: 0.6, stagger: 0.08, ease: 'power3.out' });
+          gsap.from('.etapa', { x: -24, autoAlpha: 0, duration: 0.5, stagger: 0.08, delay: 0.15, ease: 'power2.out' });
+          gsap.from('[data-fone]', { y: 40, autoAlpha: 0, duration: 0.7, delay: 0.1, ease: 'power3.out' });
+
+          return function () {
+            st.kill();
+            raiz.classList.remove('pin-passo');
+            gsap.set(trilho, { clearProps: 'all' });
+            etapas.forEach(function (e, k) { e.classList.toggle('ativa', k === 0); });
+            barras.forEach(function (b, k) { b.classList.toggle('on', k === 0); });
+            if (passos.length) tituloC.textContent = v(passos[0].titulo);
+          };
+        });
+
+        // Fichas da grade entram em sequência (só com movimento).
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          gsap.utils.toArray('.grade--4, .grade--3, .grade--2, .problema__lista').forEach(function (g) {
+            gsap.from(g.querySelectorAll(':scope > [data-gerado] .ficha, :scope > li.celula'), {
+              clipPath: 'inset(0 0 100% 0)', duration: 0.6, ease: 'power3.inOut', stagger: 0.08,
+              scrollTrigger: { trigger: g, start: 'top 85%', once: true }
+            });
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

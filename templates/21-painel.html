@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="pt-BR" data-template="21">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 21 Painel</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       21 Painel · dados · N4 / C9 / R4
+       Painel de controle com números grandes: um console grafite com
+       quatro mostradores mecânicos. Os contadores rolam como odômetro
+       até o valor exato de prova.stats (o texto hidratado nunca muda;
+       a fita de dígitos é uma camada aria-hidden por cima dele).
+       - nada de opacity < 1 fora do gsap.matchMedia;
+       - canto inferior direito livre (pílula do switcher);
+       - gráficos são decorativos (aria-hidden), sem números inventados.
+       ================================================================= */
+
+    :root { --nav-h: 80px; --respiro: var(--sp-9); }
+    @media (max-width: 767px) { :root { --nav-h: 68px; --respiro: 56px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 2px solid var(--petroleo); outline-offset: 2px;
+    }
+    main > section { padding-block: var(--respiro); scroll-margin-top: var(--nav-h); }
+
+    /* Valores provisórios: asterisco discreto, explicado pelo aviso do rodapé */
+    .prov[data-provisorio]::after, .prov [data-provisorio]::after {
+      content: "*"; font-size: .38em; vertical-align: super; margin-left: .08em; color: var(--terra-clara);
+    }
+    [data-aviso-provisorio]::before { content: "* "; }
+
+    /* ---------- N4: barra com hambúrguer que abre overlay em tela cheia ---------- */
+    .topo { position: sticky; top: 0; z-index: 60; background: var(--creme); border-bottom: var(--bd); }
+    .topo__barra { display: flex; align-items: center; justify-content: space-between; height: var(--nav-h); gap: var(--sp-4); }
+    .marca { display: block; flex: none; margin-right: var(--sp-4); }
+    .marca img { width: 64px; height: 64px; }
+    .topo__acoes { display: flex; align-items: center; gap: var(--sp-3); }
+    .topo__acoes .dr-btn { padding: 10px 18px; font-size: var(--fs-small); }
+    .menu-btn {
+      display: inline-flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 5px;
+      width: 48px; height: 48px; border: var(--bd-forte); border-radius: var(--r-md);
+      background: var(--branco); cursor: pointer; padding: 0 0 0 13px;
+    }
+    .menu-btn span { display: block; width: 20px; height: 2px; background: var(--terra-escura); border-radius: 2px; }
+    .menu-btn span:nth-child(2) { width: 12px; background: var(--petroleo); }
+    @media (max-width: 767px) {
+      .marca img { width: 52px; height: 52px; }
+      .topo__acoes .dr-btn { display: none; }
+    }
+
+    .menu {
+      position: fixed; inset: 0; z-index: 100; background: var(--grafite); color: var(--creme);
+      display: grid; grid-template-rows: auto 1fr auto; overflow-y: auto;
+      background-image: radial-gradient(rgba(255,251,230,.05) 1px, transparent 1px);
+      background-size: 22px 22px;
+    }
+    .menu[hidden] { display: none; }
+    .menu__topo { display: flex; align-items: center; justify-content: space-between; height: var(--nav-h); }
+    .menu__topo img { width: 64px; height: 64px; }
+    .menu-fechar {
+      width: 48px; height: 48px; border-radius: var(--r-md); cursor: pointer;
+      border: 1.5px solid var(--grafite-suave); background: transparent; color: var(--creme);
+      display: grid; place-items: center;
+    }
+    .menu__lista { align-self: center; counter-reset: menu; padding-block: var(--sp-6); }
+    .menu__lista li { counter-increment: menu; border-top: 1px solid var(--grafite-suave); }
+    .menu__lista li:last-child { border-bottom: 1px solid var(--grafite-suave); }
+    .menu__lista a {
+      display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: baseline; gap: var(--sp-4);
+      padding-block: var(--sp-4); color: var(--creme); text-decoration: none;
+      font-family: var(--serif); font-weight: 500; font-size: clamp(30px, 5vw, 60px); line-height: 1.05; letter-spacing: -.015em;
+    }
+    .menu__lista a::before {
+      content: counter(menu, decimal-leading-zero);
+      font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; color: var(--mel);
+    }
+    .menu__lista a::after { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--grafite-suave); align-self: center; }
+    .menu__lista a:hover::after, .menu__lista a:focus-visible::after { background: var(--mel); border-color: var(--mel); }
+    .menu__lista a:hover { color: var(--mel-claro); }
+    .menu__base { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; justify-content: space-between; padding-block: var(--sp-5) var(--sp-8); }
+    .menu__base .dr-btn--secundario { color: var(--creme); border-color: var(--grafite-suave); }
+    .menu__base .dr-btn--secundario:hover { background: var(--grafite-suave); }
+    .menu__base small { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .16em; text-transform: uppercase; color: var(--tenue); }
+    @media (prefers-reduced-motion: no-preference) {
+      .menu:not([hidden]) { animation: menu-abre .45s cubic-bezier(.2,.7,.2,1) both; }
+      .menu:not([hidden]) .menu__lista li { animation: menu-linha .5s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(.12s + var(--i, 0) * .05s); }
+      @keyframes menu-abre { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+      @keyframes menu-linha { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
+    }
+    body.menu-aberto { overflow: hidden; }
+
+    /* ---------- Hero: console de controle ---------- */
+    section[data-secao="hero"] { padding-top: var(--sp-8); padding-bottom: var(--sp-8); }
+    .hero__topo { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-7); align-items: end; }
+    .hero__titulo { font-size: clamp(40px, 6vw, 84px); line-height: 1; letter-spacing: -.028em; margin-top: var(--sp-4); text-wrap: balance; }
+    .hero__lado p { font-size: var(--fs-body-lg); line-height: 1.6; color: var(--corpo); max-width: 42ch; }
+    .acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+    @media (max-width: 899px) { .hero__topo { grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); } }
+
+    .console {
+      margin-top: var(--sp-7); background: var(--grafite); color: var(--creme);
+      border-radius: var(--r-xl); padding: var(--sp-5) var(--sp-6) var(--sp-6);
+      box-shadow: var(--sh-lg), inset 0 0 0 1px rgba(255,251,230,.06);
+      background-image:
+        radial-gradient(rgba(255,251,230,.045) 1px, transparent 1px),
+        linear-gradient(180deg, #262626, var(--grafite));
+      background-size: 18px 18px, 100% 100%;
+    }
+    .console__status {
+      display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-5);
+      padding-bottom: var(--sp-4); border-bottom: 1px solid var(--grafite-suave);
+      font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .16em; text-transform: uppercase; color: var(--tenue);
+    }
+    .led { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--sucesso); box-shadow: 0 0 0 3px rgba(62,142,90,.22); }
+    .console__status .led + span { color: var(--creme); }
+    .console__status time { margin-left: auto; }
+    .console__parafusos { display: flex; gap: 6px; }
+    .console__parafusos i { width: 6px; height: 6px; border-radius: 50%; background: var(--grafite-suave); }
+
+    .mostradores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: var(--sp-5); }
+    .mostrador { padding: var(--sp-4) var(--sp-4) var(--sp-2); display: flex; flex-direction: column; gap: var(--sp-4); }
+    .mostrador + .mostrador { border-left: 1px solid var(--grafite-suave); }
+    .mostrador__rotulo {
+      font-family: var(--mono); font-size: var(--fs-eyebrow); font-weight: 500; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--tenue); line-height: 1.5; min-height: 3em;
+    }
+    .mostrador__rotulo::before { content: counter(mostrador, decimal-leading-zero) " / "; color: var(--mel); }
+    .mostradores { counter-reset: mostrador; }
+    .mostrador { counter-increment: mostrador; }
+    .visor {
+      align-self: flex-start; max-width: 100%;
+      background: #161616; border-radius: var(--r-md); padding: 10px 14px 8px;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,251,230,.05);
+      position: relative; overflow: hidden;
+    }
+    .visor::before, .visor::after { /* sombra das fitas acima e abaixo da janela */
+      content: ""; position: absolute; left: 0; right: 0; height: 30%; pointer-events: none; z-index: 2;
+    }
+    .visor::before { top: 0; background: linear-gradient(#161616, rgba(22,22,22,0)); }
+    .visor::after { bottom: 0; background: linear-gradient(rgba(22,22,22,0), #161616); }
+    .mostrador__valor {
+      position: relative; display: block; white-space: nowrap;
+      font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums;
+      font-size: clamp(40px, 4.6vw, 64px); line-height: 1; letter-spacing: -.03em; color: var(--mel);
+    }
+    .mostrador__valor.prov[data-provisorio]::after { color: var(--tenue); }
+    .barras { display: block; width: 100%; height: 28px; }
+    .barras rect { fill: var(--grafite-suave); }
+    .barras rect.on { fill: var(--petroleo-claro); }
+    @media (max-width: 899px) {
+      .console { padding: var(--sp-4); }
+      .mostradores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .mostrador { padding: var(--sp-4) var(--sp-3) var(--sp-3); }
+      .mostrador:nth-child(odd) { border-left: 0; }
+      .mostrador:nth-child(n+3) { border-top: 1px solid var(--grafite-suave); }
+      .console__status time { margin-left: 0; }
+    }
+    @media (max-width: 767px) { .mostrador__valor { font-size: 36px; } }
+
+    /* Odômetro: fita de dígitos sobre o texto real (mesma métrica mono) */
+    .rolando { color: transparent !important; }
+    .odo { position: absolute; left: 0; top: 0; display: flex; color: var(--mel); pointer-events: none; }
+    .odo--claro { color: var(--terra-escura); }
+    .odo__janela { display: block; height: 1em; overflow: hidden; }
+    .odo__fita { display: block; }
+    .odo__fita > span, .odo__sep { display: block; height: 1em; line-height: 1; }
+
+    /* ---------- R4: número de seção gigante em mono como marcador ---------- */
+    main { counter-reset: secao; }
+    .cabeca { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-6); align-items: end; counter-increment: secao; }
+    .cabeca::before {
+      content: counter(secao, decimal-leading-zero);
+      font-family: var(--mono); font-weight: 500; font-size: clamp(88px, 13vw, 180px); line-height: .78; letter-spacing: -.06em;
+      color: transparent; -webkit-text-stroke: 1.5px var(--petroleo-claro);
+    }
+    .cabeca > div { padding-bottom: var(--sp-2); border-bottom: 2px solid var(--terra-escura); }
+    .cabeca .dr-eyebrow { margin-bottom: var(--sp-3); }
+    .cabeca + * { margin-top: var(--sp-7); }
+    .cabeca .intro { margin-top: var(--sp-3); max-width: 56ch; padding-bottom: var(--sp-3); }
+    @media (max-width: 767px) {
+      .cabeca { grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); }
+      .cabeca::before { font-size: 88px; }
+      .dr-h2 { font-size: 30px; }
+      .cabeca + * { margin-top: var(--sp-6); }
+    }
+
+    /* ---------- C9: chips e pílulas em fluxo ---------- */
+    .nuvem { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+    .chip {
+      display: inline-flex; align-items: center; gap: var(--sp-3);
+      padding: 10px 18px 10px 10px; border-radius: var(--r-pill);
+      background: var(--branco); border: var(--bd-forte);
+    }
+    .chip__icone { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--petroleo-veu); color: var(--petroleo); }
+    .chip--alerta { background: var(--erro-veu); border-color: transparent; }
+    .chip--alerta .chip__icone { background: var(--branco); color: var(--erro); }
+    .chip--alerta p { color: var(--ink); }
+
+    .pilulas { display: flex; flex-wrap: wrap; gap: var(--sp-4); }
+    .pilula {
+      display: flex; gap: var(--sp-4); align-items: flex-start;
+      flex: 1 1 340px; max-width: 560px;
+      padding: var(--sp-4) var(--sp-6) var(--sp-4) var(--sp-4); border-radius: 44px;
+      background: var(--branco); border: var(--bd-forte);
+      transition: border-color .2s ease, background-color .2s ease;
+    }
+    .pilula:hover { border-color: var(--petroleo-claro); background: var(--creme-papel); }
+    .pilula .chip__icone { width: 52px; height: 52px; }
+    .pilula .dr-h4 { font-size: 18px; margin-bottom: 2px; }
+    .pilula .dr-body { font-size: 15px; line-height: 1.55; }
+    .pilula:nth-child(3n+2) { flex-basis: 420px; }
+
+    /* ---------- Problema ---------- */
+    .problema-grade { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-7); align-items: center; }
+    .grande { display: flex; flex-direction: column; gap: var(--sp-4); padding: var(--sp-6); border-radius: var(--r-xl); background: var(--creme-papel); border: var(--bd); }
+    .grande__valor {
+      position: relative; display: block; align-self: flex-start;
+      font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums;
+      font-size: clamp(80px, 10vw, 140px); line-height: 1; letter-spacing: -.05em; color: var(--terra-escura);
+    }
+    .grande .dr-body-lg { color: var(--ink); max-width: 30ch; }
+    .grande__barra { height: 12px; border-radius: var(--r-pill); background: var(--superficie); overflow: hidden; }
+    .grande__barra i { display: block; height: 100%; width: 95%; background: var(--terra); border-radius: inherit; transform-origin: left center; }
+    .problema-grade .nuvem { flex-direction: column; align-items: flex-start; }
+    .problema-grade .chip p { font-size: var(--fs-body-lg); line-height: 1.45; }
+    @media (max-width: 899px) { .problema-grade { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Como funciona: três canais ---------- */
+    .canais-passo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-6); counter-reset: passo; }
+    .passo { display: flex; flex-direction: column; gap: var(--sp-3); }
+    .passo__numero {
+      align-self: flex-start; padding: 6px 14px; border-radius: var(--r-pill);
+      background: var(--grafite); color: var(--mel); font-size: var(--fs-small); letter-spacing: .08em;
+    }
+    .passo figure { margin-top: auto; background: var(--creme-papel); border: var(--bd); border-radius: var(--r-xl); padding: var(--sp-4) var(--sp-4) 0; overflow: hidden; }
+    .passo img { width: 100%; max-width: 220px; margin-inline: auto; height: 300px; object-fit: cover; object-position: top; border-radius: var(--r-lg) var(--r-lg) 0 0; box-shadow: var(--sh-md); }
+    .passo figcaption { padding: var(--sp-3) 0; text-align: center; }
+    @media (max-width: 899px) { .canais-passo { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Para quem: interruptores ---------- */
+    .perfis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+    .perfil { display: flex; flex-direction: column; gap: var(--sp-4); }
+    .perfil .dr-h4 {
+      align-self: flex-start; display: inline-flex; align-items: center; gap: var(--sp-3);
+      padding: 10px 20px 10px 10px; border-radius: var(--r-pill); background: var(--mel-veu); border: 1.5px solid var(--mel-claro);
+      font-size: 18px; color: var(--terra-escura);
+    }
+    .perfil .dr-h4::before { /* interruptor ligado */
+      content: ""; flex: none; width: 34px; height: 20px; border-radius: 999px; background: var(--petroleo);
+      background: radial-gradient(circle at 24px 10px, var(--creme) 6px, var(--petroleo) 7px);
+    }
+    @media (max-width: 899px) { .perfis { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Tecnologia: painel escuro ---------- */
+    .bloco-escuro { background: var(--grafite); color: var(--creme); border-radius: var(--r-xl); padding: var(--sp-7) var(--sp-6); }
+    .bloco-escuro .dr-h2 { color: var(--creme); }
+    .bloco-escuro .dr-eyebrow { color: var(--mel-claro); }
+    .bloco-escuro .cabeca > div { border-bottom-color: var(--grafite-suave); }
+    .bloco-escuro .cabeca::before { -webkit-text-stroke-color: var(--grafite-suave); }
+    .bloco-escuro .intro { color: var(--tenue); }
+    .bloco-escuro .pilula { background: #2a2a2a; border-color: var(--grafite-suave); }
+    .bloco-escuro .pilula:hover { background: #303030; border-color: var(--petroleo-claro); }
+    .bloco-escuro .pilula .chip__icone { background: rgba(46,139,130,.18); color: var(--mel-claro); }
+    .bloco-escuro .pilula .dr-h4 { color: var(--creme); }
+    .bloco-escuro .pilula .dr-body { color: var(--tenue); }
+    @media (max-width: 767px) { .bloco-escuro { padding: var(--sp-6) var(--sp-4); margin-inline: -4px; } }
+
+    /* ---------- Equipe ---------- */
+    .equipe-grade { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-7); align-items: start; }
+    .equipe-grade > p { max-width: 40ch; }
+    .crachas { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+    .cracha {
+      display: inline-flex; align-items: center; gap: var(--sp-3);
+      padding: 8px 22px 8px 8px; border-radius: var(--r-pill); background: var(--branco); border: var(--bd-forte);
+    }
+    .cracha img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: var(--bd); }
+    .cracha .dr-h4 { font-size: 17px; }
+    .cracha__cargo { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--terra); }
+    .apoios { margin-top: var(--sp-7); display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-4); padding: var(--sp-4); border-radius: var(--r-pill); background: var(--grafite); }
+    .apoio { display: inline-flex; align-items: center; gap: var(--sp-3); padding: 6px 18px 6px 6px; border-radius: var(--r-pill); border: 1px solid var(--grafite-suave); }
+    .apoio__logo { display: grid; place-items: center; height: 56px; padding: 6px 14px; border-radius: var(--r-pill); }
+    .apoio__logo img { max-height: 40px; width: auto; max-width: 130px; }
+    .apoio[data-fundo="claro"] .apoio__logo { background: var(--creme); }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--mel-claro); }
+    @media (max-width: 899px) {
+      .equipe-grade { grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); }
+      .apoios { border-radius: var(--r-xl); }
+    }
+
+    /* ---------- Depoimento ---------- */
+    .citacao { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); max-width: 920px; }
+    .citacao .dr-quote { font-size: clamp(26px, 3.4vw, 42px); line-height: 1.3; color: var(--terra-escura); text-wrap: balance; }
+    .citacao .dr-quote::before { content: "\201C"; color: var(--mel-escuro); margin-right: .05em; }
+    .citacao blockquote { margin: 0; }
+    .citacao figcaption { justify-self: start; }
+
+    /* ---------- Contato ---------- */
+    .contato-grade { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-7); }
+    .form { display: grid; gap: var(--sp-4); padding: var(--sp-6); border-radius: var(--r-xl); background: var(--creme-papel); border: var(--bd); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-family: var(--mono); font-weight: 500; font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; color: var(--terra); }
+    .campo input, .campo textarea {
+      font: inherit; font-size: var(--fs-body); color: var(--ink); background: var(--branco);
+      border: var(--bd-forte); border-radius: var(--r-lg); padding: var(--sp-3) var(--sp-4); width: 100%;
+    }
+    .campo textarea { min-height: 140px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canais { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-3); }
+    .canais .chip a { font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+    .canais .chip a:hover { text-decoration: underline; }
+    .canais .chip { max-width: 100%; }
+    @media (max-width: 899px) { .contato-grade { grid-template-columns: minmax(0, 1fr); } .form { padding: var(--sp-4); } }
+
+    /* ---------- Rodapé ---------- */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 96px; }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) {
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N4 · hambúrguer que abre overlay em tela cheia) -->
+  <nav data-secao="nav" class="topo">
+    <div class="dr-container topo__barra">
+      <a class="marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+      <div class="topo__acoes">
+        <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+        <!-- aria-label é rótulo de interface (não é cópia do site) -->
+        <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" aria-label="Menu" data-menu-abrir><span></span><span></span><span></span></button>
+      </div>
+    </div>
+    <div class="menu" id="menu" hidden>
+      <div class="dr-container menu__topo">
+        <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="64" height="64">
+        <button class="menu-fechar" type="button" aria-label="Fechar" data-menu-fechar>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <ul class="dr-container menu__lista">
+        <li style="--i:0"><a href="#problema" data-c="problema.eyebrow"></a></li>
+        <li style="--i:1"><a href="#funcionalidades" data-c="funcionalidades.eyebrow"></a></li>
+        <li style="--i:2"><a href="#como-funciona" data-c="comoFunciona.eyebrow"></a></li>
+        <li style="--i:3"><a href="#para-quem" data-c="paraQuem.eyebrow"></a></li>
+        <li style="--i:4"><a href="#tecnologia" data-c="tecnologia.eyebrow"></a></li>
+        <li style="--i:5"><a href="#equipe" data-c="equipe.eyebrow"></a></li>
+        <li style="--i:6"><a href="#contato" data-c="contato.eyebrow"></a></li>
+      </ul>
+      <div class="dr-container menu__base">
+        <div class="acoes" style="margin-top:0">
+          <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+          <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+        </div>
+        <small data-c="rodape.endereco"></small>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (título + console grafite; a prova é o próprio painel) -->
+    <section data-secao="hero" id="inicio">
+      <div class="dr-container">
+        <div class="hero__topo">
+          <div>
+            <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+            <h1 class="dr-display hero__titulo" data-c="hero.titulo"></h1>
+          </div>
+          <div class="hero__lado">
+            <p data-c="hero.subtitulo"></p>
+            <div class="acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO: prova (fundida no hero: os quatro mostradores do console) -->
+        <section data-secao="prova" class="console">
+          <div class="console__status">
+            <span class="console__parafusos" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="led" aria-hidden="true"></span>
+            <span data-c="rodape.endereco"></span>
+            <time data-hoje></time>
+          </div>
+          <ul class="mostradores" data-c-lista="prova.stats">
+            <template>
+              <li class="mostrador">
+                <span class="mostrador__rotulo" data-c="rotulo"></span>
+                <span class="visor"><span class="mostrador__valor prov" data-odometro data-c="valor"></span></span>
+                <svg class="barras" viewBox="0 0 240 28" preserveAspectRatio="none" aria-hidden="true" data-barras></svg>
+              </li>
+            </template>
+          </ul>
+        </section>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: problema -->
+    <section data-secao="problema" id="problema">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+            <h2 class="dr-h2" data-c="problema.titulo"></h2>
+          </div>
+        </header>
+        <div class="problema-grade">
+          <div class="grande">
+            <span class="grande__valor" data-odometro="claro" data-c="problema.estatistica.valor"></span>
+            <div class="grande__barra" aria-hidden="true"><i></i></div>
+            <p class="dr-body-lg" data-c="problema.estatistica.texto"></p>
+          </div>
+          <ul class="nuvem" data-c-lista="problema.consequencias">
+            <template>
+              <li class="chip chip--alerta">
+                <span class="chip__icone"><svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg></span>
+                <p class="dr-body" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades (pílulas em fluxo) -->
+    <section data-secao="funcionalidades" id="funcionalidades">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+            <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+          </div>
+        </header>
+        <ul class="pilulas" data-c-lista="funcionalidades.itens">
+          <template>
+            <li class="pilula">
+              <span class="chip__icone"><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg></span>
+              <div>
+                <h3 class="dr-h4" data-c="titulo"></h3>
+                <p class="dr-body" data-c="texto"></p>
+              </div>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona -->
+    <section data-secao="como-funciona" id="como-funciona">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+            <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+          </div>
+        </header>
+        <ol class="canais-passo" data-c-lista="comoFunciona.passos">
+          <template>
+            <li class="passo">
+              <span class="dr-data passo__numero" data-c="numero"></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <figure>
+                <img data-c-src="imagem" data-c-alt="alt" alt="">
+                <figcaption class="dr-caption" data-c="alt"></figcaption>
+              </figure>
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem (interruptores ligados) -->
+    <section data-secao="para-quem" id="para-quem">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+            <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+          </div>
+        </header>
+        <ul class="perfis" data-c-lista="paraQuem.perfis">
+          <template>
+            <li class="perfil">
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body-lg" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia (segundo console, escuro) -->
+    <section data-secao="tecnologia" id="tecnologia">
+      <div class="dr-container">
+        <div class="bloco-escuro">
+          <header class="cabeca">
+            <div>
+              <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+              <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+              <p class="dr-body-lg intro" data-c="tecnologia.texto"></p>
+            </div>
+          </header>
+          <ul class="pilulas" data-c-lista="tecnologia.pilares">
+            <template>
+              <li class="pilula">
+                <span class="chip__icone"><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg></span>
+                <div>
+                  <h3 class="dr-h4" data-c="titulo"></h3>
+                  <p class="dr-body" data-c="texto"></p>
+                </div>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe (crachás em pílula + apoios no escuro) -->
+    <section data-secao="equipe" id="equipe">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+            <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+          </div>
+        </header>
+        <div class="equipe-grade">
+          <p class="dr-body-lg" data-c="equipe.origem"></p>
+          <ul class="crachas" data-c-lista="equipe.pessoas">
+            <template>
+              <li class="cracha">
+                <img data-c-src="foto" data-c-alt="alt" alt="" width="56" height="56">
+                <span>
+                  <span class="dr-h4" data-c="nome"></span><br>
+                  <span class="cracha__cargo" data-c="cargo"></span>
+                </span>
+              </li>
+            </template>
+          </ul>
+        </div>
+        <ul class="apoios" data-c-lista="equipe.apoios">
+          <template>
+            <li class="apoio">
+              <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+              <span class="apoio__nome" data-c="nome"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento -->
+    <section data-secao="depoimento">
+      <div class="dr-container">
+        <figure class="citacao">
+          <blockquote><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+          <figcaption class="cracha">
+            <img data-c-src="depoimento.foto" alt="" width="56" height="56">
+            <span>
+              <span class="dr-h4" data-c="depoimento.nome"></span><br>
+              <span class="cracha__cargo" data-c="depoimento.local"></span>
+            </span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" id="contato">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div>
+            <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+            <h2 class="dr-h2" data-c="contato.titulo"></h2>
+            <p class="dr-body-lg intro" data-c="contato.texto"></p>
+          </div>
+        </header>
+        <div class="contato-grade">
+          <form class="form" method="post" data-form-contato>
+            <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+            <div class="campo">
+              <label for="f-nome" data-c="contato.form.nome"></label>
+              <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+            </div>
+            <div class="campo">
+              <label for="f-email" data-c="contato.form.email"></label>
+              <input id="f-email" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="campo">
+              <label for="f-msg" data-c="contato.form.mensagem"></label>
+              <textarea id="f-msg" name="mensagem" required></textarea>
+            </div>
+            <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+          </form>
+          <div>
+            <ul class="canais">
+              <li class="chip">
+                <span class="chip__icone"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
+                <a data-mailto data-c="contato.email"></a>
+              </li>
+              <li class="chip">
+                <span class="chip__icone"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></span>
+                <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+              </li>
+              <li class="chip">
+                <span class="chip__icone"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></span>
+                <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+              </li>
+            </ul>
+            <div class="acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '#';
+      var SVGNS = 'http://www.w3.org/2000/svg';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+
+      /* Bargraph decorativo: 24 barras, forma fixa por índice (sem número inventado). */
+      function desenharBarras(svg, semente) {
+        var n = 24, w = 240 / n;
+        for (var i = 0; i < n; i++) {
+          var h = 6 + Math.round(18 * (0.5 + 0.5 * Math.sin(i * 0.55 + semente * 1.7)) * (0.55 + i / n * 0.45));
+          var r = document.createElementNS(SVGNS, 'rect');
+          r.setAttribute('x', (i * w + 1).toFixed(1));
+          r.setAttribute('y', 28 - h);
+          r.setAttribute('width', (w - 3).toFixed(1));
+          r.setAttribute('height', h);
+          r.setAttribute('rx', 1);
+          if (i < n * (0.55 + semente * 0.1)) r.setAttribute('class', 'on');
+          svg.appendChild(r);
+        }
+      }
+
+      /* Odômetro: cria uma fita de dígitos aria-hidden por cima do texto real.
+         O texto hidratado (data-c) nunca é alterado: só fica transparente
+         enquanto a fita gira e volta ao normal no fim. */
+      function montarOdometro(el) {
+        var final = el.textContent;
+        var odo = document.createElement('span');
+        odo.className = 'odo' + (el.getAttribute('data-odometro') === 'claro' ? ' odo--claro' : '');
+        odo.setAttribute('aria-hidden', 'true');
+        var fitas = [];
+        var digitos = final.replace(/\D/g, '').length;
+        var posDireita = digitos;
+        Array.prototype.forEach.call(final, function (ch) {
+          if (/\d/.test(ch)) {
+            posDireita--;
+            var alvo = +ch;
+            var voltas = Math.max(1, 3 - posDireita); // o dígito da direita gira mais, como num odômetro
+            var janela = document.createElement('span');
+            janela.className = 'odo__janela';
+            var fita = document.createElement('span');
+            fita.className = 'odo__fita';
+            var total = voltas * 10 + alvo + 1;
+            for (var k = 0; k < total; k++) {
+              var d = document.createElement('span');
+              d.textContent = k % 10;
+              fita.appendChild(d);
+            }
+            janela.appendChild(fita);
+            odo.appendChild(janela);
+            fitas.push({ fita: fita, total: total });
+          } else {
+            var s = document.createElement('span');
+            s.className = 'odo__sep';
+            s.textContent = ch;
+            odo.appendChild(s);
+          }
+        });
+        el.appendChild(odo);
+        el.classList.add('rolando');
+        return {
+          fitas: fitas,
+          desfazer: function () {
+            if (odo.parentNode) odo.parentNode.removeChild(odo);
+            el.classList.remove('rolando');
+            el.textContent = final;
+          }
+        };
+      }
+
+      function rolar(el, atraso, opcoes) {
+        var o = montarOdometro(el);
+        var tl = gsap.timeline({ delay: atraso || 0, onComplete: o.desfazer, scrollTrigger: opcoes && opcoes.scrollTrigger });
+        o.fitas.forEach(function (f, i) {
+          tl.fromTo(f.fita, { yPercent: 0 }, {
+            yPercent: -100 * (f.total - 1) / f.total, duration: 1.05 + i * 0.08, ease: 'power3.out'
+          }, i * 0.04);
+        });
+        return { tl: tl, o: o };
+      }
+
+      /* Overlay do menu (N4). */
+      function ligarMenu() {
+        var menu = document.getElementById('menu');
+        var abrir = document.querySelector('[data-menu-abrir]');
+        var fechar = document.querySelector('[data-menu-fechar]');
+        if (!menu || !abrir || !fechar) return;
+        function setAberto(sim) {
+          menu.hidden = !sim;
+          abrir.setAttribute('aria-expanded', sim ? 'true' : 'false');
+          document.body.classList.toggle('menu-aberto', sim);
+          if (sim) { var l = menu.querySelector('a'); if (l) l.focus(); } else { abrir.focus(); }
+        }
+        abrir.addEventListener('click', function () { setAberto(true); });
+        fechar.addEventListener('click', function () { setAberto(false); });
+        menu.querySelectorAll('.menu__lista a').forEach(function (a) {
+          a.addEventListener('click', function () { menu.hidden = true; abrir.setAttribute('aria-expanded', 'false'); document.body.classList.remove('menu-aberto'); });
+        });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) setAberto(false); });
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) { if (email) a.setAttribute('href', 'mailto:' + email.v); });
+        document.querySelectorAll('[data-ano]').forEach(function (el) { el.textContent = '© ' + new Date().getFullYear(); });
+        document.querySelectorAll('[data-hoje]').forEach(function (el) {
+          var hoje = new Date();
+          el.setAttribute('datetime', hoje.toISOString().slice(0, 10));
+          el.textContent = hoje.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        });
+        document.querySelectorAll('[data-barras]').forEach(function (svg, i) { desenharBarras(svg, i); });
+        ligarMenu();
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          var odos = [];
+
+          // Hero: os quatro mostradores rolam como odômetro logo após a hidratação
+          // (terminam em ~1,3 s, antes da captura da miniatura).
+          document.querySelectorAll('.console [data-odometro]').forEach(function (el, i) {
+            odos.push(rolar(el, 0.1 + i * 0.06));
+          });
+          gsap.from('.barras rect', { scaleY: 0, transformOrigin: '50% 100%', duration: 0.5, ease: 'power2.out', stagger: { each: 0.008 }, delay: 0.2 });
+
+          // Problema: o 95% também rola quando entra na tela.
+          document.querySelectorAll('main > section:not([data-secao="hero"]) [data-odometro]').forEach(function (el) {
+            odos.push(rolar(el, 0, { scrollTrigger: { trigger: el, start: 'top 85%', once: true } }));
+          });
+          gsap.from('.grande__barra i', { scaleX: 0, duration: 1.2, ease: 'power3.out', scrollTrigger: { trigger: '.grande', start: 'top 85%', once: true } });
+
+          // R4: o número gigante da seção e o título entram juntos.
+          gsap.utils.toArray('.cabeca').forEach(function (c) {
+            gsap.from(c, { y: 24, autoAlpha: 0, duration: 0.7, ease: 'power3.out', scrollTrigger: { trigger: c, start: 'top 88%', once: true } });
+          });
+
+          // C9: chips e pílulas acendem em sequência.
+          gsap.utils.toArray('.nuvem, .pilulas, .perfis, .crachas, .apoios, .canais-passo').forEach(function (lista) {
+            gsap.from(lista.children, {
+              autoAlpha: 0, scale: 0.94, y: 10, duration: 0.5, ease: 'back.out(1.6)', stagger: 0.06,
+              scrollTrigger: { trigger: lista, start: 'top 88%', once: true }
+            });
+          });
+
+          return function () { odos.forEach(function (x) { x.tl.kill(); x.o.desfazer(); }); };
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

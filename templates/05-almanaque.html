@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="pt-BR" data-template="05">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 05 Almanaque</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       05 Almanaque · editorial · N4 / C9 / R2
+       Almanaque agrícola: a página é uma grade de fichas técnicas
+       numeradas (pautadas, com furo de fichário). As fichas viram em 3D
+       ao entrar na tela: o verso (favo mel, sem texto) dá lugar à frente.
+       Assuntos e perfis em chips e pílulas (C9), blocos grafite de
+       ponta a ponta intercalados com o creme (R2), menu hambúrguer com
+       sobreposição em tela cheia (N4).
+       Regras: nada de opacity < 1 fora do gsap.matchMedia (sem movimento,
+       as fichas ficam de frente e o verso nunca aparece); canto inferior
+       direito livre para o switcher.
+       ================================================================= */
+
+    :root { --nav-h: 80px; --respiro: 104px; }
+    @media (max-width: 767px) { :root { --nav-h: 68px; --respiro: 64px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible {
+      outline: 2px solid var(--petroleo); outline-offset: 2px;
+    }
+    body { counter-reset: ficha; }
+    main > section { padding-block: var(--respiro); scroll-margin-top: var(--nav-h); }
+    .dr-container { max-width: 1240px; }
+
+    /* ---------- N4: cabeçalho com hambúrguer e sobreposição em tela cheia ---------- */
+    .cabecalho { position: sticky; top: 0; z-index: 60; background: var(--creme); border-bottom: 3px double var(--terra); }
+    .cabecalho__in { height: var(--nav-h); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--sp-4); }
+    .cabecalho__marca img { width: 64px; height: 64px; }
+    .cabecalho__meio {
+      font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--terra);
+      display: flex; gap: var(--sp-4); align-items: center;
+    }
+    .cabecalho__meio::before, .cabecalho__meio::after { content: ""; width: 32px; height: 1px; background: var(--terra-clara); }
+    .hamburguer {
+      justify-self: end; display: grid; place-items: center; width: 48px; height: 48px; padding: 0;
+      background: var(--creme); border: 1.5px solid var(--terra); border-radius: var(--r-md); color: var(--terra-escura); cursor: pointer;
+    }
+    .hamburguer:hover { background: var(--mel-veu); }
+    @media (max-width: 767px) { .cabecalho__marca img { width: 52px; height: 52px; } .cabecalho__meio { display: none; } .cabecalho__in { grid-template-columns: 1fr auto; } }
+
+    .sobre { position: fixed; inset: 0; z-index: 100; display: none; background: var(--grafite); color: var(--creme); overflow-y: auto; }
+    .sobre.aberta { display: block; }
+    .sobre__in { min-height: 100%; display: grid; grid-template-rows: auto 1fr auto; gap: var(--sp-6); padding-block: var(--sp-4) var(--sp-8); }
+    .sobre__topo { display: flex; justify-content: space-between; align-items: center; }
+    .sobre__topo img { width: 72px; height: 72px; }
+    .fechar {
+      display: grid; place-items: center; width: 48px; height: 48px; padding: 0; cursor: pointer;
+      background: transparent; border: 1.5px solid var(--mel-claro); border-radius: var(--r-md); color: var(--mel-claro);
+    }
+    .sobre__lista { counter-reset: menu; align-self: center; display: grid; gap: var(--sp-2); }
+    .sobre__lista a {
+      counter-increment: menu; display: flex; align-items: baseline; gap: var(--sp-5);
+      color: var(--creme); text-decoration: none; padding-block: var(--sp-2); border-bottom: 1px solid var(--grafite-suave);
+      font-family: var(--serif); font-weight: 500; font-size: clamp(32px, 5vw, 60px); line-height: 1.1; letter-spacing: -.02em;
+    }
+    .sobre__lista a::before { content: counter(menu, decimal-leading-zero); font-family: var(--mono); font-size: var(--fs-small); letter-spacing: .1em; color: var(--mel); }
+    .sobre__lista a:hover { color: var(--mel-claro); }
+    .sobre__rodape { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; }
+
+    /* ---------- Ficha técnica (frente pautada + verso de favo) ---------- */
+    .ficha { counter-increment: ficha; perspective: 1400px; }
+    .ficha__in { position: relative; height: 100%; transform-style: preserve-3d; }
+    .frente {
+      position: relative; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      display: flex; flex-direction: column;
+      background:
+        repeating-linear-gradient(to bottom, transparent 0 31px, rgba(23,107,102,.07) 31px 32px) 0 56px / 100% calc(100% - 56px) no-repeat,
+        var(--branco);
+      border: 1px solid var(--linha-forte); border-radius: var(--r-md);
+      padding: var(--sp-4) var(--sp-5) var(--sp-5); box-shadow: var(--sh-sm);
+    }
+    .frente::before {
+      content: "\2116\00A0" counter(ficha, decimal-leading-zero);
+      display: block; padding-bottom: var(--sp-3); margin-bottom: var(--sp-4); border-bottom: 3px double var(--linha-forte);
+      font-family: var(--mono); font-size: 11.5px; font-weight: 700; letter-spacing: .16em; color: var(--erro);
+    }
+    /* Furo de fichário */
+    .frente::after {
+      content: ""; position: absolute; top: 14px; right: 16px; width: 12px; height: 12px; border-radius: 50%;
+      background: var(--creme); box-shadow: inset 0 1px 2px rgba(78,52,46,.25);
+    }
+    .verso {
+      position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      border-radius: var(--r-md); border: 1px solid var(--mel-escuro);
+      background: var(--mel-veu) url(../img/padroes/favo-mel.svg) center / 84px auto;
+      display: grid; place-items: center;
+    }
+    .verso::after {
+      content: counter(ficha, decimal-leading-zero); display: grid; place-items: center;
+      width: 72px; height: 72px; border-radius: 50%; background: var(--mel); color: var(--terra-escura);
+      font-family: var(--mono); font-weight: 700; font-size: 22px;
+    }
+    .ficha .dr-icone { color: var(--petroleo); }
+    /* O formulário nunca depende de animação: ficha fixa, sem verso nem flip. */
+    .ficha--estatica { perspective: none; }
+
+    /* ---------- Hero: página de abertura do almanaque ---------- */
+    main > section[data-secao="hero"] { padding-top: var(--sp-6); }
+    .abertura { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--sp-5); align-items: stretch; }
+    .titulo-ficha .frente { padding: var(--sp-5) var(--sp-6) var(--sp-6); }
+    .titulo-ficha h1 { font-size: clamp(40px, 4.6vw, 64px); line-height: 1.02; letter-spacing: -.025em; text-wrap: balance; margin-top: var(--sp-3); }
+    .titulo-ficha .dr-body-lg { margin-top: var(--sp-4); max-width: 44ch; }
+    .acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+    .assuntos { margin-top: auto; padding-top: var(--sp-5); }
+
+    /* ---------- C9: chips e pílulas em fluxo ---------- */
+    .chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+    .chip {
+      display: inline-flex; align-items: center; gap: var(--sp-2); padding: 7px 14px 7px 10px;
+      border: 1px solid var(--linha-forte); border-radius: var(--r-pill); background: var(--creme);
+      font-size: var(--fs-small); font-weight: 600; color: var(--terra-escura); line-height: 1.2;
+    }
+    .chip .dr-icone { width: 18px; height: 18px; color: var(--petroleo); }
+
+    .prova { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-5); padding: 0; }
+    .prova .frente { justify-content: flex-end; }
+    .dado { display: block; font-family: var(--mono); font-weight: 500; font-size: clamp(36px, 4vw, 54px); line-height: 1; letter-spacing: -.04em; color: var(--terra-escura); margin-top: auto; }
+    .dado__rotulo { display: block; margin-top: var(--sp-3); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    .prova .dr-icone { position: absolute; top: 58px; right: var(--sp-5); }
+    .estampa { margin-top: var(--sp-5); }
+    .estampa img { width: 100%; height: auto; aspect-ratio: 16 / 5; object-fit: cover; border-radius: var(--r-sm); }
+    .estampa figcaption { margin-top: var(--sp-3); color: var(--terra); }
+    @media (max-width: 1023px) {
+      .abertura { grid-template-columns: minmax(0, 1fr); }
+    }
+    @media (max-width: 767px) {
+      .titulo-ficha .frente { padding: var(--sp-4) var(--sp-5) var(--sp-5); }
+      .titulo-ficha h1 { font-size: 40px; }
+      .prova { gap: var(--sp-3); }
+      .prova .frente { padding: var(--sp-3) var(--sp-4) var(--sp-4); min-height: 168px; }
+      .prova .dr-icone { top: 50px; right: var(--sp-4); width: 20px; height: 20px; }
+      .dado { font-size: 34px; }
+      .estampa img { aspect-ratio: 4 / 3; }
+    }
+
+    /* ---------- Cabeça de seção ---------- */
+    .cab { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-5); align-items: end; margin-bottom: var(--sp-7); padding-bottom: var(--sp-5); border-bottom: 3px double var(--linha-forte); }
+    .cab .dr-eyebrow { margin-bottom: var(--sp-3); }
+    .cab .dr-h2 { max-width: 20ch; }
+    .cab .dr-body-lg { max-width: 48ch; }
+    @media (max-width: 899px) { .cab { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 767px) { .dr-h2 { font-size: 30px; } }
+
+    /* ---------- R2: blocos grafite de ponta a ponta ---------- */
+    .grafite { background: var(--grafite); color: var(--tenue); }
+    .grafite .dr-eyebrow { color: var(--mel); }
+    .grafite .dr-h2 { color: var(--creme); }
+    .grafite .dr-body-lg, .grafite .dr-body { color: #D9D2C3; }
+    .grafite .cab { border-bottom-color: var(--grafite-suave); }
+
+    /* Problema */
+    .alerta { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-8); align-items: start; }
+    .alerta__valor { display: block; font-family: var(--mono); font-weight: 500; font-size: clamp(96px, 13vw, 180px); line-height: .85; letter-spacing: -.06em; color: var(--mel); }
+    .alerta__texto { margin-top: var(--sp-4); font-family: var(--serif); font-size: var(--fs-h4); line-height: 1.45; color: var(--creme); max-width: 30ch; }
+    .riscos > li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--sp-4); padding-block: var(--sp-5); border-bottom: 1px solid var(--grafite-suave); }
+    .riscos > li:first-child { border-top: 1px solid var(--grafite-suave); }
+    .riscos .dr-icone { color: var(--mel); margin-top: 2px; }
+    @media (max-width: 899px) { .alerta { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } }
+
+    /* Funcionalidades e equipe: grades de fichas */
+    .grade-fichas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+    .grade-fichas h3 { margin-block: var(--sp-4) var(--sp-2); }
+    @media (max-width: 1023px) { .grade-fichas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 639px) { .grade-fichas { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); } }
+
+    /* Como funciona: fichas de passo com tela do app */
+    .passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+    .passo__num { font-family: var(--serif); font-style: italic; font-size: 56px; line-height: .9; color: var(--terra-clara); }
+    .passos h3 { margin-block: var(--sp-3) var(--sp-2); }
+    .passos figure { margin-top: auto; padding-top: var(--sp-5); }
+    .passos img { width: 100%; max-height: 300px; object-fit: cover; object-position: top; border-radius: var(--r-sm); border: 1px solid var(--linha); }
+    .passos figcaption { margin-top: var(--sp-2); color: var(--terra); }
+    @media (max-width: 899px) { .passos { grid-template-columns: minmax(0, 1fr); } .passos img { max-width: 260px; } }
+
+    /* Para quem: pílulas grandes */
+    .pilulas { display: flex; flex-wrap: wrap; gap: var(--sp-4); }
+    .pilula {
+      flex: 0 1 600px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-2) var(--sp-4); align-items: center;
+      padding: var(--sp-5) var(--sp-7) var(--sp-5) var(--sp-5); border-radius: var(--r-pill);
+      background: var(--branco); border: 1.5px solid var(--linha-forte);
+    }
+    .pilula__icone { grid-row: span 2; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--mel); color: var(--terra-escura); }
+    .pilula h3 { font-family: var(--serif); font-weight: 500; font-size: 24px; color: var(--terra-escura); line-height: 1.1; }
+    .pilula p { font-size: var(--fs-small); line-height: 1.5; color: var(--corpo); }
+    @media (max-width: 639px) { .pilula { border-radius: var(--r-xl); padding: var(--sp-4); } }
+
+    /* Tecnologia (grafite): chips em contorno mel */
+    .chips--escuro { gap: var(--sp-3); }
+    .chips--escuro > li {
+      display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px var(--sp-3); align-items: center;
+      padding: var(--sp-3) var(--sp-6) var(--sp-3) var(--sp-3); border: 1px solid var(--mel-escuro); border-radius: var(--r-pill);
+      flex: 1 1 420px;
+    }
+    .chips--escuro .ic { grid-row: span 2; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--grafite-suave); color: var(--mel); }
+    .chips--escuro h3 { font-size: 17px; font-weight: 700; color: var(--creme); }
+    .chips--escuro p { font-size: var(--fs-small); color: #CFC7B6; line-height: 1.5; }
+    @media (max-width: 639px) { .chips--escuro > li { border-radius: var(--r-lg); padding: var(--sp-3) var(--sp-4) var(--sp-3) var(--sp-3); } }
+
+    /* Equipe */
+    .origem { font-family: var(--serif); font-size: var(--fs-h4); line-height: 1.5; color: var(--terra-escura); max-width: 46ch; }
+    .pessoa .frente { flex-direction: column; }
+    .pessoa__linha { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
+    .pessoa img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 1px solid var(--linha-forte); }
+    .pessoa p { margin-top: 4px; font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    /* Faixa grafite: a logo do Centelha é negativa e só funciona no escuro. */
+    .apoios { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); margin-top: var(--sp-6); padding: var(--sp-5); background: var(--grafite); border-radius: var(--r-lg); }
+    .apoio { display: inline-flex; align-items: center; gap: var(--sp-3); padding: 8px 20px 8px 8px; border: 1px solid var(--grafite-suave); border-radius: var(--r-pill); }
+    .apoio__logo { display: grid; place-items: center; height: 56px; padding: 6px 16px; border-radius: var(--r-pill); }
+    .apoio[data-fundo="claro"] .apoio__logo { background: var(--creme); }
+    .apoio__logo img { max-height: 40px; width: auto; max-width: 120px; }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .18em; text-transform: uppercase; color: var(--mel-claro); }
+
+    /* Depoimento (grafite) */
+    .citacao { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; max-width: 900px; margin-inline: auto; }
+    .citacao .dr-quote { font-size: clamp(26px, 3.4vw, 44px); line-height: 1.25; color: var(--creme); text-wrap: balance; }
+    .citacao__orn { display: flex; align-items: center; gap: var(--sp-4); color: var(--mel); margin-bottom: var(--sp-6); }
+    .citacao__orn::before, .citacao__orn::after { content: ""; width: 64px; height: 1px; background: var(--mel-escuro); }
+    .citacao figcaption { display: flex; align-items: center; gap: var(--sp-4); margin-top: var(--sp-6); text-align: left; }
+    .citacao figcaption img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+    .citacao__nome { color: var(--creme); font-weight: 700; }
+    .citacao__local { display: block; font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--mel-claro); }
+
+    /* Contato */
+    .contato-grade { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--sp-6); align-items: start; }
+    .form { display: grid; gap: var(--sp-4); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; color: var(--terra); }
+    .campo input, .campo textarea {
+      font: inherit; font-size: var(--fs-body); color: var(--ink); width: 100%;
+      background: var(--creme); border: 1.5px solid var(--linha-forte); border-radius: var(--r-sm); padding: var(--sp-3) var(--sp-4);
+    }
+    .campo textarea { min-height: 128px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canais { display: grid; gap: var(--sp-3); }
+    .canais > li { display: flex; align-items: center; gap: var(--sp-3); padding: 12px 20px 12px 14px; border: 1px solid var(--linha-forte); border-radius: var(--r-pill); background: var(--branco); }
+    .canais .dr-icone { color: var(--petroleo); flex: none; }
+    .canais a { font-weight: 600; overflow-wrap: anywhere; text-underline-offset: 4px; }
+    .contato-acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+    @media (max-width: 899px) { .contato-grade { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Rodapé ---------- */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 96px; border-top: 1px solid var(--grafite-suave); }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1240px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) {
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N4 · hambúrguer que abre sobreposição em tela cheia) -->
+  <nav data-secao="nav">
+    <div class="cabecalho">
+      <div class="dr-container cabecalho__in">
+        <a class="cabecalho__marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+        <span class="cabecalho__meio"><span data-c="rodape.endereco"></span><time data-ano-edicao></time></span>
+        <button class="hamburguer" type="button" aria-expanded="false" aria-controls="menu" data-abrir>
+          <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="sobre" id="menu" role="dialog" aria-modal="true" data-menu>
+      <div class="dr-container sobre__in">
+        <div class="sobre__topo">
+          <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+          <button class="fechar" type="button" data-fechar>
+            <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="sobre__lista">
+          <a href="#problema" data-c="problema.eyebrow"></a>
+          <a href="#funcionalidades" data-c="funcionalidades.eyebrow"></a>
+          <a href="#como-funciona" data-c="comoFunciona.eyebrow"></a>
+          <a href="#para-quem" data-c="paraQuem.eyebrow"></a>
+          <a href="#tecnologia" data-c="tecnologia.eyebrow"></a>
+          <a href="#equipe" data-c="equipe.eyebrow"></a>
+          <a href="#contato" data-c="contato.eyebrow"></a>
+        </div>
+        <div class="sobre__rodape">
+          <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+          <a class="dr-btn dr-btn--link" style="color: var(--mel-claro)" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (grade de fichas técnicas: título com assuntos em chips, números, estampa) -->
+    <section data-secao="hero" id="inicio">
+      <div class="dr-container">
+        <div class="abertura">
+          <div class="ficha titulo-ficha" data-ficha>
+            <div class="ficha__in">
+              <div class="frente">
+                <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+                <h1 class="dr-h1" data-c="hero.titulo"></h1>
+                <p class="dr-body-lg" data-c="hero.subtitulo"></p>
+                <div class="acoes">
+                  <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+                  <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+                  <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+                </div>
+                <div class="assuntos">
+                  <ul class="chips" data-c-lista="funcionalidades.itens">
+                    <template>
+                      <li class="chip"><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg><span data-c="titulo"></span></li>
+                    </template>
+                  </ul>
+                </div>
+              </div>
+              <div class="verso" aria-hidden="true"></div>
+            </div>
+          </div>
+
+          <!-- SEÇÃO: prova (quatro fichas de números, dentro da grade do hero) -->
+          <section data-secao="prova" class="prova">
+            <div class="ficha" data-ficha>
+              <div class="ficha__in"><div class="frente">
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-abelha"></use></svg>
+                <span class="dado" data-c="prova.stats[0].valor"></span><span class="dado__rotulo" data-c="prova.stats[0].rotulo"></span>
+              </div><div class="verso" aria-hidden="true"></div></div>
+            </div>
+            <div class="ficha" data-ficha>
+              <div class="ficha__in"><div class="frente">
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-colmeia"></use></svg>
+                <span class="dado" data-c="prova.stats[1].valor"></span><span class="dado__rotulo" data-c="prova.stats[1].rotulo"></span>
+              </div><div class="verso" aria-hidden="true"></div></div>
+            </div>
+            <div class="ficha" data-ficha>
+              <div class="ficha__in"><div class="frente">
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-mapa"></use></svg>
+                <span class="dado" data-c="prova.stats[2].valor"></span><span class="dado__rotulo" data-c="prova.stats[2].rotulo"></span>
+              </div><div class="verso" aria-hidden="true"></div></div>
+            </div>
+            <div class="ficha" data-ficha>
+              <div class="ficha__in"><div class="frente">
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-offline"></use></svg>
+                <span class="dado" data-c="prova.stats[3].valor"></span><span class="dado__rotulo" data-c="prova.stats[3].rotulo"></span>
+              </div><div class="verso" aria-hidden="true"></div></div>
+            </div>
+          </section>
+        </div>
+
+        <figure class="ficha estampa" data-ficha>
+          <div class="ficha__in">
+            <div class="frente">
+              <img data-c-src="hero.imagem" data-c-alt="hero.imagemAlt" alt="" width="1600" height="1000">
+              <figcaption class="dr-caption" data-c="hero.imagemAlt"></figcaption>
+            </div>
+            <div class="verso" aria-hidden="true"></div>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: problema (bloco grafite de ponta a ponta) -->
+    <section data-secao="problema" id="problema" class="grafite">
+      <div class="dr-container">
+        <header class="cab">
+          <div>
+            <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+            <h2 class="dr-h2" data-c="problema.titulo"></h2>
+          </div>
+        </header>
+        <div class="alerta">
+          <div>
+            <span class="alerta__valor" data-c="problema.estatistica.valor"></span>
+            <p class="alerta__texto" data-c="problema.estatistica.texto"></p>
+          </div>
+          <ul class="riscos" data-c-lista="problema.consequencias">
+            <template>
+              <li>
+                <svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg>
+                <p class="dr-body-lg" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades (seis fichas técnicas que viram) -->
+    <section data-secao="funcionalidades" id="funcionalidades">
+      <div class="dr-container">
+        <header class="cab">
+          <div>
+            <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+            <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+          </div>
+        </header>
+        <ul class="grade-fichas" data-c-lista="funcionalidades.itens">
+          <template>
+            <li class="ficha" data-ficha>
+              <div class="ficha__in">
+                <div class="frente">
+                  <svg class="dr-icone dr-icone--lg" aria-hidden="true"><use data-icone></use></svg>
+                  <h3 class="dr-h4" data-c="titulo"></h3>
+                  <p class="dr-body" data-c="texto"></p>
+                </div>
+                <div class="verso" aria-hidden="true"></div>
+              </div>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona (fichas de passo com telas do app) -->
+    <section data-secao="como-funciona" id="como-funciona" style="padding-top: 0">
+      <div class="dr-container">
+        <header class="cab">
+          <div>
+            <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+            <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+          </div>
+        </header>
+        <ol class="passos" data-c-lista="comoFunciona.passos">
+          <template>
+            <li class="ficha" data-ficha>
+              <div class="ficha__in">
+                <div class="frente">
+                  <span class="passo__num" data-c="numero"></span>
+                  <h3 class="dr-h4" data-c="titulo"></h3>
+                  <p class="dr-body" data-c="texto"></p>
+                  <figure>
+                    <img data-c-src="imagem" data-c-alt="alt" alt="">
+                    <figcaption class="dr-caption" data-c="alt"></figcaption>
+                  </figure>
+                </div>
+                <div class="verso" aria-hidden="true"></div>
+              </div>
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem (C9 · pílulas grandes em fluxo) -->
+    <section data-secao="para-quem" id="para-quem" style="padding-top: 0">
+      <div class="dr-container">
+        <header class="cab">
+          <div>
+            <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+            <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+          </div>
+        </header>
+        <ul class="pilulas" data-c-lista="paraQuem.perfis">
+          <template>
+            <li class="pilula">
+              <span class="pilula__icone" aria-hidden="true"><svg class="dr-icone"><use href="#dr-florada"></use></svg></span>
+              <h3 data-c="titulo"></h3>
+              <p data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia (bloco grafite com chips de contorno mel) -->
+    <section data-secao="tecnologia" id="tecnologia" class="grafite">
+      <div class="dr-container">
+        <header class="cab">
+          <div>
+            <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+            <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+          </div>
+          <p class="dr-body-lg" data-c="tecnologia.texto"></p>
+        </header>
+        <ul class="chips chips--escuro" data-c-lista="tecnologia.pilares">
+          <template>
+            <li>
+              <span class="ic" aria-hidden="true"><svg class="dr-icone"><use data-icone></use></svg></span>
+              <h3 data-c="titulo"></h3>
+              <p data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe (fichas de pessoa e apoios em pílula) -->
+    <section data-secao="equipe" id="equipe">
+      <div class="dr-container">
+        <header class="cab">
+          <div>
+            <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+            <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+          </div>
+          <p class="origem" data-c="equipe.origem"></p>
+        </header>
+        <ul class="grade-fichas" data-c-lista="equipe.pessoas">
+          <template>
+            <li class="ficha pessoa" data-ficha>
+              <div class="ficha__in">
+                <div class="frente">
+                  <div class="pessoa__linha">
+                    <img data-c-src="foto" data-c-alt="alt" alt="" width="72" height="72">
+                    <div>
+                      <h3 class="dr-h4" data-c="nome" style="margin:0"></h3>
+                      <p data-c="cargo"></p>
+                    </div>
+                  </div>
+                </div>
+                <div class="verso" aria-hidden="true"></div>
+              </div>
+            </li>
+          </template>
+        </ul>
+        <!-- Apoios numa faixa grafite (Centelha é negativa); logos de fundo claro ganham placa creme -->
+        <ul class="apoios" data-c-lista="equipe.apoios">
+          <template>
+            <li class="apoio">
+              <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+              <span class="apoio__nome" data-c="nome"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento (bloco grafite) -->
+    <section data-secao="depoimento" class="grafite">
+      <div class="dr-container">
+        <figure class="citacao">
+          <span class="citacao__orn" aria-hidden="true"><svg class="dr-icone"><use href="#dr-favo"></use></svg></span>
+          <blockquote style="margin:0"><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+          <figcaption>
+            <img data-c-src="depoimento.foto" alt="" width="56" height="56">
+            <span>
+              <span class="citacao__nome" data-c="depoimento.nome"></span>
+              <span class="citacao__local" data-c="depoimento.local"></span>
+            </span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato (ficha de formulário e canais em pílula) -->
+    <section data-secao="contato" id="contato">
+      <div class="dr-container">
+        <header class="cab">
+          <div>
+            <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+            <h2 class="dr-h2" data-c="contato.titulo"></h2>
+          </div>
+          <p class="dr-body-lg" data-c="contato.texto"></p>
+        </header>
+        <div class="contato-grade">
+          <div class="ficha ficha--estatica">
+            <div class="ficha__in">
+              <div class="frente">
+                <form class="form" method="post" data-form-contato>
+                  <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+                  <div class="campo">
+                    <label for="f-nome" data-c="contato.form.nome"></label>
+                    <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+                  </div>
+                  <div class="campo">
+                    <label for="f-email" data-c="contato.form.email"></label>
+                    <input id="f-email" name="email" type="email" autocomplete="email" required>
+                  </div>
+                  <div class="campo">
+                    <label for="f-msg" data-c="contato.form.mensagem"></label>
+                    <textarea id="f-msg" name="mensagem" required></textarea>
+                  </div>
+                  <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div>
+            <ul class="canais">
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <a data-mailto data-c="contato.email"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+              </li>
+            </ul>
+            <div class="contato-acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '#';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+
+      /* Menu em tela cheia: abre/fecha, Esc fecha, foco volta ao botão. */
+      function ligarMenu() {
+        var abrir = document.querySelector('[data-abrir]');
+        var menu = document.querySelector('[data-menu]');
+        var fechar = menu.querySelector('[data-fechar]');
+        var marca = DR.valor('marca.nome');
+        // Rótulos de interface (não são cópia do site): nome acessível dos botões de ícone.
+        abrir.setAttribute('aria-label', 'Menu' + (marca ? ' · ' + marca.v : ''));
+        fechar.setAttribute('aria-label', 'Fechar');
+        function definir(aberto) {
+          menu.classList.toggle('aberta', aberto);
+          abrir.setAttribute('aria-expanded', String(aberto));
+          document.documentElement.style.overflow = aberto ? 'hidden' : '';
+          if (aberto) {
+            fechar.focus();
+            if (window.gsap && window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+              gsap.fromTo(menu.querySelectorAll('.sobre__lista a'), { x: -24, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: 0.4, ease: 'power2.out', stagger: 0.04 });
+            }
+          } else {
+            abrir.focus();
+          }
+        }
+        abrir.addEventListener('click', function () { definir(true); });
+        fechar.addEventListener('click', function () { definir(false); });
+        menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { definir(false); }); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && menu.classList.contains('aberta')) definir(false); });
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) {
+          if (email) a.setAttribute('href', 'mailto:' + email.v);
+        });
+        document.querySelectorAll('[data-ano]').forEach(function (el) {
+          el.textContent = '© ' + new Date().getFullYear();
+        });
+        document.querySelectorAll('[data-ano-edicao]').forEach(function (el) {
+          var ano = String(new Date().getFullYear());
+          el.setAttribute('datetime', ano);
+          el.textContent = ano;
+        });
+        ligarMenu();
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          function virar(alvos, extra) {
+            return gsap.fromTo(alvos, { rotationY: -180 }, Object.assign({
+              rotationY: 0, duration: 0.8, ease: 'power3.out', transformOrigin: '50% 50%',
+              clearProps: 'transform'
+            }, extra));
+          }
+
+          // Abertura: a ficha do título vira primeiro, depois as quatro de números
+          // e a estampa. Tudo de frente em ~1,3 s.
+          var hero = document.querySelector('[data-secao="hero"]');
+          var fichasHero = hero.querySelectorAll('[data-ficha] > .ficha__in');
+          virar(fichasHero, { stagger: 0.08, delay: 0.05 });
+          gsap.from(hero.querySelectorAll('.chip'), { scale: 0.6, autoAlpha: 0, duration: 0.35, ease: 'back.out(2)', stagger: 0.04, delay: 0.75 });
+
+          // Fora do hero: cada grupo de fichas vira em sequência ao entrar na tela.
+          var grupos = new Set();
+          document.querySelectorAll('main > section:not([data-secao="hero"]) [data-ficha]').forEach(function (f) { grupos.add(f.parentElement); });
+          grupos.forEach(function (g) {
+            var ins = Array.prototype.filter.call(g.children, function (c) { return c.hasAttribute('data-ficha'); })
+              .map(function (c) { return c.querySelector('.ficha__in'); });
+            virar(ins, { stagger: 0.1, scrollTrigger: { trigger: g, start: 'top 82%', once: true } });
+          });
+
+          // Chips e pílulas entram em fluxo.
+          gsap.utils.toArray('.pilulas, .chips--escuro, .apoios, .canais, .riscos').forEach(function (lista) {
+            gsap.from(lista.querySelectorAll(':scope > li'), {
+              autoAlpha: 0, y: 16, duration: 0.5, ease: 'power2.out', stagger: 0.07,
+              scrollTrigger: { trigger: lista, start: 'top 85%', once: true }
+            });
+          });
+          gsap.from('.alerta__valor', {
+            autoAlpha: 0, x: -30, duration: 0.8, ease: 'power3.out',
+            scrollTrigger: { trigger: '.alerta', start: 'top 80%', once: true }
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

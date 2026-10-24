@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="pt-BR" data-template="16">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 16 Colmeia</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       16 Colmeia · favo · N3 / C4 / R3
+       O hero é um favo inteiro: uma grade de células hexagonais que
+       preenche a tela e se abre em volta do texto. Cada célula expande
+       sob o cursor (as vizinhas cedem espaço); no toque, a célula abre
+       e uma onda corre pelo favo, anel por anel.
+       Regras herdadas do 01:
+       - nada de opacity < 1 fora do gsap.matchMedia (texto "apagado" usa cor);
+       - canto inferior direito livre (pílula do switcher);
+       - favo em traço fino sobre claro, nunca atrás de texto corrido
+         (as células sob o painel do texto são removidas).
+       ================================================================= */
+
+    :root { --nav-h: 76px; --respiro: clamp(72px, 10vw, 136px); --hex: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); --hex-deitado: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+    @media (max-width: 767px) { :root { --nav-h: 64px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    body { padding-top: var(--nav-h); }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible {
+      outline: 2px solid var(--petroleo); outline-offset: 2px;
+    }
+    main > section { scroll-margin-top: var(--nav-h); }
+
+    /* ---------- N3: barra que some ao descer e volta ao subir ---------- */
+    .barra {
+      position: fixed; inset: 0 0 auto 0; z-index: 60; height: var(--nav-h);
+      background: var(--creme); border-bottom: 1px solid var(--linha);
+      transition: transform .38s cubic-bezier(.2, .7, .2, 1), box-shadow .3s ease;
+    }
+    .barra--oculta { transform: translateY(-101%); }
+    .barra--solta { box-shadow: var(--sh-sm); }
+    .barra:focus-within { transform: none; }
+    .barra__miolo { display: flex; align-items: center; gap: var(--sp-5); height: 100%; }
+    .marca { display: block; flex: none; margin-right: var(--sp-3); }
+    .marca img { width: 60px; height: 60px; }
+    .barra__links { display: flex; gap: var(--sp-5); margin-inline: auto; }
+    .barra__links a {
+      position: relative; padding-block: var(--sp-2);
+      font-family: var(--mono); font-size: var(--fs-eyebrow); font-weight: 500;
+      letter-spacing: .16em; text-transform: uppercase; color: var(--terra-escura); text-decoration: none;
+    }
+    .barra__links a::before {
+      content: ""; position: absolute; left: 50%; top: -6px; width: 9px; height: 10px; margin-left: -4.5px;
+      background: var(--mel); clip-path: var(--hex); transform: scale(0); transition: transform .2s ease;
+    }
+    .barra__links a:hover::before, .barra__links a:focus-visible::before { transform: scale(1); }
+    .barra .dr-btn { padding: 10px 18px; font-size: var(--fs-small); margin-left: auto; }
+    .barra__links + .dr-btn { margin-left: 0; }
+    @media (max-width: 959px) { .barra__links { display: none; } .barra .dr-btn, .barra__links + .dr-btn { margin-left: auto; } }
+    @media (max-width: 767px) { .marca img { width: 52px; height: 52px; } }
+
+    /* ---------- R3: fios finos e muito branco ---------- */
+    .fio { height: 1px; background: var(--linha); border: 0; margin: 0; }
+    .secao { padding-block: var(--respiro); }
+    .cabeca { max-width: 720px; }
+    .cabeca .dr-eyebrow { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+    .cabeca .dr-eyebrow::before { content: ""; width: 10px; height: 11px; background: var(--mel); clip-path: var(--hex); flex: none; }
+    .cabeca .dr-body-lg { margin-top: var(--sp-5); max-width: 56ch; }
+    .cabeca + * { margin-top: var(--sp-8); }
+    .cabeca--centro { margin-inline: auto; text-align: center; }
+    .cabeca--centro .dr-eyebrow { justify-content: center; }
+    .cabeca--centro .dr-body-lg { margin-inline: auto; }
+    @media (max-width: 767px) { .dr-h2 { font-size: 30px; } .cabeca + * { margin-top: var(--sp-7); } }
+
+    /* ---------- Hero: o favo preenchendo a tela ---------- */
+    .hero {
+      position: relative; overflow: hidden; isolation: isolate;
+      min-height: max(640px, calc(100svh - var(--nav-h)));
+      display: flex; align-items: center;
+      padding-block: clamp(56px, 8vh, 96px);
+      background: var(--creme);
+    }
+    .favo-grade { position: absolute; inset: 0; z-index: 0; }
+    .cel {
+      position: absolute; display: block; clip-path: var(--hex);
+      background: var(--linha-forte);
+      transition: transform .42s cubic-bezier(.2, .9, .25, 1.2), background-color .3s ease;
+      will-change: transform; touch-action: manipulation;
+    }
+    .cel__miolo {
+      position: absolute; inset: 1.5px; clip-path: var(--hex); background: var(--creme);
+      background-size: cover; background-position: center 18%;
+      transition: background-color .3s ease;
+    }
+    .cel--papel .cel__miolo { background-color: var(--creme-papel); }
+    .cel--sup { background: var(--superficie); }
+    .cel--sup .cel__miolo { background-color: var(--superficie); }
+    .cel--veu { background: var(--mel-claro); }
+    .cel--veu .cel__miolo { background-color: var(--mel-veu); }
+    .cel--claro { background: var(--mel); }
+    .cel--claro .cel__miolo { background-color: var(--mel-claro); }
+    .cel--mel { background: var(--mel-escuro); }
+    .cel--mel .cel__miolo { background-color: var(--mel); }
+    .cel--terra { background: var(--terra-clara); }
+    .cel--terra .cel__miolo { background-color: var(--creme); }
+    .cel--app1 .cel__miolo { background-image: url(../img/app/01_dashboard_apiarios.png); background-color: var(--creme-papel); }
+    .cel--app2 .cel__miolo { background-image: url(../img/app/03_inspecao_detalhada.png); background-color: var(--creme-papel); background-position: center 40%; }
+    .cel--app3 .cel__miolo { background-image: url(../img/app/02_lista_colmeias_status.png); background-color: var(--creme-papel); }
+    .cel--app1, .cel--app2, .cel--app3 { background: var(--terra); }
+    .cel--foco { transform: scale(1.62); z-index: 3; background: var(--mel-escuro); }
+    .cel--foco .cel__miolo { background-color: var(--mel-claro); }
+    .cel--foco.cel--mel .cel__miolo, .cel--foco.cel--claro .cel__miolo { background-color: var(--mel); }
+    .cel--vizinha { transform: scale(.84); z-index: 2; }
+    .cel--vizinha .cel__miolo { background-color: var(--mel-veu); }
+    .cel--app1.cel--foco .cel__miolo, .cel--app2.cel--foco .cel__miolo, .cel--app3.cel--foco .cel__miolo,
+    .cel--app1.cel--vizinha .cel__miolo, .cel--app2.cel--vizinha .cel__miolo, .cel--app3.cel--vizinha .cel__miolo { background-color: var(--creme-papel); }
+    .cel--onda { animation: onda .62s cubic-bezier(.3, .7, .3, 1) both; z-index: 2; }
+    .cel--onda .cel__miolo { animation: onda-cor .62s ease both; }
+    @keyframes onda { 0% { transform: scale(1); } 45% { transform: scale(1.28); } 100% { transform: scale(1); } }
+    @keyframes onda-cor { 0%, 100% { } 45% { background-color: var(--mel-claro); } }
+    @media (prefers-reduced-motion: reduce) {
+      .cel--foco { transform: none; }
+      .cel--vizinha { transform: none; }
+    }
+
+    .hero__painel {
+      position: relative; z-index: 4; max-width: 600px;
+      background: var(--creme); padding: var(--sp-6) var(--sp-6) var(--sp-6) 0;
+    }
+    .hero__painel .dr-eyebrow { display: inline-flex; align-items: center; gap: var(--sp-3); }
+    .hero__painel .dr-eyebrow::before { content: ""; width: 12px; height: 14px; background: var(--mel); clip-path: var(--hex); }
+    .hero__titulo {
+      margin-top: var(--sp-5);
+      font-size: clamp(44px, 6.2vw, 86px); line-height: .98; letter-spacing: -.03em; text-wrap: balance;
+    }
+    .hero__sub { margin-top: var(--sp-5); max-width: 46ch; }
+    .hero__acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+    @media (max-width: 767px) {
+      .hero { align-items: flex-start; padding-block: var(--sp-5) 260px; min-height: 0; }
+      .hero__painel { padding: var(--sp-5) var(--sp-4) var(--sp-5) 0; }
+      .hero__titulo { font-size: 42px; }
+    }
+
+    /* ---------- C4: hexágonos com conteúdo centralizado ---------- */
+    .hexa {
+      position: relative; display: grid; place-items: center; text-align: center;
+      clip-path: var(--hex); background: var(--linha-forte);
+      transition: transform .35s cubic-bezier(.2, .9, .25, 1.15);
+    }
+    .hexa::before { content: ""; position: absolute; inset: 1.5px; clip-path: var(--hex); background: var(--creme-papel); transition: background-color .3s ease; }
+    .hexa > * { position: relative; }
+    .hexa:hover, .hexa:focus-within, .hexa:active { transform: scale(1.05); z-index: 2; }
+    .hexa:hover::before, .hexa:active::before { background: var(--mel-veu); }
+
+    /* Prova: quatro células lado a lado, alternando altura como no quadro */
+    .placar { display: flex; justify-content: center; gap: 10px; padding-block: var(--sp-5); }
+    .placar > li { --w: 230px; width: var(--w); height: calc(var(--w) * 1.1547); }
+    .placar > li:nth-child(even) { transform: translateY(calc(var(--w) * .2887)); }
+    .placar > li:nth-child(even):hover { transform: translateY(calc(var(--w) * .2887)) scale(1.05); }
+    .placar > li:nth-child(1)::before { background: var(--mel); }
+    .placar > li:nth-child(3)::before { background: var(--mel-veu); }
+    .placar > li:nth-child(1) { background: var(--mel-escuro); }
+    .placar__miolo { padding-inline: 28px; }
+    .placar__valor { display: block; font-size: clamp(36px, 3.6vw, 52px); line-height: 1; color: var(--terra-escura); }
+    .placar__rotulo {
+      display: block; margin-top: var(--sp-3);
+      font-family: var(--mono); font-size: var(--fs-eyebrow); font-weight: 500; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--terra); line-height: 1.55;
+    }
+    .placar > li:nth-child(1) .placar__rotulo { color: var(--terra-escura); }
+    .prova { padding-block: var(--sp-8) calc(var(--sp-8) + 66px); }
+    @media (max-width: 1023px) { .placar > li { --w: 180px; } }
+    @media (max-width: 767px) {
+      .placar { --w: min(140px, calc((100vw - 56px) / 2.5)); display: grid; grid-template-columns: repeat(5, calc(var(--w) / 2 + 2px)); justify-content: center; gap: 0; padding: 0; }
+      .placar > li { --w: min(140px, calc((100vw - 56px) / 2.5)); grid-column: span 2; margin-inline: 2px; }
+      .placar > li:nth-child(even) { transform: none; }
+      .placar > li:nth-child(even):hover { transform: scale(1.05); }
+      .placar > li:nth-child(3) { grid-column: 2 / span 2; margin-top: calc(var(--w) * -.25 + 8px); }
+      .placar > li:nth-child(4) { margin-top: calc(var(--w) * -.25 + 8px); }
+      .placar__miolo { padding-inline: 14px; }
+      .placar__valor { font-size: 30px; }
+      .placar__rotulo { font-size: 10.5px; letter-spacing: .08em; margin-top: var(--sp-2); }
+      .prova { padding-block: var(--sp-7); }
+    }
+
+    /* Funcionalidades: favo de seis células (3 + 3 deslocadas) */
+    .favo-cards {
+      --w: 300px; --h: calc(var(--w) * 1.1547);
+      display: grid; justify-content: center;
+      grid-template-columns: repeat(7, calc(var(--w) / 2 + 6px));
+      grid-auto-rows: calc(var(--h) * .75 + 10px);
+      padding-bottom: calc(var(--h) * .25);
+    }
+    .favo-cards > li { grid-column: span 2; height: var(--h); margin-inline: 6px; }
+    .favo-cards > li:nth-child(4) { grid-column: 2 / span 2; }
+    .favo-cards__miolo { padding-inline: 40px; display: grid; justify-items: center; gap: var(--sp-2); }
+    .favo-cards .dr-icone { color: var(--petroleo); width: 28px; height: 28px; margin-bottom: var(--sp-2); }
+    .favo-cards .dr-h4 { font-size: 19px; }
+    .favo-cards .dr-body { font-size: 15px; line-height: 1.55; }
+    .favo-cards > li:nth-child(2)::before, .favo-cards > li:nth-child(6)::before { background: var(--creme); }
+    @media (max-width: 1099px) {
+      .favo-cards { --w: 262px; grid-template-columns: repeat(5, calc(var(--w) / 2 + 6px)); }
+      .favo-cards > li:nth-child(4n+1) { grid-column: 1 / span 2; }
+      .favo-cards > li:nth-child(4n+2) { grid-column: 3 / span 2; }
+      .favo-cards > li:nth-child(4n+3) { grid-column: 2 / span 2; }
+      .favo-cards > li:nth-child(4n+4) { grid-column: 4 / span 2; }
+      .favo-cards__miolo { padding-inline: 34px; }
+      .favo-cards .dr-body { font-size: 14px; }
+    }
+    @media (max-width: 679px) {
+      /* No celular as células deitam: largura cheia, texto confortável */
+      .favo-cards { display: grid; grid-template-columns: minmax(0, 360px); grid-auto-rows: auto; gap: 10px; padding: 0; }
+      .favo-cards > li, .favo-cards > li:nth-child(n) { grid-column: 1; height: auto; aspect-ratio: 1 / .866; margin: 0; clip-path: var(--hex-deitado); }
+      .favo-cards > li::before { clip-path: var(--hex-deitado); }
+      .favo-cards__miolo { padding-inline: 19%; }
+    }
+
+    /* ---------- Problema ---------- */
+    .problema { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--sp-8); align-items: center; }
+    .celula-dado { position: relative; width: min(100%, 380px); aspect-ratio: 1 / 1.1547; display: grid; place-items: center; text-align: center; margin-top: var(--sp-7); }
+    .celula-dado svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .celula-dado__valor { display: block; font-size: clamp(72px, 8vw, 112px); line-height: .9; color: var(--terra-escura); }
+    .celula-dado p { max-width: 22ch; margin: var(--sp-4) auto 0; }
+    .consequencias > li {
+      display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--sp-4);
+      padding-block: var(--sp-6); border-top: 1px solid var(--linha);
+    }
+    .consequencias > li:last-of-type { border-bottom: 1px solid var(--linha); }
+    .consequencias .dr-icone { color: var(--erro); margin-top: 3px; }
+    @media (max-width: 899px) { .problema { grid-template-columns: minmax(0, 1fr); gap: var(--sp-7); } .celula-dado { margin-inline: auto; width: min(100%, 300px); } }
+
+    /* ---------- Como funciona ---------- */
+    .passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .passo { padding-inline: var(--sp-6); border-left: 1px solid var(--linha); }
+    .passo:first-child { border-left: 0; padding-left: 0; }
+    .passos > .passo:nth-last-child(2) { padding-right: 0; }
+    .passo__num {
+      display: grid; place-items: center; width: 56px; height: 64px; clip-path: var(--hex);
+      background: var(--mel); color: var(--terra-escura); font-size: 18px;
+    }
+    .passo .dr-h4 { margin-block: var(--sp-5) var(--sp-2); }
+    .passo figure { margin-top: var(--sp-6); }
+    .passo img {
+      width: 100%; max-width: 230px; height: auto; max-height: 360px; object-fit: cover; object-position: top;
+      border: 1px solid var(--linha-forte); border-radius: var(--r-lg); background: var(--creme-papel);
+    }
+    .passo figcaption { margin-top: var(--sp-3); max-width: 230px; }
+    @media (max-width: 899px) {
+      .passos { grid-template-columns: minmax(0, 1fr); }
+      .passo, .passo:first-child { padding: var(--sp-6) 0; border-left: 0; border-top: 1px solid var(--linha); }
+      .passo:first-child { border-top: 0; padding-top: 0; }
+      .passo img { max-height: 300px; }
+    }
+
+    /* ---------- Para quem ---------- */
+    .perfis > li {
+      display: grid; grid-template-columns: 88px minmax(0, 4fr) minmax(0, 7fr); gap: var(--sp-6); align-items: center;
+      padding-block: var(--sp-6); border-top: 1px solid var(--linha);
+    }
+    .perfis > li:last-of-type { border-bottom: 1px solid var(--linha); }
+    .perfil__selo { width: 72px; height: 83px; display: grid; place-items: center; clip-path: var(--hex); background: var(--petroleo-veu); color: var(--petroleo); }
+    .perfis .dr-h3 { font-family: var(--serif); font-weight: 500; color: var(--terra-escura); }
+    @media (max-width: 767px) {
+      .perfis > li { grid-template-columns: 56px minmax(0, 1fr); gap: var(--sp-3) var(--sp-4); }
+      .perfis > li > p { grid-column: 2; }
+      .perfil__selo { width: 48px; height: 55px; }
+    }
+
+    /* ---------- Tecnologia ---------- */
+    .tec { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: var(--sp-8); }
+    .tec .cabeca + * { margin-top: 0; }
+    .tec .cabeca { position: sticky; top: calc(var(--nav-h) + var(--sp-5)); align-self: start; }
+    .pilares { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--linha); }
+    .pilares > li { padding: var(--sp-6) var(--sp-5) var(--sp-6) 0; border-bottom: 1px solid var(--linha); }
+    .pilares > li:nth-child(even) { padding-left: var(--sp-6); border-left: 1px solid var(--linha); }
+    .pilar__icone { width: 48px; height: 55px; display: grid; place-items: center; clip-path: var(--hex); background: var(--petroleo); color: var(--creme); margin-bottom: var(--sp-4); }
+    .pilares .dr-h4 { margin-bottom: var(--sp-2); }
+    @media (max-width: 899px) { .tec { grid-template-columns: minmax(0, 1fr); gap: var(--sp-7); } .tec .cabeca { position: static; } }
+    @media (max-width: 599px) {
+      .pilares { grid-template-columns: minmax(0, 1fr); }
+      .pilares > li, .pilares > li:nth-child(even) { padding: var(--sp-5) 0; border-left: 0; }
+    }
+
+    /* ---------- Equipe ---------- */
+    .origem { margin-top: var(--sp-5); }
+    .pessoas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-7); }
+    .pessoa { text-align: center; }
+    .pessoa__foto { width: 168px; height: 194px; margin-inline: auto; clip-path: var(--hex); background: var(--linha-forte); padding: 2px; }
+    .pessoa__foto img { width: 100%; height: 100%; object-fit: cover; clip-path: var(--hex); }
+    .pessoa .dr-h4 { margin-top: var(--sp-5); }
+    .pessoa__cargo { margin-top: var(--sp-1); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .1em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    .apoios { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-5); margin-top: var(--sp-8); padding-top: var(--sp-7); border-top: 1px solid var(--linha); }
+    .apoio { display: grid; justify-items: center; gap: var(--sp-3); }
+    .apoio__logo { display: grid; place-items: center; width: 200px; height: 104px; border-radius: var(--r-md); background: var(--branco); border: 1px solid var(--linha); }
+    .apoio[data-fundo="escuro"] .apoio__logo { background: var(--grafite); border-color: var(--grafite); }
+    .apoio__logo img { max-height: 60px; max-width: 150px; width: auto; }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--terra); }
+    @media (max-width: 899px) { .pessoas { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); } }
+
+    /* ---------- Depoimento ---------- */
+    .citacao { max-width: 860px; margin-inline: auto; text-align: center; }
+    .citacao .dr-quote { font-size: clamp(25px, 3.2vw, 40px); line-height: 1.3; color: var(--terra-escura); text-wrap: balance; }
+    .citacao__aspa { display: block; width: 44px; height: 50px; margin: 0 auto var(--sp-6); clip-path: var(--hex); background: var(--mel); color: var(--terra-escura); font-family: var(--serif); font-size: 44px; line-height: 64px; }
+    .citacao figcaption { display: inline-flex; align-items: center; gap: var(--sp-4); margin-top: var(--sp-7); text-align: left; }
+    .citacao figcaption img { width: 60px; height: 69px; object-fit: cover; clip-path: var(--hex); }
+    .citacao__nome { font-weight: 700; color: var(--ink); }
+    .citacao__local { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); }
+
+    /* ---------- Contato ---------- */
+    .contato { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--sp-8); }
+    .contato .cabeca + * { margin-top: 0; }
+    .form { display: grid; gap: var(--sp-4); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo input, .campo textarea {
+      font: inherit; font-size: var(--fs-body); color: var(--ink); width: 100%;
+      background: var(--branco); border: var(--bd-forte); border-radius: var(--r-sm); padding: var(--sp-3) var(--sp-4);
+    }
+    .campo textarea { min-height: 140px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canais, .contato .cabeca + .canais { margin-top: var(--sp-6); }
+    .canais > li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-4); align-items: center; padding-block: var(--sp-4); border-top: 1px solid var(--linha); }
+    .canais > li:last-child { border-bottom: 1px solid var(--linha); }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-weight: 600; font-size: var(--fs-body-lg); overflow-wrap: anywhere; text-underline-offset: 4px; }
+    .contato__acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+    @media (max-width: 899px) { .contato { grid-template-columns: minmax(0, 1fr); gap: var(--sp-7); } }
+
+    /* ---------- Rodapé ---------- */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-8) 96px; }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-7); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) {
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N3 · barra que se oculta ao descer e reaparece ao subir) -->
+  <nav data-secao="nav" class="barra" data-barra>
+    <div class="dr-container barra__miolo">
+      <a class="marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="60" height="60"></a>
+      <div class="barra__links">
+        <a href="#funcionalidades" data-c="funcionalidades.eyebrow"></a>
+        <a href="#como-funciona" data-c="comoFunciona.eyebrow"></a>
+        <a href="#para-quem" data-c="paraQuem.eyebrow"></a>
+        <a href="#equipe" data-c="equipe.eyebrow"></a>
+        <a href="#contato" data-c="contato.eyebrow"></a>
+      </div>
+      <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (grade hexagonal preenchendo a tela, aberta em volta do texto) -->
+    <section data-secao="hero" id="inicio" class="hero">
+      <div class="favo-grade" data-favo aria-hidden="true"></div>
+      <div class="dr-container" style="width:100%">
+        <div class="hero__painel" data-painel>
+          <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+          <h1 class="dr-display hero__titulo" data-c="hero.titulo"></h1>
+          <p class="dr-body-lg hero__sub" data-c="hero.subtitulo"></p>
+          <div class="hero__acoes">
+            <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+            <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+            <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: prova (quatro células do quadro) -->
+    <section data-secao="prova" class="prova">
+      <div class="dr-container">
+        <ul class="placar" data-c-lista="prova.stats">
+          <template>
+            <li class="hexa">
+              <div class="placar__miolo">
+                <span class="dr-data placar__valor" data-c="valor"></span>
+                <span class="placar__rotulo" data-c="rotulo"></span>
+              </div>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <div class="dr-container"><hr class="fio"></div>
+
+    <!-- SEÇÃO: problema (o dado dentro de uma célula vazia) -->
+    <section data-secao="problema" class="secao">
+      <div class="dr-container problema">
+        <div>
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+            <h2 class="dr-h2" data-c="problema.titulo"></h2>
+          </header>
+          <div class="celula-dado">
+            <svg viewBox="0 0 100 115.47" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M50 1 99 29.4 99 86.1 50 114.5 1 86.1 1 29.4Z" fill="none" stroke="var(--linha-forte)" stroke-width=".6" vector-effect="non-scaling-stroke"/>
+              <path d="M50 9 92 33.3 92 82.2 50 106.5 8 82.2 8 33.3Z" fill="none" stroke="var(--mel)" stroke-width="2" stroke-dasharray="4 5" vector-effect="non-scaling-stroke"/>
+            </svg>
+            <div>
+              <span class="dr-data celula-dado__valor" data-c="problema.estatistica.valor"></span>
+              <p class="dr-body" data-c="problema.estatistica.texto"></p>
+            </div>
+          </div>
+        </div>
+        <ul class="consequencias" data-c-lista="problema.consequencias">
+          <template>
+            <li>
+              <svg class="dr-icone" aria-hidden="true"><use href="#dr-alerta"></use></svg>
+              <p class="dr-body-lg" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <div class="dr-container"><hr class="fio"></div>
+
+    <!-- SEÇÃO: funcionalidades (C4 · seis células hexagonais em favo) -->
+    <section data-secao="funcionalidades" id="funcionalidades" class="secao">
+      <div class="dr-container">
+        <header class="cabeca cabeca--centro">
+          <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+          <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+        </header>
+        <ul class="favo-cards" data-c-lista="funcionalidades.itens">
+          <template>
+            <li class="hexa">
+              <div class="favo-cards__miolo">
+                <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+                <h3 class="dr-h4" data-c="titulo"></h3>
+                <p class="dr-body" data-c="texto"></p>
+              </div>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <div class="dr-container"><hr class="fio"></div>
+
+    <!-- SEÇÃO: como-funciona (três colunas com selo hexagonal) -->
+    <section data-secao="como-funciona" id="como-funciona" class="secao">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+          <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+        </header>
+        <ol class="passos" data-c-lista="comoFunciona.passos">
+          <template>
+            <li class="passo">
+              <span class="dr-data passo__num" data-c="numero"></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <figure>
+                <img data-c-src="imagem" data-c-alt="alt" alt="">
+                <figcaption class="dr-caption" data-c="alt"></figcaption>
+              </figure>
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <div class="dr-container"><hr class="fio"></div>
+
+    <!-- SEÇÃO: para-quem -->
+    <section data-secao="para-quem" id="para-quem" class="secao">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+          <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+        </header>
+        <ul class="perfis" data-c-lista="paraQuem.perfis">
+          <template>
+            <li>
+              <span class="perfil__selo"><svg class="dr-icone" aria-hidden="true"><use href="#dr-colmeia"></use></svg></span>
+              <h3 class="dr-h3" data-c="titulo"></h3>
+              <p class="dr-body-lg" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <div class="dr-container"><hr class="fio"></div>
+
+    <!-- SEÇÃO: tecnologia -->
+    <section data-secao="tecnologia" class="secao">
+      <div class="dr-container tec">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+          <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+          <p class="dr-body-lg" data-c="tecnologia.texto"></p>
+        </header>
+        <ul class="pilares" data-c-lista="tecnologia.pilares">
+          <template>
+            <li>
+              <span class="pilar__icone"><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <div class="dr-container"><hr class="fio"></div>
+
+    <!-- SEÇÃO: equipe (retratos em célula, apoios em placas) -->
+    <section data-secao="equipe" id="equipe" class="secao">
+      <div class="dr-container">
+        <header class="cabeca cabeca--centro">
+          <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+          <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+          <p class="dr-body-lg origem" data-c="equipe.origem"></p>
+        </header>
+        <ul class="pessoas" data-c-lista="equipe.pessoas">
+          <template>
+            <li class="pessoa">
+              <div class="pessoa__foto"><img data-c-src="foto" data-c-alt="alt" alt="" width="168" height="194"></div>
+              <h3 class="dr-h4" data-c="nome"></h3>
+              <p class="pessoa__cargo" data-c="cargo"></p>
+            </li>
+          </template>
+        </ul>
+        <!-- A logo do Centelha só funciona sobre escuro: data-fundo escolhe a placa -->
+        <ul class="apoios" data-c-lista="equipe.apoios">
+          <template>
+            <li class="apoio">
+              <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+              <span class="apoio__nome" data-c="nome"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <div class="dr-container"><hr class="fio"></div>
+
+    <!-- SEÇÃO: depoimento -->
+    <section data-secao="depoimento" class="secao">
+      <div class="dr-container">
+        <figure class="citacao">
+          <span class="citacao__aspa" aria-hidden="true">&ldquo;</span>
+          <blockquote style="margin:0"><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+          <figcaption>
+            <img data-c-src="depoimento.foto" alt="" width="60" height="69">
+            <span>
+              <span class="citacao__nome" data-c="depoimento.nome"></span><br>
+              <span class="citacao__local" data-c="depoimento.local"></span>
+            </span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <div class="dr-container"><hr class="fio"></div>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" id="contato" class="secao">
+      <div class="dr-container contato">
+        <div>
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+            <h2 class="dr-h2" data-c="contato.titulo"></h2>
+            <p class="dr-body-lg" data-c="contato.texto"></p>
+          </header>
+          <ul class="canais">
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <a data-mailto data-c="contato.email"></a>
+            </li>
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+              <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+            </li>
+            <li>
+              <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+            </li>
+          </ul>
+          <div class="contato__acoes">
+            <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+            <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+          </div>
+        </div>
+        <form class="form" method="post" data-form-contato>
+          <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+          <div class="campo">
+            <label for="f-nome" data-c="contato.form.nome"></label>
+            <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+          </div>
+          <div class="campo">
+            <label for="f-email" data-c="contato.form.email"></label>
+            <input id="f-email" name="email" type="email" autocomplete="email" required>
+          </div>
+          <div class="campo">
+            <label for="f-msg" data-c="contato.form.mensagem"></label>
+            <textarea id="f-msg" name="mensagem" required></textarea>
+          </div>
+          <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '#';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+      var reduzido = window.matchMedia('(prefers-reduced-motion: reduce)');
+      var fino = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+      /* ---------- Favo do hero ----------
+         Células hexagonais "de pé" em linhas desencontradas. As que caem sob o
+         painel do texto não são criadas: o texto fica sempre sobre creme liso. */
+      var favo = { celulas: [], mapa: {} };
+
+      function aleatorio(semente) {
+        return function () { semente = (semente * 16807) % 2147483647; return (semente - 1) / 2147483646; };
+      }
+
+      function montarFavo() {
+        var grade = document.querySelector('[data-favo]');
+        var painel = document.querySelector('[data-painel]');
+        if (!grade || !painel) return;
+        grade.textContent = '';
+        favo.celulas = []; favo.mapa = {};
+        var W = grade.clientWidth, H = grade.clientHeight;
+        var s = W < 768 ? 26 : (W < 1200 ? 36 : 42);   // raio da célula
+        var gap = W < 768 ? 4 : 6;
+        var w = Math.sqrt(3) * s, h = 2 * s;
+        var passoX = w + gap, passoY = 1.5 * s + gap * 0.866;
+        var gr = grade.getBoundingClientRect();
+        var pr = painel.getBoundingClientRect();
+        var corte = { l: pr.left - gr.left - gap * 2, t: pr.top - gr.top - gap * 2, r: pr.right - gr.left + gap * 2, b: pr.bottom - gr.top + gap * 2 };
+        var rnd = aleatorio(7);
+        var linhas = Math.ceil(H / passoY) + 1, colunas = Math.ceil(W / passoX) + 1;
+        var apps = ['cel--app1', 'cel--app2', 'cel--app3'], appUsados = 0;
+        var frag = document.createDocumentFragment();
+        for (var r = -1; r < linhas; r++) {
+          for (var c = -1; c < colunas; c++) {
+            var x = c * passoX + ((r & 1) ? passoX / 2 : 0) - w / 2;
+            var y = r * passoY - h / 2;
+            if (x + w > corte.l && x < corte.r && y + h > corte.t && y < corte.b) continue;
+            // Mel concentrado no canto inferior direito, como num quadro real.
+            var nx = (x + w / 2) / W, ny = (y + h / 2) / H;
+            var calor = Math.max(0, nx * 0.7 + ny * 0.5 - 0.35);
+            var sorte = rnd(), tipo = '';
+            if (sorte < calor * 0.3) tipo = 'cel--mel';
+            else if (sorte < calor * 0.7) tipo = 'cel--claro';
+            else if (sorte < calor * 1.2 + 0.08) tipo = 'cel--veu';
+            else if (sorte < calor * 1.2 + 0.2) tipo = 'cel--sup';
+            else if (sorte < calor * 1.2 + 0.26) tipo = 'cel--terra';
+            else if (sorte < calor * 1.2 + 0.36) tipo = 'cel--papel';
+            if (appUsados < apps.length && nx > 0.6 && nx < 0.95 && ny > 0.2 && ny < 0.85 && rnd() < 0.05 && W >= 768) {
+              tipo = apps[appUsados++];
+            }
+            var el = document.createElement('span');
+            el.className = 'cel ' + tipo;
+            el.style.cssText = 'left:' + x.toFixed(1) + 'px;top:' + y.toFixed(1) + 'px;width:' + w.toFixed(1) + 'px;height:' + h + 'px';
+            el.innerHTML = '<span class="cel__miolo"></span>';
+            el._r = r; el._c = c;
+            favo.mapa[r + ',' + c] = el;
+            favo.celulas.push(el);
+            frag.appendChild(el);
+          }
+        }
+        grade.appendChild(frag);
+      }
+
+      function vizinhas(el) {
+        var r = el._r, c = el._c, o = (r & 1) ? 1 : 0;
+        var pares = [[r, c - 1], [r, c + 1], [r - 1, c - 1 + o], [r - 1, c + o], [r + 1, c - 1 + o], [r + 1, c + o]];
+        return pares.map(function (p) { return favo.mapa[p[0] + ',' + p[1]]; }).filter(Boolean);
+      }
+
+      var atual = null;
+      function focar(el) {
+        if (atual === el) return;
+        soltar();
+        atual = el;
+        el.classList.add('cel--foco');
+        vizinhas(el).forEach(function (n) { n.classList.add('cel--vizinha'); });
+      }
+      function soltar() {
+        if (!atual) return;
+        atual.classList.remove('cel--foco');
+        vizinhas(atual).forEach(function (n) { n.classList.remove('cel--vizinha'); });
+        atual = null;
+      }
+
+      // Toque: a célula abre e uma onda corre pelo favo, anel por anel.
+      function onda(origem) {
+        if (reduzido.matches) { focar(origem); setTimeout(soltar, 900); return; }
+        var visto = new Set([origem]), anel = [origem], d = 0;
+        focar(origem);
+        setTimeout(function () { if (atual === origem) soltar(); }, 1100);
+        while (anel.length && d < 6) {
+          d++;
+          var proximo = [];
+          anel.forEach(function (el) {
+            vizinhas(el).forEach(function (n) { if (!visto.has(n)) { visto.add(n); proximo.push(n); } });
+          });
+          proximo.forEach(function (n) {
+            setTimeout(function () {
+              n.classList.remove('cel--onda'); void n.offsetWidth; n.classList.add('cel--onda');
+            }, d * 75);
+          });
+          anel = proximo;
+        }
+      }
+
+      function ligarFavo() {
+        var grade = document.querySelector('[data-favo]');
+        if (!grade) return;
+        grade.addEventListener('pointerover', function (e) {
+          if (!fino.matches || e.pointerType !== 'mouse') return;
+          var el = e.target.closest('.cel');
+          if (el) focar(el);
+        });
+        grade.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') soltar(); });
+        grade.addEventListener('pointerdown', function (e) {
+          var el = e.target.closest('.cel');
+          if (el) onda(el);
+        });
+        grade.addEventListener('animationend', function (e) {
+          var el = e.target.closest('.cel');
+          if (el && e.target === el) el.classList.remove('cel--onda');
+        });
+      }
+
+      /* ---------- N3: a barra some ao descer e volta ao subir ---------- */
+      function ligarBarra() {
+        var barra = document.querySelector('[data-barra]');
+        if (!barra) return;
+        var ultimo = window.scrollY, pedido = false;
+        window.addEventListener('scroll', function () {
+          if (pedido) return;
+          pedido = true;
+          requestAnimationFrame(function () {
+            pedido = false;
+            var y = window.scrollY, delta = y - ultimo;
+            if (Math.abs(delta) < 6) return;
+            barra.classList.toggle('barra--oculta', delta > 0 && y > 160);
+            barra.classList.toggle('barra--solta', y > 8);
+            ultimo = y;
+          });
+        }, { passive: true });
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) {
+          if (email) a.setAttribute('href', 'mailto:' + email.v);
+        });
+        document.querySelectorAll('[data-ano]').forEach(function (el) {
+          el.textContent = '© ' + new Date().getFullYear();
+        });
+
+        montarFavo();
+        ligarFavo();
+        ligarBarra();
+        var largura = window.innerWidth, espera;
+        window.addEventListener('resize', function () {
+          clearTimeout(espera);
+          espera = setTimeout(function () {
+            if (window.innerWidth === largura) return;
+            largura = window.innerWidth;
+            soltar();
+            montarFavo();
+          }, 180);
+        });
+        // As fontes mudam a altura do painel: remonta quando chegarem.
+        if (document.fonts) document.fonts.ready.then(function () { soltar(); montarFavo(); entrada(); });
+        else entrada();
+      });
+
+      /* ---------- Movimento: só com GSAP e sem pedido de movimento reduzido ---------- */
+      var movimentoLigado = false;
+      function entrada() {
+        if (movimentoLigado || !window.gsap || !window.ScrollTrigger) return;
+        movimentoLigado = true;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          // O favo se forma a partir do painel, como cera sendo puxada.
+          var painel = document.querySelector('[data-painel]').getBoundingClientRect();
+          var cx = painel.left + painel.width / 2, cy = painel.top + painel.height / 2;
+          var ordem = favo.celulas.slice().sort(function (a, b) {
+            var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+            return Math.hypot(ra.left - cx, ra.top - cy) - Math.hypot(rb.left - cx, rb.top - cy);
+          });
+          gsap.from(ordem, { scale: 0, duration: 0.5, ease: 'back.out(2)', stagger: { amount: 0.8 }, clearProps: 'transform' });
+          gsap.from('.hero__painel > *', { y: 18, autoAlpha: 0, duration: 0.7, ease: 'power3.out', stagger: 0.08 });
+
+          // Células de conteúdo se assentam no favo ao entrar.
+          gsap.utils.toArray('.placar, .favo-cards').forEach(function (lista) {
+            gsap.from(lista.children, {
+              scale: 0.6, autoAlpha: 0, duration: 0.6, ease: 'back.out(1.6)', stagger: 0.08, clearProps: 'transform',
+              scrollTrigger: { trigger: lista, start: 'top 82%', once: true }
+            });
+          });
+          gsap.utils.toArray('.consequencias, .passos, .perfis, .pilares, .pessoas').forEach(function (lista) {
+            gsap.from(lista.children, {
+              y: 20, autoAlpha: 0, duration: 0.6, ease: 'power2.out', stagger: 0.09,
+              scrollTrigger: { trigger: lista, start: 'top 85%', once: true }
+            });
+          });
+          gsap.utils.toArray('.fio').forEach(function (f) {
+            gsap.from(f, { scaleX: 0, transformOrigin: 'left center', duration: 1, ease: 'power2.inOut', scrollTrigger: { trigger: f, start: 'top 92%', once: true } });
+          });
+          gsap.from('.celula-dado svg path', { rotate: -30, transformOrigin: '50% 50%', scale: 0.8, autoAlpha: 0, duration: 1, ease: 'power3.out', stagger: 0.12, scrollTrigger: { trigger: '.celula-dado', start: 'top 80%', once: true } });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
