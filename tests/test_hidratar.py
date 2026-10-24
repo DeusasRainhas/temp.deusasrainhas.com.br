@@ -36,3 +36,18 @@ def test_valor(page, raiz_url):
     abrir(page, raiz_url)
     assert page.evaluate("DR.valor('contato.email')") == {"v": "contato@deusasrainhas.com.br", "provisorio": "email"}
     assert page.evaluate("DR.valor('hero.titulo').provisorio") is None
+def test_svg_script_nao_vaza(page, raiz_url):
+    abrir(page, raiz_url)
+    page.evaluate("DR_CONTEUDO.hero.subtitulo = 'a <svg><script>x()</script></svg> <em>b</em>'; DR.hidratar()")
+    html = page.inner_html("[data-c-html]")
+    assert "x()" not in html and "<em>b</em>" in html
+def test_rehidratacao_idempotente(page, raiz_url):
+    abrir(page, raiz_url)
+    page.evaluate("DR.hidratar()"); page.evaluate("DR.hidratar()")
+    assert page.locator("ul li").count() == 6
+    assert page.locator("[data-aviso-provisorio]").count() == 1
+    page.evaluate("DR.hidratar(document.querySelector('h1'))")
+    assert page.locator("[data-aviso-provisorio]").count() == 1
+def test_valor_com_colchetes(page, raiz_url):
+    abrir(page, raiz_url)
+    assert page.evaluate("DR.valor('funcionalidades.itens[0].titulo').v") == page.evaluate("DR_CONTEUDO.funcionalidades.itens[0].titulo")

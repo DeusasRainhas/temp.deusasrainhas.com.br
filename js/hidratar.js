@@ -5,8 +5,9 @@
 window.DR = window.DR || {};
 
 (function (DR) {
-  var PERMITIDOS = { EM: 'em', STRONG: 'strong', BR: 'br' };
-  var DESCARTADOS = { SCRIPT: 1, STYLE: 1 };
+  var PERMITIDOS = { em: 1, strong: 1, br: 1 };
+  var DESCARTADOS = { script: 1, style: 1 };
+  var XHTML = 'http://www.w3.org/1999/xhtml';
 
   function ehEnvoltorio(o) {
     return o !== null && typeof o === 'object' && !Array.isArray(o) && 'v' in o;
@@ -44,9 +45,9 @@ window.DR = window.DR || {};
         if (n.nodeType === 3) {
           destino.appendChild(document.createTextNode(n.nodeValue));
         } else if (n.nodeType === 1) {
-          if (DESCARTADOS[n.tagName]) return;
-          var tag = PERMITIDOS[n.tagName];
-          if (tag) {
+          var tag = n.localName;
+          if (DESCARTADOS[tag]) return;
+          if (PERMITIDOS[tag] && n.namespaceURI === XHTML) {
             var novo = document.createElement(tag);
             if (tag !== 'br') percorrer(n, novo);
             destino.appendChild(novo);
@@ -141,7 +142,7 @@ window.DR = window.DR || {};
     });
 
     var aviso = document.querySelector('[data-aviso-provisorio]');
-    if (estado.provisorio) {
+    if (document.querySelector('[data-provisorio]') !== null) {
       var rodape = document.querySelector('[data-secao="rodape"]');
       var txt = DR.valor('rodape.avisoProvisorio');
       if (!aviso && rodape && txt) {
