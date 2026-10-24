@@ -49,3 +49,25 @@ def test_em_iframe_nao_mostra_e_posta(page, raiz_url):
     m = page.evaluate("msgs.at(-1)"); assert m["tipo"] == "dr.scroll" and m["template"] == 1 and 0 < m["ratio"] <= 1
     page.frames[1].evaluate("window.postMessage({tipo:'dr.scrollTo', ratio:0}, '*')"); page.wait_for_timeout(100)
     assert page.frames[1].evaluate("window.scrollY") == 0
+def test_storage_bloqueado(page, raiz_url):
+    erros = []; page.on("pageerror", lambda e: erros.append(e))
+    page.add_init_script("Object.defineProperty(window,'localStorage',{get(){ throw new Error('blocked') }}); Object.defineProperty(window,'sessionStorage',{get(){ throw new Error('blocked') }})")
+    abrir(page, raiz_url)
+    assert page.evaluate("DR.switcher.favoritos()") == []
+    page.keyboard.press("f")
+    assert page.evaluate("DR.switcher.favoritos()") == [1]
+    assert erros == []
+def test_throttle_envia_posicao_final(page, raiz_url):
+    page.set_content(f"<iframe src='{raiz_url}{FIX}' style='height:400px'></iframe><script>window.msgs=[];addEventListener('message',e=>msgs.push(e.data))</script>")
+    page.frame_locator("iframe").locator("[data-secao=rodape]").wait_for()
+    fr = page.frames[1]
+    # Dois eventos de scroll separados dentro da janela de 50ms: o segundo cai no throttle.
+    fr.evaluate("addEventListener('scroll', () => window.scrollTo(0,1500), {once:true}); window.scrollTo(0,500)")
+    page.wait_for_timeout(150)
+    esperado = fr.evaluate("DR.switcher.scrollRatio()")
+    assert abs(page.evaluate("msgs.at(-1)")["ratio"] - esperado) < 0.01
+def test_nota_por_teclado(page, raiz_url):
+    abrir(page, raiz_url); page.click("[data-sw=pilula]")
+    page.locator("[data-sw=item][data-n='3'] [data-sw=expandir]").focus(); page.keyboard.press("Enter")
+    assert page.is_visible("[data-sw=item][data-n='3'] [data-sw=nota]")
+    assert page.get_attribute("[data-sw=item][data-n='3'] [data-sw=expandir]", "aria-expanded") == "true"

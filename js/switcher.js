@@ -39,12 +39,33 @@ window.DR = window.DR || {};
     return ((base - 1 + passo) % TOTAL + TOTAL) % TOTAL + 1;
   }
 
-  function lerJSON(armazem, chave) {
-    try { return JSON.parse(armazem.getItem(chave)); } catch (e) { return null; }
+  /* Acessar window.localStorage pode lançar (SecurityError) quando o navegador
+     bloqueia armazenamento; nesse caso tudo cai numa memória local da página. */
+  var memoria = {};
+  function store(nome) {
+    try { return window[nome] || null; } catch (e) { return null; }
   }
 
-  function gravar(armazem, chave, valor) {
-    try { armazem.setItem(chave, valor); } catch (e) { /* armazenamento indisponível */ }
+  function lerBruto(nome, chave) {
+    var s = store(nome);
+    if (s) { try { return s.getItem(chave); } catch (e) { /* cai na memória */ } }
+    return Object.prototype.hasOwnProperty.call(memoria, nome + ':' + chave) ? memoria[nome + ':' + chave] : null;
+  }
+
+  function lerJSON(nome, chave) {
+    try { return JSON.parse(lerBruto(nome, chave)); } catch (e) { return null; }
+  }
+
+  function gravar(nome, chave, valor) {
+    var s = store(nome);
+    if (s) { try { s.setItem(chave, valor); return; } catch (e) { /* cai na memória */ } }
+    memoria[nome + ':' + chave] = valor;
+  }
+
+  function apagar(nome, chave) {
+    var s = store(nome);
+    if (s) { try { s.removeItem(chave); } catch (e) { /* ignore */ } }
+    delete memoria[nome + ':' + chave];
   }
 
   function dentroTemplates() { return location.pathname.indexOf('/templates/') !== -1; }
@@ -53,7 +74,7 @@ window.DR = window.DR || {};
   /* ---------- estado persistido ---------- */
 
   function favoritos() {
-    var v = lerJSON(localStorage, K_FAV);
+    var v = lerJSON('localStorage', K_FAV);
     if (!Array.isArray(v)) return [];
     var vistos = {};
     return v.filter(function (n) {
@@ -67,20 +88,20 @@ window.DR = window.DR || {};
     var favs = favoritos();
     var i = favs.indexOf(n);
     if (i === -1) favs.push(n); else favs.splice(i, 1);
-    gravar(localStorage, K_FAV, JSON.stringify(favs));
+    gravar('localStorage', K_FAV, JSON.stringify(favs));
     atualizarEstrelas();
     return favs;
   }
 
   function notas() {
-    var v = lerJSON(localStorage, K_NOTAS);
+    var v = lerJSON('localStorage', K_NOTAS);
     return v && typeof v === 'object' && !Array.isArray(v) ? v : {};
   }
 
   function salvarNota(n, texto) {
     var obj = notas();
     if (String(texto).trim() === '') delete obj[n]; else obj[n] = String(texto);
-    gravar(localStorage, K_NOTAS, JSON.stringify(obj));
+    gravar('localStorage', K_NOTAS, JSON.stringify(obj));
   }
 
   /* ---------- API ---------- */
@@ -93,7 +114,7 @@ window.DR = window.DR || {};
   function ir(n) {
     var destino = DR.caminho(n);
     if (!destino) return;
-    gravar(sessionStorage, K_SCROLL, String(scrollRatio()));
+    gravar('sessionStorage', K_SCROLL, String(scrollRatio()));
     location.href = destino;
   }
 
@@ -138,11 +159,18 @@ window.DR = window.DR || {};
 
   if (EM_IFRAME) {
     var ultimo = 0;
-    window.addEventListener('scroll', function () {
-      var agora = Date.now();
-      if (agora - ultimo < 50) return;
-      ultimo = agora;
+    var pendente = null;
+    function postar() {
+      ultimo = Date.now();
+      pendente = null;
       parent.postMessage({ tipo: 'dr.scroll', ratio: scrollRatio(), template: DR.atual() }, '*');
+    }
+    /* Throttle de 50ms com borda final: a posição de repouso sempre é enviada. */
+    window.addEventListener('scroll', function () {
+      var resta = 50 - (Date.now() - ultimo);
+      if (pendente) { clearTimeout(pendente); pendente = null; }
+      if (resta <= 0) postar();
+      else pendente = setTimeout(postar, resta);
     }, { passive: true });
     window.addEventListener('message', function (e) {
       var d = e.data;
@@ -159,8 +187,7 @@ window.DR = window.DR || {};
   function restaurar() {
     if (restaurado) return;
     restaurado = true;
-    var bruto = null;
-    try { bruto = sessionStorage.getItem(K_SCROLL); } catch (e) { return; }
+    var bruto = lerBruto('sessionStorage', K_SCROLL);
     if (bruto === null) return;
     requestAnimationFrame(function () {
       var r = parseFloat(bruto);
@@ -168,7 +195,7 @@ window.DR = window.DR || {};
         var max = document.documentElement.scrollHeight - window.innerHeight;
         window.scrollTo(0, Math.max(0, Math.min(1, r)) * Math.max(0, max));
       }
-      try { sessionStorage.removeItem(K_SCROLL); } catch (e) { /* ignore */ }
+      apagar('sessionStorage', K_SCROLL);
     });
   }
   document.addEventListener('conteudo:pronto', restaurar);
@@ -207,6 +234,7 @@ window.DR = window.DR || {};
     '.dr-sw-fav{width:28px;height:28px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:var(--r-md,8px);background:transparent;cursor:pointer}',
     '.dr-sw-fav svg{width:16px;height:16px;fill:none;stroke:var(--terra-escura,#4E342E);stroke-width:1.6}',
     '.dr-sw-fav[aria-pressed="true"] svg{fill:var(--mel,#F5C02C);stroke:var(--mel-escuro,#D9A521)}',
+    '.dr-sw-expandir[aria-expanded="true"]{background:var(--superficie,#F4ECD2)}',
     '.dr-sw-efeito{display:block;margin:0 0 0 28px;font-size:12px;color:var(--terra-escura,#4E342E)}',
     '.dr-sw-nota{display:block;width:calc(100% - 28px);margin:6px 0 2px 28px;min-height:64px;padding:8px;border:1px solid var(--linha,#E7DFC8);border-radius:var(--r-md,8px);background:var(--branco,#fff);resize:vertical}',
     '.dr-sw-rodape{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:8px;border-top:1px solid var(--linha,#E7DFC8)}',
@@ -216,6 +244,8 @@ window.DR = window.DR || {};
 
   var SVG_COROA = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
     '<path d="M3 8l4.5 4L12 4l4.5 8L21 8l-2 11H5L3 8z"/></svg>';
+  var SVG_NOTA = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+    '<path d="M5 6h14M5 11h14M5 16h9"/></svg>';
   var SVG_ESTRELA = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
     '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>';
 
@@ -303,6 +333,12 @@ window.DR = window.DR || {};
     var a = el('a', { 'class': 'dr-sw-nome', href: DR.caminho(t.n) }, t.nome);
     linha.appendChild(a);
     linha.appendChild(el('span', { 'class': 'dr-sw-esp' }));
+    var exp = el('button', {
+      type: 'button', 'class': 'dr-sw-fav dr-sw-expandir', 'data-sw': 'expandir',
+      'aria-expanded': 'false', 'aria-label': 'Anotar', title: 'Anotar ' + t.nome
+    });
+    exp.innerHTML = SVG_NOTA;
+    linha.appendChild(exp);
     var fav = el('button', {
       type: 'button', 'class': 'dr-sw-fav', 'data-sw': 'fav', 'aria-pressed': 'false',
       'aria-label': 'Favoritar ' + t.nome
@@ -374,6 +410,7 @@ window.DR = window.DR || {};
       var nota = li.querySelector('[data-sw="nota"]');
       var expandir = !li.classList.contains('expanded');
       li.classList.toggle('expanded', expandir);
+      li.querySelector('[data-sw="expandir"]').setAttribute('aria-expanded', expandir ? 'true' : 'false');
       nota.hidden = !expandir;
       if (expandir) nota.focus();
     });
