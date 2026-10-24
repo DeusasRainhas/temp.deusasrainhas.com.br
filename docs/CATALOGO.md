@@ -49,8 +49,8 @@ Gerado em 2026-10-24 por scripts/auditar.py
 | 43 | perdas | narrativa | Começa pelo problema em terracota | Paleta transiciona de terracota a mel conforme a solução aparece | N0 | C3 | R4 |
 | 44 | dia | narrativa | Um dia de campo do amanhecer ao fim de tarde | Arco do sol avança no céu com o scroll | N1 | C5 | R7 |
 | 45 | origem | narrativa | Mapa do Brasil como hero | Zoom progressivo do Brasil até Cocalzinho em SVG | N2 | C7 | R0 |
-| 46 | blocos | estrutural | Grade dura de blocos com bordas grossas | Movimento em degraus com `steps()`, sem easing | N9 | C0 | R9 |
-| 47 | poster | estrutural | Cartaz tipográfico rotacionado | Tipografia gigante fixa enquanto o conteúdo passa | N0 | C2 | R2 |
+| 46 | blocos | estrutural | Grade dura de blocos com bordas grossas | Movimento em degraus com `steps()`, sem easing | N9 | C2 | R9 |
+| 47 | poster | estrutural | Cartaz tipográfico rotacionado | Tipografia gigante fixa enquanto o conteúdo passa | N0 | C0 | R2 |
 | 48 | manifesto | estrutural | Manifesto da marca em frases curtas | Destaque palavra a palavra ao rolar, estilo karaokê | N1 | C4 | R5 |
 | 49 | tabela | estrutural | Funcionalidades em tabela periódica | Células viram e mostram tooltip no hover | N2 | C6 | R8 |
 | 50 | arquivo | estrutural | Gavetas de arquivo com as seções | Gavetas abrem em acordeão com altura animada | N3 | C8 | R1 |
@@ -76,9 +76,9 @@ Gerado em 2026-10-24 por scripts/auditar.py
 
 | Item | Usos | Templates |
 |---|---|---|
-| C0 | 5 | 10, 19, 28, 37, 46 |
+| C0 | 5 | 10, 19, 28, 37, 47 |
 | C1 | 5 | 01, 15, 24, 33, 42 |
-| C2 | 5 | 06, 20, 29, 38, 47 |
+| C2 | 5 | 06, 20, 29, 38, 46 |
 | C3 | 5 | 02, 11, 25, 34, 43 |
 | C4 | 5 | 07, 16, 30, 39, 48 |
 | C5 | 5 | 03, 12, 23, 35, 44 |

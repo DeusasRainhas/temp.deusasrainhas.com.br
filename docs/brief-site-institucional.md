@@ -144,3 +144,29 @@ docs/PENDENCIAS.md          (checklist de troca dos valores provisórios)
 ```
 
 Ordem sugerida: componentes.html e site.css primeiro (valida o sistema com a marca), depois index.html com placeholders no tom de voz, depois troca pelos textos finais e fotos.
+
+## 9. Protótipos: 50 templates
+
+Para escolher a direção visual do site, preparamos 50 páginas de exemplo, todas com a mesma marca e conteúdos provisórios. Esta seção explica como percorrer o conjunto e como devolver a escolha.
+
+**Como abrir.** Abra `index.html`: ele leva à galeria. As 50 páginas funcionam direto do disco, sem servidor. Basta dar dois cliques em `index.html`.
+
+**A galeria.** Mostra 50 cartões, um por template, com miniatura e nome. Os filtros por família (as 10 famílias de abordagem) reduzem a lista, e a estrela em cada cartão marca o template como favorito.
+
+**O seletor em todas as páginas.** Em cada template há uma pílula no canto inferior direito. Ao abrir, aparece um painel com busca e as 10 famílias. Atalhos de teclado:
+
+- ← → : template anterior e seguinte
+- / : buscar
+- F : favoritar o template atual
+- G : voltar à galeria
+- C : abrir a comparação
+- H : esconder ou mostrar o seletor
+- Esc : fechar o painel
+
+**Comparar.** A página de comparação põe dois templates lado a lado, com rolagem sincronizada, e permite alternar a largura entre desktop, 768 e 390 pixels.
+
+**Favoritos e anotações.** Ficam salvos no navegador, neste computador. Cada template aceita uma anotação curta.
+
+**Como devolver a escolha.** No seletor, aperte Exportar. O seletor copia um texto com os favoritos, as anotações e as assinaturas dos templates. Cole esse texto na resposta.
+
+**Atenção.** Fotos, dados de contato e números são provisórios, conforme `docs/PENDENCIAS.md`. O arquivo `docs/CATALOGO.md` lista as 50 assinaturas.
