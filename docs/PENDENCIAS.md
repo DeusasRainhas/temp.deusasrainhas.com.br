@@ -40,7 +40,9 @@ grep -rn 'data-provisorio' *.html
 ## Imagens
 
 - [ ] `foto-hero` — substituir o bloco favo + screenshot por foto JPG 1600x1000 (campo, colmeias, luz natural quente)
-- [ ] `foto-equipe-1`, `foto-equipe-2`, `foto-equipe-3` — retratos 600x600, fundo neutro, luz natural
+- [ ] `foto-equipe-1` — retrato de Carolina Cyrino, 600x600, fundo neutro, luz natural
+- [ ] `foto-equipe-2` — retrato de Bruno Vasconcelos, 600x600, fundo neutro, luz natural
+- [ ] `foto-equipe-3` — retrato do consultor apícola (ver `equipe-3`), 600x600, fundo neutro, luz natural
 - [ ] `foto-depoimento` — opcional, só com autorização
 - [ ] `og-image` — gerar 1200x630 com logo e foto real (provisório usa favo + logo)
 
