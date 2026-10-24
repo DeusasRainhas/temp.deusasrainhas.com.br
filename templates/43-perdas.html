@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="pt-BR" data-template="43">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 43 Perdas</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       43 Perdas · narrativa · N0 / C3 / R4
+       Começa pelo problema em terracota (--erro, o token de erro da marca):
+       a primeira tela é o caderno que não dá conta, com favo quebrado.
+       Ao rolar, a solução aparece e a paleta inteira transiciona de
+       terracota a mel: as variáveis --tom, --tom-forte, --tom-fundo e
+       --tom-veu são animadas no :root (scrub), só entre tokens da marca.
+       O favo se completa em mel ao mesmo tempo.
+       Sem movimento: a zona do problema fica em terracota e o resto em mel,
+       por variáveis locais; o favo fica no estado "quebrado", estático.
+       N0: barra fixa com logo à esquerda e CTA à direita.
+       C3: cards com circuito-canto.svg no canto. R4: número de seção gigante.
+       Regras: nada de opacity < 1 fora do gsap.matchMedia; canto inferior
+       direito livre (switcher).
+       ================================================================= */
+
+    /* Estado final (solução). O problema sobrescreve localmente; com movimento, o JS anima no :root. */
+    :root {
+      --tom: #F5C02C;          /* --mel */
+      --tom-forte: #4E342E;    /* --terra-escura */
+      --tom-fundo: #FFFBE6;    /* --creme */
+      --tom-veu: #FDEFC2;      /* --mel-veu */
+      --nav-h: 80px; --respiro: var(--sp-9);
+    }
+    @media (max-width: 767px) { :root { --nav-h: 68px; --respiro: 72px; } }
+    html:not(.vivo) .zona--problema { box-shadow: 0 0 0 100vmax var(--tom-fundo); clip-path: inset(0 -100vmax); }
+    html:not(.vivo) .zona--problema, html:not(.vivo) .zona--tons {
+      --tom: #C0492F;          /* --erro */
+      --tom-forte: #C0492F;
+      --tom-fundo: #F7E3DC;    /* --erro-veu */
+      --tom-veu: #F7E3DC;
+    }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
+
+    /* ---------- N0 ---------- */
+    .barra { position: sticky; top: 0; z-index: 50; background: var(--creme); border-bottom: 3px solid var(--tom); }
+    .barra__dentro { display: flex; align-items: center; gap: var(--sp-5); height: var(--nav-h); }
+    .marca { display: block; flex: none; margin-right: var(--sp-4); }
+    .marca img { width: 64px; height: 64px; }
+    .barra__links { display: flex; gap: var(--sp-5); margin-inline: auto; }
+    .barra__links a { font-weight: 600; font-size: var(--fs-small); color: var(--terra-escura); text-decoration: none; }
+    .barra__links a:hover { text-decoration: underline; text-decoration-color: var(--tom); text-decoration-thickness: 2px; text-underline-offset: 6px; }
+    .barra .dr-btn { margin-left: auto; padding: 10px 18px; font-size: var(--fs-small); }
+    @media (max-width: 999px) { .barra__links { display: none; } }
+    @media (max-width: 767px) { .marca img { width: 52px; height: 52px; } }
+
+    /* ---------- Arco: problema -> virada ---------- */
+    .arco { background: var(--tom-fundo); }
+    .arco__grade { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-7); }
+    .zona--problema { background: var(--tom-fundo); padding-block: var(--sp-8) var(--sp-9); }
+    .virada { padding-block: var(--sp-9); }
+    .arco__arte { padding-block: var(--sp-8); }
+    .arco__arte-fixa { width: 100%; max-width: 440px; margin-inline: auto; }
+    html.vivo .arco__arte-fixa { position: sticky; top: calc(var(--nav-h) + 48px); }
+    @media (max-width: 899px) {
+      .arco__grade { grid-template-columns: minmax(0, 1fr); gap: 0; }
+      .arco__arte { order: -1; padding-block: var(--sp-6) 0; background: var(--tom-fundo); }
+      html:not(.vivo) .arco__arte { background: #F7E3DC; }
+      .zona--problema { padding-top: var(--sp-6); }
+      .arco__arte-fixa { max-width: 240px; }
+      .arco > .arco__grade { padding-inline: 0; }
+      .arco__texto > * { padding-inline: 16px; }
+    }
+    @media (max-width: 899px) and (min-width: 768px) { .arco__texto > * { padding-inline: 32px; } }
+
+    .zona--problema .dr-eyebrow { color: var(--terra-escura); } /* 12px mono: terra-escura passa de 4,5:1 sobre o véu de erro */
+    .zona--problema h2 { font-family: var(--serif); font-weight: 500; font-size: clamp(42px, 6vw, 80px); line-height: 1.02; letter-spacing: -.02em; color: var(--tom-forte); margin-top: var(--sp-4); text-wrap: balance; }
+    .perda { display: flex; align-items: flex-end; gap: var(--sp-5); margin-top: var(--sp-7); flex-wrap: wrap; }
+    .perda__valor { font-size: clamp(88px, 12vw, 168px); line-height: .82; letter-spacing: -.05em; color: var(--tom-forte); font-weight: 700; }
+    .perda p { flex: 1 1 220px; max-width: 30ch; padding-bottom: 6px; font-size: var(--fs-body-lg); color: var(--ink); }
+    .consequencias { margin-top: var(--sp-7); display: grid; gap: var(--sp-3); }
+    .consequencias li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-4); align-items: start; padding: var(--sp-4) 0; border-top: 1px solid var(--tom); }
+    .consequencias .dr-icone { color: var(--tom-forte); margin-top: 3px; }
+    .consequencias p { color: var(--ink); font-size: var(--fs-body-lg); line-height: 1.55; }
+
+    .virada .dr-eyebrow { display: inline-flex; align-items: center; gap: var(--sp-3); }
+    .virada .dr-eyebrow::before { content: ""; width: 32px; height: 3px; background: var(--tom); }
+    .virada h1 { margin-top: var(--sp-4); font-size: clamp(42px, 5.4vw, 72px); text-wrap: balance; }
+    .virada .dr-body-lg { margin-top: var(--sp-5); max-width: 44ch; }
+    .acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+
+    .favo { width: 100%; height: auto; display: block; overflow: visible; }
+    .favo .celula { fill: var(--tom-veu); stroke: var(--tom); stroke-width: 2; stroke-linejoin: round; }
+    .favo .celula--perdida { fill: none; stroke-dasharray: 5 6; }
+    .favo .mel { fill: var(--mel); opacity: 0; } /* só aparece com movimento, quando a solução chega */
+    .favo .fenda { fill: none; stroke: var(--tom); stroke-width: 2; stroke-linecap: round; }
+
+    /* ---------- R4: número de seção gigante ---------- */
+    main { counter-reset: secao; }
+    .numerada { counter-increment: secao; padding-block: var(--respiro); scroll-margin-top: var(--nav-h); }
+    .marco { display: flex; align-items: flex-end; gap: var(--sp-6); flex-wrap: wrap; }
+    .marco::before {
+      content: counter(secao, decimal-leading-zero);
+      font-family: var(--mono); font-weight: 700; font-size: clamp(96px, 14vw, 200px); line-height: .78; letter-spacing: -.06em;
+      color: transparent; -webkit-text-stroke: 2px var(--mel-escuro);
+    }
+    .marco > div { flex: 1 1 320px; padding-bottom: 6px; }
+    .marco .dr-eyebrow { margin-bottom: var(--sp-3); }
+    .marco + * { margin-top: var(--sp-7); }
+    .marco--so + * { margin-top: var(--sp-5); }
+    .numerada[data-secao="prova"] { padding-top: var(--sp-7); }
+    .intro { margin-top: var(--sp-4); max-width: 52ch; }
+    .numerada--papel { background: var(--creme-papel); }
+    @media (max-width: 767px) { .dr-h2 { font-size: 30px; } .marco + * { margin-top: var(--sp-6); } }
+
+    /* ---------- C3: cards com canto de circuito ---------- */
+    .cards { display: grid; gap: var(--sp-5); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .cards--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .cards--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .card {
+      position: relative; overflow: hidden; background: var(--branco); border: var(--bd); border-radius: var(--r-lg);
+      padding: var(--sp-7) var(--sp-5) var(--sp-5);
+    }
+    .card::before {
+      content: ""; position: absolute; top: 0; right: 0; width: 84px; height: 84px; pointer-events: none;
+      background: url(../img/padroes/circuito-canto.svg) right top / contain no-repeat; transform: scaleX(-1);
+    }
+    .card .dr-icone { color: var(--petroleo); }
+    .card .dr-h4 { margin: var(--sp-4) 0 var(--sp-2); }
+    @media (max-width: 1023px) { .cards, .cards--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 639px) { .cards, .cards--4, .cards--2 { grid-template-columns: minmax(0, 1fr); } }
+
+    .card--numero .dr-data { display: block; font-size: clamp(40px, 4vw, 56px); line-height: 1; color: var(--terra-escura); }
+    .card--numero .rotulo { display: block; margin-top: var(--sp-3); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; color: var(--terra); }
+
+    /* Como funciona */
+    .passo { display: flex; flex-direction: column; }
+    .passo__numero { font-size: var(--fs-h3); color: var(--petroleo); }
+    .passo figure { margin-top: auto; padding-top: var(--sp-5); }
+    .passo img { width: 100%; max-height: 300px; object-fit: cover; object-position: top; border-radius: var(--r-md); border: var(--bd); background: var(--creme-papel); }
+    .passo figcaption { margin-top: var(--sp-2); }
+
+    .tecnologia-grade { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-7); align-items: start; }
+    .tecnologia-grade > .marco + * { margin-top: 0; }
+    @media (max-width: 899px) { .tecnologia-grade { grid-template-columns: minmax(0, 1fr); } }
+
+    .perfil .dr-h3 { font-family: var(--serif); font-weight: 500; color: var(--terra-escura); margin-bottom: var(--sp-3); }
+
+    /* Depoimento */
+    .depoimento { background: var(--mel-veu); }
+    .citacao { max-width: 900px; }
+    .citacao .dr-quote { font-size: clamp(26px, 3.4vw, 40px); line-height: 1.3; color: var(--terra-escura); text-wrap: balance; }
+    .citacao figcaption { display: flex; align-items: center; gap: var(--sp-4); margin-top: var(--sp-6); }
+    .citacao img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--linha-forte); }
+    .citacao__nome { font-weight: 700; color: var(--ink); display: block; }
+    .citacao__local { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); }
+
+    /* Equipe */
+    .pessoa { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
+    .pessoa img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: var(--bd); }
+    .pessoa .dr-h4 { margin: 0; font-size: 18px; }
+    .pessoa__cargo { margin-top: var(--sp-1); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .1em; text-transform: uppercase; color: var(--terra); }
+    .apoios { display: flex; flex-wrap: wrap; gap: var(--sp-5); align-items: center; margin-top: var(--sp-7); }
+    .apoio { display: flex; align-items: center; gap: var(--sp-3); }
+    .apoio__logo { display: grid; place-items: center; height: 72px; padding: var(--sp-2) var(--sp-4); border-radius: var(--r-md); background: var(--branco); border: var(--bd); }
+    .apoio__logo img { max-height: 52px; width: auto; max-width: 160px; }
+    .apoio[data-fundo="escuro"] .apoio__logo { background: var(--grafite); border-color: var(--grafite); }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .18em; text-transform: uppercase; color: var(--terra); }
+
+    /* Contato */
+    .contato-grade { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-6); align-items: start; }
+    .form { display: grid; gap: var(--sp-4); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo input, .campo textarea {
+      font: inherit; font-size: var(--fs-body); color: var(--ink);
+      background: var(--branco); border: var(--bd-forte); border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4); width: 100%;
+    }
+    .campo textarea { min-height: 140px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canais { display: grid; gap: var(--sp-4); }
+    .canais li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-3); align-items: center; }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-weight: 600; overflow-wrap: anywhere; text-underline-offset: 3px; }
+    .contato-acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+    @media (max-width: 899px) { .contato-grade { grid-template-columns: minmax(0, 1fr); } }
+
+    /* Rodapé */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 96px; border-top: 3px solid var(--tom); }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) {
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N0 · barra fixa, logo à esquerda, CTA à direita; o filete acompanha a paleta) -->
+  <nav data-secao="nav" class="barra">
+    <div class="dr-container barra__dentro">
+      <a class="marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+      <div class="barra__links">
+        <a href="#problema" data-c="problema.eyebrow"></a>
+        <a href="#funcionalidades" data-c="funcionalidades.eyebrow"></a>
+        <a href="#como-funciona" data-c="comoFunciona.eyebrow"></a>
+        <a href="#para-quem" data-c="paraQuem.eyebrow"></a>
+        <a href="#contato" data-c="contato.eyebrow"></a>
+      </div>
+      <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (abre pelo problema, em terracota; a virada traz a solução em mel) -->
+    <section data-secao="hero" id="inicio" class="arco">
+      <div class="dr-container arco__grade">
+        <div class="arco__texto">
+
+          <!-- SEÇÃO: problema (primeira tela, dentro do hero) -->
+          <section data-secao="problema" id="problema" class="zona--problema">
+            <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+            <h2 data-c="problema.titulo"></h2>
+            <div class="perda">
+              <span class="dr-data perda__valor" data-c="problema.estatistica.valor"></span>
+              <p data-c="problema.estatistica.texto"></p>
+            </div>
+            <ul class="consequencias" data-c-lista="problema.consequencias">
+              <template>
+                <li>
+                  <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+                  <p data-c="texto"></p>
+                </li>
+              </template>
+            </ul>
+          </section>
+
+          <div class="virada">
+            <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+            <h1 class="dr-display" data-c="hero.titulo"></h1>
+            <p class="dr-body-lg" data-c="hero.subtitulo"></p>
+            <div class="acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+        <div class="arco__arte zona--tons" aria-hidden="true">
+          <div class="arco__arte-fixa">
+            <svg class="favo" viewBox="-190 -190 380 380"></svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: prova -->
+    <section data-secao="prova" class="numerada">
+      <div class="dr-container">
+        <header class="marco marco--so"><div></div></header>
+        <ul class="cards cards--4" data-c-lista="prova.stats">
+          <template>
+            <li class="card card--numero">
+              <span class="dr-data" data-c="valor"></span>
+              <span class="rotulo" data-c="rotulo"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades -->
+    <section data-secao="funcionalidades" id="funcionalidades" class="numerada numerada--papel">
+      <div class="dr-container">
+        <header class="marco">
+          <div>
+            <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+            <h2 class="dr-h2" data-c="funcionalidades.titulo"></h2>
+          </div>
+        </header>
+        <ul class="cards" data-c-lista="funcionalidades.itens">
+          <template>
+            <li class="card">
+              <svg class="dr-icone dr-icone--lg" aria-hidden="true"><use data-icone></use></svg>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona -->
+    <section data-secao="como-funciona" id="como-funciona" class="numerada">
+      <div class="dr-container">
+        <header class="marco">
+          <div>
+            <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+            <h2 class="dr-h2" data-c="comoFunciona.titulo"></h2>
+          </div>
+        </header>
+        <ol class="cards" data-c-lista="comoFunciona.passos">
+          <template>
+            <li class="card passo">
+              <span class="dr-data passo__numero" data-c="numero"></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <figure>
+                <img data-c-src="imagem" data-c-alt="alt" alt="" width="320" height="300">
+                <figcaption class="dr-caption" data-c="alt"></figcaption>
+              </figure>
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia -->
+    <section data-secao="tecnologia" class="numerada numerada--papel">
+      <div class="dr-container tecnologia-grade">
+        <header class="marco">
+          <div>
+            <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+            <h2 class="dr-h2" data-c="tecnologia.titulo"></h2>
+            <p class="dr-body-lg intro" data-c="tecnologia.texto"></p>
+          </div>
+        </header>
+        <ul class="cards cards--2" data-c-lista="tecnologia.pilares">
+          <template>
+            <li class="card">
+              <svg class="dr-icone dr-icone--lg" aria-hidden="true"><use data-icone></use></svg>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem -->
+    <section data-secao="para-quem" id="para-quem" class="numerada">
+      <div class="dr-container">
+        <header class="marco">
+          <div>
+            <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+            <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
+          </div>
+        </header>
+        <ul class="cards" data-c-lista="paraQuem.perfis">
+          <template>
+            <li class="card perfil">
+              <h3 class="dr-h3" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento -->
+    <section data-secao="depoimento" class="numerada depoimento">
+      <div class="dr-container">
+        <header class="marco marco--so"><div></div></header>
+        <figure class="citacao">
+          <blockquote><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+          <figcaption>
+            <img data-c-src="depoimento.foto" alt="" width="56" height="56">
+            <span>
+              <span class="citacao__nome" data-c="depoimento.nome"></span>
+              <span class="citacao__local" data-c="depoimento.local"></span>
+            </span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe -->
+    <section data-secao="equipe" id="equipe" class="numerada numerada--papel">
+      <div class="dr-container">
+        <header class="marco">
+          <div>
+            <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+            <h2 class="dr-h2" data-c="equipe.titulo"></h2>
+            <p class="dr-body-lg intro" data-c="equipe.origem"></p>
+          </div>
+        </header>
+        <ul class="cards" data-c-lista="equipe.pessoas">
+          <template>
+            <li class="card pessoa">
+              <img data-c-src="foto" data-c-alt="alt" alt="" width="64" height="64">
+              <div>
+                <h3 class="dr-h4" data-c="nome"></h3>
+                <p class="pessoa__cargo" data-c="cargo"></p>
+              </div>
+            </li>
+          </template>
+        </ul>
+        <ul class="apoios" data-c-lista="equipe.apoios">
+          <template>
+            <li class="apoio">
+              <span class="apoio__logo"><img data-c-src="logo" data-c-alt="alt" alt=""></span>
+              <span class="apoio__nome" data-c="nome"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" id="contato" class="numerada">
+      <div class="dr-container">
+        <header class="marco">
+          <div>
+            <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+            <h2 class="dr-h2" data-c="contato.titulo"></h2>
+            <p class="dr-body-lg intro" data-c="contato.texto"></p>
+          </div>
+        </header>
+        <div class="contato-grade">
+          <form class="form card" method="post" data-form-contato>
+            <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+            <div class="campo">
+              <label for="f-nome" data-c="contato.form.nome"></label>
+              <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+            </div>
+            <div class="campo">
+              <label for="f-email" data-c="contato.form.email"></label>
+              <input id="f-email" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="campo">
+              <label for="f-msg" data-c="contato.form.mensagem"></label>
+              <textarea id="f-msg" name="mensagem" required></textarea>
+            </div>
+            <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+          </form>
+          <div class="card">
+            <ul class="canais">
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <a data-mailto data-c="contato.email"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+              </li>
+            </ul>
+            <div class="contato-acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var SVGNS = 'http://www.w3.org/2000/svg';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+
+      // Paletas de partida e chegada: só tokens da marca (erro/erro-véu -> mel/terra-escura/creme/mel-véu).
+      var PROBLEMA = { '--tom': '#C0492F', '--tom-forte': '#C0492F', '--tom-fundo': '#F7E3DC', '--tom-veu': '#F7E3DC' };
+      var SOLUCAO = { '--tom': '#F5C02C', '--tom-forte': '#4E342E', '--tom-fundo': '#FFFBE6', '--tom-veu': '#FDEFC2' };
+
+      /* Favo de 19 células (raio 2). Seis estão "perdidas": tracejadas, sem fundo, com fenda.
+         Cada célula tem um hexágono de mel por cima que cresce quando a solução aparece. */
+      var PERDIDAS = [1, 4, 8, 11, 15, 17];
+      function hex(cx, cy, s) {
+        var pts = [];
+        for (var i = 0; i < 6; i++) {
+          var a = Math.PI / 180 * (60 * i - 30);
+          pts.push((cx + s * Math.cos(a)).toFixed(1) + ',' + (cy + s * Math.sin(a)).toFixed(1));
+        }
+        return pts.join(' ');
+      }
+      function montarFavo() {
+        var svg = document.querySelector('.favo');
+        var s = 46, n = 0;
+        for (var r = -2; r <= 2; r++) {
+          for (var q = -2; q <= 2; q++) {
+            if (Math.abs(q + r) > 2) continue;
+            var cx = s * Math.sqrt(3) * (q + r / 2), cy = s * 1.5 * r;
+            var perdida = PERDIDAS.indexOf(n) !== -1;
+            var c = document.createElementNS(SVGNS, 'polygon');
+            c.setAttribute('points', hex(cx, cy, s - 4));
+            c.setAttribute('class', 'celula' + (perdida ? ' celula--perdida' : ''));
+            svg.appendChild(c);
+            if (perdida) {
+              var f = document.createElementNS(SVGNS, 'path');
+              f.setAttribute('class', 'fenda');
+              f.setAttribute('d', 'M' + (cx - 10) + ' ' + (cy - 16) + ' l8 12 l-6 6 l10 14');
+              svg.appendChild(f);
+            }
+            var m = document.createElementNS(SVGNS, 'polygon');
+            m.setAttribute('points', hex(cx, cy, s - 10));
+            m.setAttribute('class', 'mel');
+            svg.appendChild(m);
+            n++;
+          }
+        }
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) {
+          if (email) a.setAttribute('href', 'mailto:' + email.v);
+        });
+        document.querySelectorAll('[data-ano]').forEach(function (el) {
+          el.textContent = '© ' + new Date().getFullYear();
+        });
+        montarFavo();
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        var raiz = document.documentElement;
+
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          // A paleta passa a morar no :root, começando em terracota.
+          raiz.classList.add('vivo');
+          gsap.set(raiz, PROBLEMA);
+          gsap.set('.favo .mel', { opacity: 1, scale: 0, transformOrigin: '50% 50%' });
+
+          // Entrada do problema (termina em ~1,2s): fendas se abrem, o número sobe.
+          var valor = document.querySelector('.perda__valor');
+          var final = valor.textContent;
+          var alvo = parseInt(final, 10);
+          var cont = { n: 0 };
+          var tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+          tl.from('.zona--problema .dr-eyebrow, .zona--problema h2', { y: 24, autoAlpha: 0, duration: 0.7, stagger: 0.1 })
+            .from('.favo .celula', { scale: 0.6, transformOrigin: 'center', autoAlpha: 0, duration: 0.5, stagger: { each: 0.025, from: 'center' } }, 0.1)
+            .from('.favo .fenda', { autoAlpha: 0, duration: 0.3, stagger: 0.05 }, 0.7);
+          if (!isNaN(alvo)) {
+            tl.to(cont, {
+              n: alvo, duration: 1, ease: 'power2.out',
+              onUpdate: function () { valor.textContent = Math.round(cont.n) + final.replace(/^\d+/, ''); },
+              onComplete: function () { valor.textContent = final; }
+            }, 0.2);
+          }
+
+          // Efeito principal: a paleta vai de terracota a mel enquanto a solução entra.
+          var virada = gsap.timeline({
+            scrollTrigger: { trigger: '.virada', start: 'top 90%', end: 'center 45%', scrub: 0.6 }
+          });
+          virada.fromTo(raiz, PROBLEMA, Object.assign({ ease: 'none', duration: 1 }, SOLUCAO), 0)
+            .to('.favo .mel', { scale: 1, ease: 'back.out(1.4)', duration: 0.4, stagger: { each: 0.03, from: 'random' } }, 0.1)
+            .to('.favo .fenda', { autoAlpha: 0, duration: 0.3 }, 0.2)
+            .from('.virada > *', { y: 30, autoAlpha: 0, duration: 0.4, stagger: 0.08 }, 0);
+
+          // Cards C3 sobem em grade.
+          gsap.utils.toArray('.cards, .apoios').forEach(function (lista) {
+            gsap.from(lista.children, {
+              autoAlpha: 0, y: 24, duration: 0.6, ease: 'power2.out', stagger: 0.07,
+              scrollTrigger: { trigger: lista, start: 'top 85%', once: true }
+            });
+          });
+          // R4: o número gigante desliza ao entrar.
+          gsap.utils.toArray('.marco').forEach(function (m) {
+            gsap.from(m, { x: -30, duration: 0.8, ease: 'power3.out', scrollTrigger: { trigger: m, start: 'top 85%', once: true } });
+          });
+
+          return function () {
+            raiz.classList.remove('vivo');
+            Object.keys(SOLUCAO).forEach(function (k) { raiz.style.removeProperty(k); });
+            valor.textContent = final;
+          };
+        });
+
+        document.fonts.ready.then(function () { ScrollTrigger.refresh(); });
+      });
+    })();
+  </script>
+</body>
+</html>
