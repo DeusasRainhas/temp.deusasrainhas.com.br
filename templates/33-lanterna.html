@@ -47,7 +47,7 @@
     .escuro .dr-body, .escuro .dr-body-lg { color: #D8CFBB; }
     .escuro .dr-eyebrow { color: var(--mel); }
     .escuro .dr-caption { color: var(--tenue); }
-    .escuro a { color: var(--mel-claro); }
+    .escuro a:not(.dr-btn) { color: var(--mel-claro); }
     .escuro a:focus-visible, .escuro button:focus-visible, .escuro .dr-btn:focus-visible { outline-color: var(--mel); }
 
     /* ---------- N8: botão coroa no canto que expande em leque ---------- */
@@ -99,7 +99,11 @@
               mask-image: radial-gradient(circle var(--raio, 380px) at var(--mx, 34%) var(--my, 44%), #000 0, #000 38%, rgba(0, 0, 0, .55) 62%, transparent 100%);
     }
     /* só escurece quando a lanterna está ligada (JS, fora do movimento reduzido) */
-    .lanterna-ligada .camada--sombra { filter: brightness(.3) saturate(.5); }
+    /* os CTAs ficam fora do filtro (como a logo): sempre encontráveis com o mouse parado */
+    .lanterna-ligada .camada--sombra .dr-eyebrow,
+    .lanterna-ligada .camada--sombra .titulo-lanterna,
+    .lanterna-ligada .camada--sombra .cena__sub,
+    .lanterna-ligada .camada--sombra .cena__tela { filter: brightness(.3) saturate(.5); }
     .lanterna-ligada {
       background:
         radial-gradient(circle calc(var(--raio, 380px) * 1.2) at var(--mx, 34%) var(--my, 44%), rgba(245, 192, 44, .14), transparent 70%),

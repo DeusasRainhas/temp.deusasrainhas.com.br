@@ -90,14 +90,20 @@
     @supports ((-webkit-background-clip: text) or (background-clip: text)) {
       .titulo-projecao {
         color: transparent;
+        /* Camadas (de cima para baixo): brilho do projetor; tinta mel leve em soft-light;
+           faixa mel (multiply, só na metade de baixo, alfa .5); véu creme em screen, que garante luminância mínima (contraste ≥ 3:1 sobre o grafite) mesmo com foto escura;
+           a foto do hero. A foto aparece; a tinta só aquece. */
         background-image:
-          linear-gradient(100deg, rgba(255, 251, 230, 0) 30%, rgba(255, 251, 230, .55) 46%, rgba(255, 251, 230, 0) 62%),
-          linear-gradient(180deg, #FBE08C 0%, #F5C02C 45%, #D9A521 100%),
+          linear-gradient(100deg, rgba(255, 251, 230, 0) 30%, rgba(255, 251, 230, .5) 46%, rgba(255, 251, 230, 0) 62%),
+          linear-gradient(180deg, rgba(251, 224, 140, .75) 0%, rgba(245, 192, 44, .65) 55%, rgba(217, 165, 33, .7) 100%),
+          linear-gradient(180deg, rgba(245, 192, 44, 0) 25%, rgba(245, 192, 44, .5) 100%),
+          linear-gradient(rgba(255, 251, 230, .5), rgba(255, 251, 230, .5)),
           var(--foto);
-        background-size: 260% 100%, 100% 100%, 150% auto;
-        background-position: 0% 50%, 0 0, 30% 0%;
-        background-repeat: no-repeat, no-repeat, repeat;
-        background-blend-mode: normal, multiply, normal;
+        background-size: 260% 100%, 100% 100%, 100% 100%, 100% 100%, 180% auto;
+        background-position: 0% 50%, 0 0, 0 0, 0 0, 20% 0%;
+        background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat;
+        background-blend-mode: normal, soft-light, multiply, screen, normal;
+        background-color: #8A6A1E;
         -webkit-background-clip: text; background-clip: text;
       }
     }
@@ -597,12 +603,12 @@
           // Efeito principal: a imagem dentro das letras desliza com o scroll
           // (a foto desce e atravessa; o brilho do projetor varre as letras).
           gsap.fromTo(titulo,
-            { backgroundPosition: '0% 50%, 0% 0%, 30% 0%' },
-            { backgroundPosition: '100% 50%, 0% 0%, 70% 100%', ease: 'none',
+            { backgroundPosition: '0% 50%, 0% 0%, 0% 0%, 0% 0%, 20% 0%' },
+            { backgroundPosition: '100% 50%, 0% 0%, 0% 0%, 0% 0%, 80% 100%', ease: 'none',
               scrollTrigger: { trigger: '[data-secao="hero"]', start: 'top top', end: 'bottom top', scrub: 0.6 } });
 
           // Ao abrir, o projetor "acende": o brilho varre o título uma vez.
-          gsap.from(titulo, { backgroundPosition: '-60% 50%, 0% 0%, 30% 0%', duration: 1.1, ease: 'power2.out', clearProps: 'backgroundPosition' });
+          gsap.from(titulo, { backgroundPosition: '-60% 50%, 0% 0%, 0% 0%, 0% 0%, 20% 0%', duration: 1.1, ease: 'power2.out', clearProps: 'backgroundPosition' });
           gsap.from('.feixe', { scaleY: 0.4, transformOrigin: '50% 0%', duration: 1.1, ease: 'power2.out' });
 
           // Sparklines se desenham quando a linha entra na tela.

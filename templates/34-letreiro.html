@@ -110,6 +110,13 @@
       display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-6); align-items: end;
       margin-top: var(--sp-6); padding-top: var(--sp-5); border-top: 1px solid rgba(255, 251, 230, .16);
     }
+    /* Movimento reduzido: o título não corre, então quebra linha e as cópias somem */
+    @media (prefers-reduced-motion: reduce) {
+      .letreiro--titulo { white-space: normal; overflow: visible; }
+      .letreiro--titulo .trilho { width: auto; display: block; padding-inline: 16px; }
+      .letreiro--titulo [data-copia] { display: none; }
+      .letreiro--titulo .frase::after { display: none; }
+    }
     .hero__placa .dr-eyebrow { color: var(--mel); margin-bottom: var(--sp-3); }
     .hero__placa p:last-child { max-width: 48ch; font-size: var(--fs-body-lg); line-height: 1.6; color: #D8CFBB; }
     .acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
@@ -258,7 +265,7 @@
 
     <!-- SEÇÃO: hero (frases da marca em letreiro contínuo, sentidos alternados) -->
     <section data-secao="hero" id="inicio">
-      <div class="letreiro faixa-mono" data-sentido="1" data-vel="40" aria-hidden="true">
+      <div class="letreiro faixa-mono" data-sentido="1" data-vel="40">
         <div class="trilho"><span class="frase" data-c="hero.eyebrow"></span><span class="frase" data-c="rodape.endereco"></span></div>
       </div>
       <div class="lampadas" aria-hidden="true"></div>
@@ -598,7 +605,8 @@
         var letreiros = Array.prototype.slice.call(document.querySelectorAll('.letreiro')).map(function (el) {
           return { el: el, trilho: el.querySelector('.trilho'), passo: 0, x: 0,
                    sentido: Number(el.getAttribute('data-sentido')) || -1,
-                   vel: Number(el.getAttribute('data-vel')) || 50 };
+                   vel: Number(el.getAttribute('data-vel')) || 50,
+                   bloco: el.closest('[data-secao="hero"], .cruzados') || el };
         });
         function montarTodos() { letreiros.forEach(function (l) { l.passo = montarLetreiro(l.el); }); }
         montarTodos();
@@ -629,8 +637,10 @@
           function passo(t, dt) {
             var seg = Math.min(dt, 64) / 1000;
             impulso += (1 - impulso) * Math.min(1, seg * 2.2); // volta devagar ao ritmo de cruzeiro
+            // WCAG 2.2.2: a linha sob o mouse para; com o foco do teclado no hero (ou nos cruzados), tudo para.
             letreiros.forEach(function (l) {
               if (!l.passo) return;
+              if (l.el.matches(':hover') || l.bloco.matches(':focus-within')) return;
               l.x += l.sentido * direcao * l.vel * impulso * seg;
               // laço: mantém x em (-passo, 0]
               l.x = ((l.x % l.passo) - l.passo) % l.passo;
