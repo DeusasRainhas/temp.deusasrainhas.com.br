@@ -1,4 +1,5 @@
 import hashlib
+import re
 from conftest import RAIZ
 
 
@@ -23,3 +24,10 @@ def test_base_css_tem_classes():
     css = (RAIZ / "css/base.css").read_text()
     for c in [".dr-container", ".dr-btn--primario", ".dr-fundo-favo-escuro", "prefers-reduced-motion", ".dr-sr-only"]:
         assert c in css, c
+
+
+def test_base_css_nao_redefine_tokens():
+    css = (RAIZ / "css/base.css").read_text()
+    assert "@import" not in css
+    assert re.search(r"--(mel|terra|grafite|creme|petroleo|ink|corpo)[a-z-]*\s*:", css) is None
+    assert "background-color: var(--grafite)" in css

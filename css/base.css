@@ -42,6 +42,7 @@ img { max-width: 100%; display: block; }
 .dr-fundo-favo-claro { background: var(--creme) url(../img/padroes/favo-claro.svg); }
 .dr-fundo-favo-escuro {
   background: radial-gradient(ellipse at center, rgba(32,32,32,.0), rgba(32,32,32,.6)), url(../img/padroes/favo-escuro.svg);
+  background-color: var(--grafite);
 }
 .dr-divisoria-circuito {
   display: block; height: 80px;
