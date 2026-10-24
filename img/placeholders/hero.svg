@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-label="Foto: apicultor no campo, luz natural">
+  <defs>
+    <pattern id="favo" width="52" height="90" patternUnits="userSpaceOnUse">
+      <path d="M26 0 L52 15 L52 45 L26 60 L0 45 L0 15 Z M26 60 L26 90 M0 45 L-26 60 M52 45 L78 60" fill="none" stroke="#E7DFC8" stroke-width="1.5"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="1000" fill="#FBF6E3"/>
+  <rect width="1600" height="1000" fill="url(#favo)" opacity="0.4"/>
+  <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-family="'Hanken Grotesk', system-ui, sans-serif" font-size="14" fill="#8A7E6F">Foto: apicultor no campo, luz natural</text>
+</svg>
