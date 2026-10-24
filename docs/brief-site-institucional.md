@@ -94,7 +94,7 @@ Nenhuma pendência trava a implementação. Cada item abaixo entra no site com u
 
 | Chave | Pendência | Valor provisório no site | Origem / observação |
 |---|---|---|---|
-| `foto-hero` | Foto do hero | Bloco creme com `favo-claro.svg` + screenshot `banner_App.png`, legenda "Foto: apicultor no campo, luz natural" | Trocar por JPG 1600x1000, luz natural, campo e colmeias |
+| `foto-hero` | Foto do hero | Bloco creme com `favo-claro.svg` + placeholder `img/placeholders/hero.svg`, legenda "Foto: apicultor no campo, luz natural" | Trocar por JPG 1600x1000, luz natural, campo e colmeias |
 | `foto-equipe-*` | Fotos dos sócios | Avatar com a coroa (`coroa-cor.png`) sobre `--superficie`, 320x320 | Trocar por retrato 600x600, fundo neutro, luz natural |
 | `foto-depoimento` | Foto do depoente | Mesmo avatar de coroa | Opcional, só com autorização |
 | `email` | E-mail oficial | `contato@deusasrainhas.com.br` | **Fictício.** Manual diz `deusasrainhas@gmail.com`; repositório usa `admin@deusasrainhas.com.br` |
@@ -167,6 +167,6 @@ Para escolher a direção visual do site, preparamos 50 páginas de exemplo, tod
 
 **Favoritos e anotações.** Ficam salvos no navegador, neste computador. Cada template aceita uma anotação curta.
 
-**Como devolver a escolha.** No seletor, aperte Exportar. O seletor copia um texto com os favoritos, as anotações e as assinaturas dos templates. Cole esse texto na resposta.
+**Como devolver a escolha.** No seletor, aperte Exportar. O seletor copia um texto com os favoritos, as anotações deles e as assinaturas (anotações de templates não favoritados não são exportadas) dos templates. Cole esse texto na resposta.
 
 **Atenção.** Fotos, dados de contato e números são provisórios, conforme `docs/PENDENCIAS.md`. O arquivo `docs/CATALOGO.md` lista as 50 assinaturas.

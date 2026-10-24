@@ -15,7 +15,7 @@ def test_assets_existem():
     for p in ["img/logos/logo-abelha-cor.png", "img/logos/coroa-cor.png", "img/logos/logo-negativa.png",
               "img/logos/centelha-negativo.png", "img/logos/fapeg.png", "img/logos/finep.png",
               "img/icones/sprite-icones.svg", "img/padroes/circuito-divisoria.svg", "img/padroes/favo-claro.svg",
-              "img/app/banner_App.png", "img/placeholders/hero.svg", "img/placeholders/equipe.svg",
+              "img/placeholders/hero.svg", "img/placeholders/equipe.svg",
               "img/placeholders/depoimento.svg"]:
         assert (RAIZ / p).exists(), p
 
