@@ -93,8 +93,8 @@
     .mapa .rio { fill: none; stroke: var(--petroleo-claro); stroke-width: 1.2; vector-effect: non-scaling-stroke; opacity: .7; }
     .mapa .alvo { fill: var(--mel); stroke: var(--terra-escura); vector-effect: non-scaling-stroke; stroke-width: 1.5; }
     .mapa .alvo-anel { fill: none; stroke: var(--erro); vector-effect: non-scaling-stroke; stroke-width: 1.5; }
-    .rotulo-pino { position: absolute; left: 50%; top: 50%; transform: translate(30px, -50%); pointer-events: none; }
-    .rotulo-pino .marcador { box-shadow: var(--sh-md); white-space: nowrap; }
+    .rotulo-pino { position: absolute; left: 50%; top: 50%; transform: translate(calc(-100% - 30px), -50%); pointer-events: none; } /* à esquerda do pino: o DF fica livre à direita */
+    .rotulo-pino .marcador { box-shadow: var(--sh-md); white-space: nowrap; display: inline-flex; }
     @media (max-width: 599px) { .rotulo-pino { transform: translate(-50%, 26px); } }
     .localizador { position: absolute; left: 12px; bottom: 12px; width: 92px; height: 92px; border: var(--bloco); background: var(--creme); }
     .localizador svg { width: 100%; height: 100%; display: block; }
@@ -567,7 +567,7 @@
       var PARADAS = [
         { x: 492, y: 489, s: 0.94 },        // Brasil inteiro
         { x: 610, y: 538, s: 4.6 },         // Goiás
-        { x: 630.75, y: 527.25, s: 16 }     // Cocalzinho de Goiás
+        { x: 630.75, y: 527.25, s: 8 }      // Cocalzinho de Goiás, com a divisa de Goiás e o DF à vista
       ];
       var camera, alvo, anel;
       function porCamera(k) {
@@ -662,7 +662,7 @@
           raiz.classList.add('mapa-vivo');
           var cam = { k: 0 };
           porCamera(0);
-          gsap.set(['.etapa--2', '.etapa--3', '.rotulo-pino'], { autoAlpha: 0 });
+          gsap.set(['.etapa--2', '.etapa--3', '.rotulo-pino .marcador'], { autoAlpha: 0 });
 
           // Entrada (termina em ~1,2s): o mapa surge e o texto chega.
           gsap.timeline({ defaults: { ease: 'power3.out' } })
@@ -681,7 +681,7 @@
             .to(cam, { k: 2, duration: 1, ease: 'power1.inOut', onUpdate: function () { porCamera(cam.k); } }, 1)
             .to('.etapa--2', { autoAlpha: 0, y: -30, duration: 0.3 }, 1.25)
             .fromTo('.etapa--3', { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.3 }, 1.6)
-            .fromTo('.rotulo-pino', { autoAlpha: 0, x: -10 }, { autoAlpha: 1, x: 0, duration: 0.3 }, 1.7)
+            .fromTo('.rotulo-pino .marcador', { autoAlpha: 0, x: -10 }, { autoAlpha: 1, x: 0, duration: 0.3 }, 1.7) // anima o filho: o deslocamento do rótulo (CSS) fica intacto
             .to({}, { duration: 0.2 });
 
           return function () {

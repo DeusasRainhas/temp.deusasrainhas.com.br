@@ -531,10 +531,12 @@
 
       // Ponto na curva quadrática do arco do sol (mesmos números do path).
       function pontoArco(t) {
-        var x0 = 60, y0 = 540, cx = 500, cy = -60, x1 = 940, y1 = 540, u = 1 - t;
+        var x0 = 60, y0 = 540, cx = 500, cy = ARCO_CY, x1 = 940, y1 = 540, u = 1 - t;
         return { x: u * u * x0 + 2 * u * t * cx + t * t * x1, y: u * u * y0 + 2 * u * t * cy + t * t * y1 };
       }
+      var ARCO_CY = -60, ultimoT = 0;
       function porSol(t) {
+        ultimoT = t;
         var p = pontoArco(T0 + (T1 - T0) * t);
         document.querySelector('.sol-grupo').setAttribute('transform', 'translate(' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ')');
       }
@@ -619,7 +621,14 @@
         porSol(0); // estático: amanhecer
         // Em tela estreita o céu ancora à esquerda, para o sol nascente continuar à vista.
         var svgCeu = document.querySelector('.ceu svg');
-        function ajustarCeu() { svgCeu.setAttribute('preserveAspectRatio', window.innerWidth < 900 ? 'xMinYMax slice' : 'xMidYMid slice'); }
+        function ajustarCeu() {
+          var estreito = window.innerWidth < 900;
+          svgCeu.setAttribute('preserveAspectRatio', estreito ? 'xMinYMax slice' : 'xMidYMid slice');
+          // No estreito o arco fica baixo, entre os morros e a fileira de botões.
+          ARCO_CY = estreito ? 300 : -60;
+          svgCeu.querySelector('.arco-sol').setAttribute('d', 'M60 540 Q 500 ' + ARCO_CY + ' 940 540');
+          porSol(ultimoT);
+        }
         ajustarCeu();
         window.addEventListener('resize', ajustarCeu);
 
