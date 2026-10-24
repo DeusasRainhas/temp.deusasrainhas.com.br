@@ -132,7 +132,7 @@
     .etapa.ativa { background: var(--mel-veu); }
     .etapa.ativa .ficha__dado { color: var(--tinta); }
     .etapa.ativa::before { background: var(--mel); }
-    @media (max-width: 899px), (prefers-reduced-motion: reduce) { .etapa .ficha__dado { color: var(--tinta); } }
+    @media (max-width: 1099px), (prefers-reduced-motion: reduce) { .etapa .ficha__dado { color: var(--tinta); } }
 
     .contador__rotulo { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .2em; text-transform: uppercase; color: var(--suave); }
     .contador { display: flex; align-items: flex-end; gap: var(--sp-2); font-family: var(--mono); color: var(--tinta); }
@@ -165,7 +165,6 @@
     /* Modo pinado (classe posta pelo JS só com movimento e ≥900px) */
     .pin-passo .hero { height: calc(100vh - 82px); min-height: 640px; grid-template-rows: auto minmax(0, 1fr); }
     .pin-passo .hero__fone .fone { --fw: min(300px, calc((100vh - 82px - 260px) * .44)); }
-    @media (max-width: 1099px) { .pin-passo .hero { height: auto; } }
 
     /* ---------- Cabeça de seção ---------- */
     .cabeca { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); border-bottom: var(--fino); }
@@ -609,7 +608,7 @@
         var mm = gsap.matchMedia();
 
         // Efeito principal: contador de etapas pinado com crossfade das telas.
-        mm.add('(prefers-reduced-motion: no-preference) and (min-width: 900px)', function () {
+        mm.add('(prefers-reduced-motion: no-preference) and (min-width: 1100px)', function () {
           var raiz = document.documentElement;
           raiz.classList.add('pin-passo');
           var telas = gsap.utils.toArray('[data-tela]');

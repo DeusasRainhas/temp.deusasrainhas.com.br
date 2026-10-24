@@ -240,6 +240,7 @@
     .sheet__lista .ic { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--branco); color: var(--terra); }
     .sheet__lista .chev { width: 20px; height: 20px; color: var(--terra-clara); }
     .sheet__rodape { margin-top: var(--sp-4); }
+    @media (max-width: 599px) { .sheet__rodape { padding-bottom: 118px; } } /* livra a pílula do switcher */
   </style>
 </head>
 <body>
@@ -257,18 +258,18 @@
             <li><a href="#equipe" tabindex="-1"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg><span class="leque__rotulo" data-c="equipe.eyebrow"></span></a></li>
             <li><a href="#contato" tabindex="-1"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="leque__rotulo" data-c="contato.eyebrow"></span></a></li>
           </ul>
-          <button class="leque__botao" type="button" aria-expanded="false" aria-label="menu" data-leque-botao><img src="../img/logos/coroa-terra.png" alt="" width="30" height="22"></button>
+          <button class="leque__botao" type="button" aria-expanded="false" aria-label="Atalhos" data-leque-botao><img src="../img/logos/coroa-terra.png" alt="" width="30" height="22"></button>
         </div>
       </div>
 
       <!-- Bottom sheet: arraste a alça para cima/baixo ou toque para abrir -->
       <div class="sheet" data-sheet>
-        <button class="sheet__alca" type="button" aria-expanded="false" aria-label="menu" data-sheet-alca></button>
+        <button class="sheet__alca" type="button" aria-expanded="false" aria-label="Abrir navegação" data-sheet-alca></button>
         <div class="sheet__peek">
           <a class="dr-btn dr-btn--primario polegar" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
-          <button class="sheet__menu" type="button" aria-label="menu" data-sheet-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg></button>
+          <button class="sheet__menu" type="button" aria-expanded="false" aria-label="Abrir navegação" data-sheet-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg></button>
         </div>
-        <ul class="sheet__lista">
+        <ul class="sheet__lista" inert>
           <li><a href="#funcionalidades"><span class="ic"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-colmeia"></use></svg></span><span data-c="funcionalidades.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
           <li><a href="#como-funciona"><span class="ic"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-revisao"></use></svg></span><span data-c="comoFunciona.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
           <li><a href="#para-quem"><span class="ic"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-florada"></use></svg></span><span data-c="paraQuem.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
@@ -276,7 +277,7 @@
           <li><a href="#equipe"><span class="ic"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg></span><span data-c="equipe.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
           <li><a href="#contato"><span class="ic"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span><span data-c="contato.eyebrow"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></li>
         </ul>
-        <div class="sheet__rodape">
+        <div class="sheet__rodape" inert>
           <a class="dr-btn dr-btn--secundario polegar" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
           <a class="dr-btn dr-btn--secundario polegar" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
         </div>
@@ -385,7 +386,7 @@
           <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
           <h2 class="dr-h2" data-c="paraQuem.titulo"></h2>
         </header>
-        <div class="segmentos" role="tablist" data-segmentos hidden></div>
+        <div class="segmentos" role="tablist" aria-label="Perfis" data-segmentos hidden></div>
         <ul class="perfis" data-c-lista="paraQuem.perfis">
           <template>
             <li class="tile">
@@ -543,7 +544,7 @@
         lequeBotao.addEventListener('click', function () { lequeAbrir(!leque.classList.contains('aberto')); });
         document.querySelector('[data-leque-veu]').addEventListener('click', function () { lequeAbrir(false); });
         lequeLinks.forEach(function (a) { a.addEventListener('click', function () { lequeAbrir(false); }); });
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { lequeAbrir(false); sheetIr(false); } });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { lequeAbrir(false); if (aberta) sheetIr(false, true); } });
 
         /* ---- Efeito: bottom sheet com arrasto e toque ---- */
         var sheet = document.querySelector('[data-sheet]');
@@ -565,21 +566,32 @@
             sheet.style.transform = 'translateY(' + alvo + 'px)';
           }
         }
-        function sheetIr(abrir) {
+        var fechaveis = sheet.querySelectorAll('.sheet__lista, .sheet__rodape');
+        // focar: ao abrir, leva o foco ao primeiro link; ao fechar, devolve ao botão de seta.
+        function sheetIr(abrir, focar) {
           aberta = abrir;
           sheet.classList.toggle('aberta', abrir);
-          alca.setAttribute('aria-expanded', String(abrir));
-          toggle.setAttribute('aria-expanded', String(abrir));
+          var nome = abrir ? 'Fechar navegação' : 'Abrir navegação';
+          [alca, toggle].forEach(function (b) {
+            b.setAttribute('aria-expanded', String(abrir));
+            b.setAttribute('aria-label', nome);
+          });
+          fechaveis.forEach(function (el) { el.inert = !abrir; });
           por(abrir ? 0 : fechadoY);
+          if (focar) {
+            if (abrir) { var l = sheet.querySelector('.sheet__lista a'); if (l) l.focus({ preventScroll: true }); }
+            else toggle.focus({ preventScroll: true });
+          }
         }
-        toggle.addEventListener('click', function () { sheetIr(!aberta); });
+        toggle.addEventListener('click', function () { sheetIr(!aberta, true); });
         sheet.querySelectorAll('.sheet__lista a').forEach(function (a) { a.addEventListener('click', function () { sheetIr(false); }); });
 
         // Arrastar pela alça ou pelo topo do sheet (pointer events: dedo e mouse).
         var arrasto = null;
         function inicio(e) {
           if (e.target.closest('a, .sheet__menu')) return;
-          arrasto = { y0: e.clientY, base: y, t: performance.now(), ult: e.clientY, moveu: false };
+          // A captura redireciona o pointerup para .sheet: guarda aqui se o toque começou na alça.
+          arrasto = { y0: e.clientY, base: y, t: performance.now(), ult: e.clientY, moveu: false, naAlca: !!e.target.closest('.sheet__alca') };
           sheet.setPointerCapture(e.pointerId);
           if (window.gsap) gsap.killTweensOf(sheet);
         }
@@ -598,7 +610,7 @@
           if (!arrasto) return;
           var a = arrasto; arrasto = null;
           try { sheet.releasePointerCapture(e.pointerId); } catch (err) { /* já liberado */ }
-          if (!a.moveu) { if (e.target === alca || e.target.closest('.sheet__alca')) sheetIr(!aberta); return; }
+          if (!a.moveu) { if (a.naAlca) sheetIr(!aberta, true); return; }
           var vel = a.vel || 0;
           if (vel < -0.4) sheetIr(true);
           else if (vel > 0.4) sheetIr(false);
@@ -608,7 +620,7 @@
         sheet.addEventListener('pointermove', mover);
         sheet.addEventListener('pointerup', fim);
         sheet.addEventListener('pointercancel', fim);
-        alca.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sheetIr(!aberta); } });
+        alca.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sheetIr(!aberta, true); } });
         window.addEventListener('resize', medir);
         medir();
         if (document.fonts) document.fonts.ready.then(medir);
@@ -640,18 +652,44 @@
         if (perfis.length) {
           seg.hidden = false;
           document.querySelector('[data-secao="para-quem"]').classList.add('js-perfis');
+          perfis[0].parentElement.setAttribute('role', 'none');
+          var abas = [];
+          function selecionar(i, focar) {
+            abas.forEach(function (x, k) {
+              x.setAttribute('aria-selected', String(k === i));
+              x.tabIndex = k === i ? 0 : -1;
+            });
+            perfis.forEach(function (x, k) { x.classList.toggle('atual', k === i); });
+            if (focar) abas[i].focus();
+            if (window.gsap && !reduzido.matches) gsap.from(perfis[i], { y: 12, autoAlpha: 0, duration: 0.35, ease: 'power2.out' });
+          }
           perfis.forEach(function (p, i) {
             var b = document.createElement('button');
             b.type = 'button'; b.setAttribute('role', 'tab');
+            b.id = 'aba-perfil-' + i;
+            p.id = 'painel-perfil-' + i;
+            b.setAttribute('aria-controls', p.id);
+            p.setAttribute('role', 'tabpanel');
+            p.setAttribute('aria-labelledby', b.id);
             b.textContent = p.querySelector('h3').textContent;
-            b.setAttribute('aria-selected', String(i === 0));
-            b.addEventListener('click', function () {
-              seg.querySelectorAll('button').forEach(function (x, k) { x.setAttribute('aria-selected', String(k === i)); });
-              perfis.forEach(function (x, k) { x.classList.toggle('atual', k === i); });
-              if (window.gsap && !reduzido.matches) gsap.from(p, { y: 12, autoAlpha: 0, duration: 0.35, ease: 'power2.out' });
-            });
+            b.addEventListener('click', function () { selecionar(i, false); });
             seg.appendChild(b);
+            abas.push(b);
           });
+          // Setas/Home/End movem entre as abas (preventDefault evita a troca de template do switcher).
+          seg.addEventListener('keydown', function (e) {
+            var i = abas.indexOf(document.activeElement);
+            if (i < 0) return;
+            var n = abas.length, alvo = null;
+            if (e.key === 'ArrowRight') alvo = (i + 1) % n;
+            else if (e.key === 'ArrowLeft') alvo = (i - 1 + n) % n;
+            else if (e.key === 'Home') alvo = 0;
+            else if (e.key === 'End') alvo = n - 1;
+            if (alvo === null) return;
+            e.preventDefault(); e.stopPropagation();
+            selecionar(alvo, true);
+          });
+          abas.forEach(function (x, k) { x.setAttribute('aria-selected', String(k === 0)); x.tabIndex = k === 0 ? 0 : -1; });
           perfis[0].classList.add('atual');
         }
 
