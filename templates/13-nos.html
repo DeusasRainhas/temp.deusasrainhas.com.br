@@ -547,13 +547,16 @@
         function abrir(sim, devolverFoco) {
           botao.setAttribute('aria-expanded', sim ? 'true' : 'false');
           document.documentElement.style.overflow = sim ? 'hidden' : '';
-          if (animarMenu) animarMenu(sim); else menu.hidden = !sim;
-          if (sim) {
-            var primeiro = menu.querySelector('ol a');
-            if (primeiro) primeiro.focus({ preventScroll: true });
-          } else if (devolverFoco !== false) {
-            botao.focus({ preventScroll: true });
+          var primeiro = menu.querySelector('ol a');
+          function focarPrimeiro() { if (primeiro) primeiro.focus({ preventScroll: true }); }
+          if (animarMenu) {
+            // Com GSAP os itens ficam visibility:hidden até a entrada começar: o foco espera por ela.
+            animarMenu(sim, focarPrimeiro);
+          } else {
+            menu.hidden = !sim;
+            if (sim) focarPrimeiro();
           }
+          if (!sim && devolverFoco !== false) botao.focus({ preventScroll: true });
         }
         botao.addEventListener('click', function () { abrir(botao.getAttribute('aria-expanded') !== 'true'); });
         // Ao seguir um link, o foco acompanha a âncora (não volta ao botão).
@@ -653,11 +656,22 @@
           });
 
           // Menu: abre como um recorte que cresce a partir do botão.
-          animarMenu = function (sim) {
+          animarMenu = function (sim, aoMostrar) {
             if (sim) {
               menu.hidden = false;
               gsap.fromTo(menu, { clipPath: 'circle(0px at calc(100% - 44px) 44px)' }, { clipPath: 'circle(150% at calc(100% - 44px) 44px)', duration: .6, ease: 'power3.inOut' });
               gsap.from(menu.querySelectorAll('li, .dr-btn, .menu__marca'), { y: 20, autoAlpha: 0, duration: .5, stagger: .05, delay: .2, ease: 'power2.out' });
+              // O item do primeiro link só fica visível quando a entrada dele começa (~.25s):
+              // o foco espera por ele e tenta de novo a cada quadro até pegar (no máximo ~0,5s).
+              if (aoMostrar) {
+                var alvo = menu.querySelector('ol a');
+                gsap.delayedCall(.25, function tentar(n) {
+                  n = n || 0;
+                  if (botao.getAttribute('aria-expanded') !== 'true') return; // fechou antes: não rouba o foco
+                  aoMostrar();
+                  if (document.activeElement !== alvo && n < 30) requestAnimationFrame(function () { tentar(n + 1); });
+                });
+              }
             } else {
               gsap.to(menu, { clipPath: 'circle(0px at calc(100% - 44px) 44px)', duration: .45, ease: 'power3.inOut', onComplete: function () { menu.hidden = true; gsap.set(menu, { clearProps: 'clipPath' }); } });
             }
