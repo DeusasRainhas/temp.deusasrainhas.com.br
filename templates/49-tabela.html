@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="pt-BR" data-template="49">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 49 Tabela</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       49 Tabela · estrutural · N2 / C6 / R8
+       As funcionalidades como tabela periódica: cada célula é um
+       "elemento" com número, símbolo (derivado do título em JS) e nome.
+       Hover/foco vira a célula e mostra o texto num tooltip; teclado:
+       Tab até a célula, Enter/Espaço vira e fixa. O título ocupa o vão
+       da primeira linha, como nas tabelas impressas.
+       - nada de opacity < 1 fora do gsap.matchMedia; tooltip oculto usa display;
+       - canto inferior direito livre (pílula do switcher).
+       ================================================================= */
+
+    :root {
+      --fio: 3px solid var(--terra-escura);
+      --respiro: var(--sp-9);
+      --celula: 132px;
+      --gap: 8px;
+    }
+    @media (max-width: 767px) { :root { --respiro: var(--sp-8); --gap: 6px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    img { height: auto; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
+
+    /* ---------- R8: grade visível com linhas e bordas grossas ---------- */
+    body {
+      background-color: var(--creme);
+      background-image:
+        linear-gradient(var(--linha) 1px, transparent 1px),
+        linear-gradient(90deg, var(--linha) 1px, transparent 1px);
+      background-size: 48px 48px;
+      background-position: -1px -1px;
+    }
+    main > section { padding-block: var(--respiro); border-top: var(--fio); scroll-margin-top: var(--sp-4); }
+    main > section[data-secao="hero"] { border-top: 0; padding-block: var(--sp-5) var(--sp-8); }
+
+    /* ---------- N2: pílula inferior centralizada, estilo app ---------- */
+    .pilula {
+      position: fixed; z-index: 60; left: 50%; bottom: 16px; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 2px; padding: 6px;
+      background: var(--grafite); border-radius: var(--r-pill); box-shadow: var(--sh-lg);
+    }
+    .pilula a {
+      display: flex; align-items: center; gap: var(--sp-2); height: 44px; padding: 0 var(--sp-4);
+      border-radius: var(--r-pill); color: var(--creme); text-decoration: none;
+      font-family: var(--mono); font-size: var(--fs-eyebrow); font-weight: 500; letter-spacing: .12em; text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .pilula a .dr-icone { width: 18px; height: 18px; color: var(--mel-claro); }
+    .pilula a:hover { background: var(--grafite-suave); }
+    .pilula a[aria-current="true"] { background: var(--grafite-suave); box-shadow: inset 0 -2px 0 var(--mel); }
+    .pilula .pilula__cta { background: var(--mel); color: var(--terra-escura); font-family: var(--sans); font-size: var(--fs-small); font-weight: 700; letter-spacing: 0; text-transform: none; }
+    .pilula .pilula__cta:hover { background: var(--mel-escuro); }
+    .pilula .pilula__cta .dr-icone { color: var(--terra-escura); }
+    @media (max-width: 1023px) {
+      .pilula a span:not(.dr-sr-only) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+      .pilula a { padding: 0 12px; }
+    }
+    @media (max-width: 599px) {
+      .pilula { left: 12px; transform: none; }
+      .pilula a { padding: 0 10px; height: 40px; }
+      .pilula a[data-opcional] { display: none; }
+    }
+
+    /* ---------- Hero: a tabela periódica ---------- */
+    .topo { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); padding-bottom: var(--sp-4); margin-bottom: var(--sp-5); border-bottom: var(--fio); }
+    .topo img { width: 64px; height: 64px; }
+    .topo__meta { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--sp-2) var(--sp-5); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .16em; text-transform: uppercase; color: var(--terra); }
+
+    .tabela {
+      display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); grid-auto-rows: minmax(var(--celula), auto);
+      gap: var(--gap);
+    }
+    .tabela > ul { display: contents; }
+    .t-titulo { grid-column: 2 / 8; grid-row: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--sp-2); padding-inline: var(--sp-5); }
+    .t-titulo .dr-display { font-size: clamp(36px, 3.9vw, 58px); line-height: 1; letter-spacing: -.025em; text-wrap: balance; }
+    .t-sub { grid-column: 3 / 7; grid-row: 2; display: flex; flex-direction: column; justify-content: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-5); background: var(--creme); border: 2px solid var(--linha-forte); }
+    .t-sub p { font-size: var(--fs-body); line-height: 1.5; color: var(--corpo); }
+    .t-acoes { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+    .t-acoes .dr-btn { padding: 10px 18px; font-size: var(--fs-small); border-radius: var(--r-sm); }
+    .t-serie { grid-column: 1 / 3; grid-row: 3; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-end; text-align: right; padding: var(--sp-3); gap: var(--sp-2); }
+    .t-serie .dr-eyebrow { color: var(--petroleo); }
+    .t-serie span[aria-hidden] { font-family: var(--mono); font-size: 22px; color: var(--petroleo); }
+    .fantasma { border: 2px dashed var(--linha-forte); background: transparent; }
+    .f-a { grid-column: 7; grid-row: 3; }
+    .f-b { grid-column: 8; grid-row: 3; }
+
+    /* A célula-elemento */
+    .el { position: relative; perspective: 900px; }
+    .el__botao { position: absolute; inset: 0; cursor: pointer; border-radius: var(--r-sm); outline: none; }
+    .el__botao:focus-visible { outline: 3px solid var(--petroleo); outline-offset: 3px; }
+    .el__miolo { position: absolute; inset: 0; transform-style: preserve-3d; }
+    .el__face {
+      position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      border: 2px solid var(--terra-escura); border-radius: var(--r-sm); padding: 10px 12px;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .el__frente { background: var(--mel-veu); }
+    .el--tec .el__frente { background: var(--petroleo-veu); border-color: var(--petroleo); }
+    .el__num { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--terra); display: flex; justify-content: space-between; }
+    .el--tec .el__num { color: var(--petroleo); }
+    .el__simbolo { font-family: var(--mono); font-weight: 700; font-size: clamp(28px, 2.6vw, 38px); line-height: 1; letter-spacing: -.04em; color: var(--terra-escura); margin-top: 8px; }
+    .el--tec .el__simbolo { color: var(--petroleo); }
+    .el__nome { font-size: 11.5px; line-height: 1.2; font-weight: 600; color: var(--ink); margin-top: auto; }
+    .el__verso { background: var(--grafite); border-color: var(--grafite); transform: rotateY(180deg); justify-content: space-between; }
+    .el__verso .dr-icone { color: var(--mel-claro); width: 30px; height: 30px; }
+    .el__verso .el__nome { color: var(--creme); font-family: var(--serif); font-weight: 500; font-size: 15px; line-height: 1.15; min-height: 0; }
+    .el[data-virada="true"] .el__miolo { transform: rotateY(180deg); }
+    .el__dica {
+      display: none; position: absolute; z-index: 30; top: calc(100% + 10px); left: 0; width: 260px;
+      padding: var(--sp-3) var(--sp-4); background: var(--grafite); color: var(--creme); border-radius: var(--r-md);
+      box-shadow: var(--sh-lg); font-size: var(--fs-small); line-height: 1.5; pointer-events: none;
+    }
+    .el__dica::before { content: ""; position: absolute; top: -6px; left: 24px; width: 12px; height: 12px; background: var(--grafite); transform: rotate(45deg); }
+    .el[data-dica="true"] { z-index: 20; }
+    .el[data-dica="true"] .el__dica { display: block; }
+    .el--direita .el__dica { left: auto; right: 0; }
+    .el--direita .el__dica::before { left: auto; right: 24px; }
+    .el--acima .el__dica { top: auto; bottom: calc(100% + 10px); }
+    .el--acima .el__dica::before { top: auto; bottom: -6px; }
+
+    /* posições na tabela (desktop) */
+    .t-func > .el:nth-child(1) { grid-column: 1; grid-row: 1; }
+    .t-func > .el:nth-child(2) { grid-column: 8; grid-row: 1; }
+    .t-func > .el:nth-child(3) { grid-column: 1; grid-row: 2; }
+    .t-func > .el:nth-child(4) { grid-column: 2; grid-row: 2; }
+    .t-func > .el:nth-child(5) { grid-column: 7; grid-row: 2; }
+    .t-func > .el:nth-child(6) { grid-column: 8; grid-row: 2; }
+    .t-tec > .el:nth-child(1) { grid-column: 3; grid-row: 3; }
+    .t-tec > .el:nth-child(2) { grid-column: 4; grid-row: 3; }
+    .t-tec > .el:nth-child(3) { grid-column: 5; grid-row: 3; }
+    .t-tec > .el:nth-child(4) { grid-column: 6; grid-row: 3; }
+    .tabela { margin-bottom: var(--sp-5); }
+    .t-serie, .t-tec > .el { margin-top: var(--sp-4); }
+    .f-a, .f-b { margin-top: var(--sp-4); }
+
+    @media (max-width: 899px) {
+      :root { --celula: 108px; }
+      .tabela { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: row dense; }
+      .tabela > * , .t-func > .el:nth-child(n), .t-tec > .el:nth-child(n) { grid-column: auto; grid-row: auto; }
+      .t-titulo { grid-column: 1 / -1; padding-inline: 0; order: -2; min-height: 0; }
+      .t-func > .el { order: -1; }
+      .t-sub { grid-column: 1 / -1; order: 0; }
+      .t-serie { grid-column: 1 / -1; order: 1; align-items: flex-start; text-align: left; padding: var(--sp-3) 0 0; }
+      .t-tec > .el { order: 2; }
+      .fantasma { order: 3; }
+      .t-serie, .t-tec > .el, .f-a, .f-b { margin-top: 0; }
+      .el__dica { width: 220px; }
+      .t-func > .el:nth-child(3n) .el__dica, .t-tec > .el:nth-child(3) .el__dica { left: auto; right: 0; }
+      .t-func > .el:nth-child(3n) .el__dica::before, .t-tec > .el:nth-child(3) .el__dica::before { left: auto; right: 24px; }
+    }
+    @media (max-width: 899px) { .t-sub, .t-titulo, .t-serie { grid-row: auto; } }
+
+    /* ---------- Cabeça de seção: célula de título ---------- */
+    .cabeca { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 9fr); border: var(--fio); background: var(--creme); margin-bottom: var(--sp-7); }
+    .cabeca > * { padding: var(--sp-5); }
+    .cabeca > :first-child { border-right: var(--fio); display: flex; flex-direction: column; justify-content: space-between; gap: var(--sp-4); }
+    .cabeca__n { font-family: var(--mono); font-weight: 700; font-size: 40px; line-height: 1; color: var(--terra-escura); letter-spacing: -.04em; }
+    .cabeca .dr-h2 { font-size: clamp(30px, 3.4vw, 46px); line-height: 1.06; letter-spacing: -.02em; }
+    .cabeca .dr-body-lg { margin-top: var(--sp-3); max-width: 60ch; }
+    @media (max-width: 767px) {
+      .cabeca { grid-template-columns: minmax(0, 1fr); }
+      .cabeca > :first-child { border-right: 0; border-bottom: var(--fio); flex-direction: row; align-items: center; }
+      .cabeca__n { font-size: 28px; }
+    }
+
+    /* ---------- Prova ---------- */
+    .placar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: var(--fio); background: var(--creme); }
+    .placar > li { padding: var(--sp-5); border-left: var(--fio); counter-increment: p; }
+    .placar > li:first-child { border-left: 0; }
+    .placar { counter-reset: p; }
+    .placar > li::before { content: counter(p, decimal-leading-zero); font-family: var(--mono); font-size: 12px; color: var(--terra); }
+    .placar__valor { display: block; margin-top: var(--sp-4); font-size: clamp(44px, 5vw, 72px); line-height: 1; color: var(--terra-escura); letter-spacing: -.04em; }
+    .placar__rotulo { display: block; margin-top: var(--sp-3); font-size: var(--fs-small); font-weight: 600; color: var(--corpo); }
+    @media (max-width: 767px) {
+      .placar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .placar > li:nth-child(3) { border-left: 0; }
+      .placar > li:nth-child(n+3) { border-top: var(--fio); }
+      .placar > li { padding: var(--sp-4); }
+    }
+
+    /* ---------- Tabela-legenda (problema, funcionalidades, tecnologia) ---------- */
+    .legenda { border: var(--fio); background: var(--creme); }
+    .legenda > li { display: grid; grid-template-columns: 96px minmax(0, 4fr) minmax(0, 7fr); border-top: 1px solid var(--linha-forte); }
+    .legenda > li:first-child { border-top: 0; }
+    .legenda > li > * { padding: var(--sp-4) var(--sp-5); }
+    .legenda__sim { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); border-right: var(--fio); font-family: var(--mono); font-weight: 700; font-size: 26px; color: var(--terra-escura); background: var(--mel-veu); }
+    .legenda--tec .legenda__sim { background: var(--petroleo-veu); color: var(--petroleo); }
+    .legenda .dr-h4 { display: flex; align-items: center; gap: var(--sp-3); font-size: 19px; }
+    .legenda .dr-h4 .dr-icone { color: var(--petroleo); flex: none; }
+    @media (max-width: 767px) {
+      .legenda > li { grid-template-columns: 64px minmax(0, 1fr); }
+      .legenda__sim { grid-row: span 2; font-size: 20px; padding: var(--sp-3) !important; }
+      .legenda > li > .dr-h4 { padding-bottom: 0; }
+      .legenda > li > * { padding: var(--sp-3) var(--sp-4); }
+    }
+
+    .problema { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--sp-6); align-items: stretch; }
+    .estat { border: var(--fio); background: var(--grafite); padding: var(--sp-6); display: flex; flex-direction: column; justify-content: space-between; gap: var(--sp-5); }
+    .estat__valor { font-size: clamp(80px, 9vw, 128px); line-height: .85; color: var(--mel); letter-spacing: -.05em; }
+    .estat p { color: var(--creme); font-size: var(--fs-body-lg); line-height: 1.55; }
+    .consequencias { border: var(--fio); background: var(--creme); }
+    .consequencias > li { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; border-top: 1px solid var(--linha-forte); }
+    .consequencias > li:first-child { border-top: 0; }
+    .consequencias .dr-icone { justify-self: center; color: var(--erro); }
+    .consequencias p { padding: var(--sp-5) var(--sp-5) var(--sp-5) 0; }
+    @media (max-width: 899px) { .problema { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- C6: cards com sombra média e tilt 3D sutil ---------- */
+    .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); perspective: 1000px; }
+    .card { background: var(--branco); border-radius: var(--r-lg); box-shadow: var(--sh-md); padding: var(--sp-6); transform-style: preserve-3d; will-change: transform; }
+    .card .dr-h3 { font-family: var(--serif); font-weight: 500; font-size: 28px; color: var(--terra-escura); margin-bottom: var(--sp-3); }
+    .passo { display: flex; flex-direction: column; }
+    .passo__numero { font-size: 40px; line-height: 1; color: var(--petroleo); font-weight: 700; letter-spacing: -.04em; }
+    .passo .dr-h4 { margin-block: var(--sp-3) var(--sp-2); }
+    .passo__foto { margin-top: auto; padding-top: var(--sp-5); height: 300px; overflow: hidden; }
+    .passo__foto img { width: 190px; height: auto; margin-inline: auto; border-radius: var(--r-md) var(--r-md) 0 0; box-shadow: var(--sh-sm); border: 1px solid var(--linha); }
+    @media (max-width: 899px) { .cards { grid-template-columns: minmax(0, 1fr); } }
+
+    .tec-texto { font-family: var(--serif); font-size: clamp(22px, 2.4vw, 30px); line-height: 1.35; color: var(--terra-escura); max-width: 44ch; margin-bottom: var(--sp-6); padding: var(--sp-5); background: var(--creme); border-left: 6px solid var(--petroleo); }
+
+    /* ---------- Equipe ---------- */
+    .origem { font-size: var(--fs-body-lg); max-width: 60ch; margin-bottom: var(--sp-6); padding: var(--sp-5); background: var(--creme); border: 2px solid var(--linha-forte); }
+    .pessoa { padding: 0; overflow: hidden; }
+    .pessoa img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+    .pessoa div { padding: var(--sp-5); }
+    .pessoa__cargo { margin-top: var(--sp-1); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .1em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    .apoios { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: var(--sp-6); border: var(--fio); background: var(--creme); }
+    .apoio { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); padding: var(--sp-4) var(--sp-5); border-left: var(--fio); }
+    .apoio:first-child { border-left: 0; }
+    .apoio[data-fundo="escuro"] { background: var(--grafite); }
+    .apoio img { max-height: 48px; width: auto; max-width: 140px; }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .18em; text-transform: uppercase; color: var(--terra); }
+    .apoio[data-fundo="escuro"] .apoio__nome { color: var(--mel-claro); }
+    @media (max-width: 767px) {
+      .apoios { grid-template-columns: minmax(0, 1fr); }
+      .apoio { border-left: 0; border-top: var(--fio); }
+      .apoio:first-child { border-top: 0; }
+    }
+
+    /* ---------- Depoimento ---------- */
+    .citacao { display: grid; grid-template-columns: 160px minmax(0, 1fr); border: var(--fio); background: var(--creme); }
+    .citacao__aspas { display: grid; place-items: center; background: var(--mel); border-right: var(--fio); font-family: var(--serif); font-size: 120px; line-height: 1; color: var(--terra-escura); }
+    .citacao__corpo { padding: var(--sp-7) var(--sp-6); }
+    .citacao .dr-quote { font-size: clamp(24px, 3vw, 38px); line-height: 1.28; color: var(--terra-escura); }
+    .citacao figcaption { display: flex; align-items: center; gap: var(--sp-4); margin-top: var(--sp-5); }
+    .citacao figcaption img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--terra-escura); }
+    .citacao__nome { font-weight: 700; color: var(--ink); }
+    .citacao__local { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); }
+    @media (max-width: 767px) {
+      .citacao { grid-template-columns: minmax(0, 1fr); }
+      .citacao__aspas { border-right: 0; border-bottom: var(--fio); font-size: 80px; height: 80px; }
+      .citacao__corpo { padding: var(--sp-5) var(--sp-4); }
+    }
+
+    /* ---------- Contato ---------- */
+    .contato { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); border: var(--fio); background: var(--creme); }
+    .form { display: grid; gap: var(--sp-4); padding: var(--sp-6); border-right: var(--fio); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo input, .campo textarea {
+      font: inherit; font-size: var(--fs-body); color: var(--ink); background: var(--branco);
+      border: var(--bd-forte); border-radius: var(--r-sm); padding: var(--sp-3) var(--sp-4); width: 100%;
+    }
+    .campo textarea { min-height: 140px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canais { display: grid; align-content: start; }
+    .canais > li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-3); align-items: center; padding: var(--sp-5); border-bottom: 1px solid var(--linha-forte); }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-weight: 600; text-underline-offset: 4px; overflow-wrap: anywhere; }
+    .contato__acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); padding: var(--sp-5); }
+    @media (max-width: 899px) {
+      .contato { grid-template-columns: minmax(0, 1fr); }
+      .form { border-right: 0; border-bottom: var(--fio); padding: var(--sp-5) var(--sp-4); }
+    }
+
+    /* ---------- Rodapé ---------- */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 112px; border-top: var(--fio); }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) {
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N2 · pílula inferior centralizada, estilo app) -->
+  <nav data-secao="nav" class="pilula">
+    <a href="#funcionalidades"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-favo"></use></svg><span data-c="funcionalidades.eyebrow"></span></a>
+    <a href="#como-funciona"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-revisao"></use></svg><span data-c="comoFunciona.eyebrow"></span></a>
+    <a href="#para-quem" data-opcional><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg><span data-c="paraQuem.eyebrow"></span></a>
+    <a href="#equipe"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-rainha"></use></svg><span data-c="equipe.eyebrow"></span></a>
+    <a href="#contato"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span data-c="contato.eyebrow"></span></a>
+    <a class="pilula__cta" data-c-href="cta.baixar.url"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg><span data-c="cta.baixar.texto"></span></a>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (funcionalidades em tabela periódica; título no vão da 1ª linha) -->
+    <section data-secao="hero" id="inicio">
+      <div class="dr-container">
+        <div class="topo">
+          <a href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+          <div class="topo__meta">
+            <span data-c="hero.eyebrow"></span>
+            <span data-c="rodape.endereco"></span>
+          </div>
+        </div>
+        <div class="tabela" data-tabela>
+          <div class="t-titulo">
+            <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+            <h1 class="dr-display" data-c="hero.titulo"></h1>
+          </div>
+          <ul class="t-func" data-c-lista="funcionalidades.itens">
+            <template>
+              <li class="el">
+                <div class="el__miolo">
+                  <div class="el__face el__frente" aria-hidden="true">
+                    <span class="el__num"><span data-num></span></span>
+                    <span class="el__simbolo" data-simbolo></span>
+                    <span class="el__nome" data-c="titulo"></span>
+                  </div>
+                  <div class="el__face el__verso">
+                    <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+                    <span class="el__nome" data-c="titulo"></span>
+                  </div>
+                </div>
+                <span class="el__botao" role="button" tabindex="0" aria-pressed="false"></span>
+                <p class="el__dica" role="tooltip" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+          <div class="t-sub">
+            <p data-c="hero.subtitulo"></p>
+            <div class="t-acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+          <div class="t-serie">
+            <span aria-hidden="true">↳</span>
+            <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+          </div>
+          <ul class="t-tec" data-c-lista="tecnologia.pilares">
+            <template>
+              <li class="el el--tec">
+                <div class="el__miolo">
+                  <div class="el__face el__frente" aria-hidden="true">
+                    <span class="el__num"><span data-num></span></span>
+                    <span class="el__simbolo" data-simbolo></span>
+                    <span class="el__nome" data-c="titulo"></span>
+                  </div>
+                  <div class="el__face el__verso">
+                    <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+                    <span class="el__nome" data-c="titulo"></span>
+                  </div>
+                </div>
+                <span class="el__botao" role="button" tabindex="0" aria-pressed="false"></span>
+                <p class="el__dica" role="tooltip" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+          <div class="fantasma f-a" aria-hidden="true"></div>
+          <div class="fantasma f-b" aria-hidden="true"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: prova -->
+    <section data-secao="prova">
+      <div class="dr-container">
+        <ul class="placar" data-entra data-c-lista="prova.stats">
+          <template>
+            <li>
+              <span class="dr-data placar__valor" data-c="valor"></span>
+              <span class="placar__rotulo" data-c="rotulo"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: problema -->
+    <section data-secao="problema">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div><span class="cabeca__n" data-n></span><p class="dr-eyebrow" data-c="problema.eyebrow"></p></div>
+          <div><h2 class="dr-h2" data-c="problema.titulo"></h2></div>
+        </header>
+        <div class="problema" data-entra>
+          <div class="estat">
+            <span class="dr-data estat__valor" data-c="problema.estatistica.valor"></span>
+            <p data-c="problema.estatistica.texto"></p>
+          </div>
+          <ul class="consequencias" data-c-lista="problema.consequencias">
+            <template>
+              <li>
+                <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+                <p class="dr-body-lg" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades (a legenda da tabela, com os mesmos símbolos) -->
+    <section data-secao="funcionalidades" id="funcionalidades">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div><span class="cabeca__n" data-n></span><p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p></div>
+          <div><h2 class="dr-h2" data-c="funcionalidades.titulo"></h2></div>
+        </header>
+        <ul class="legenda" data-entra data-c-lista="funcionalidades.itens">
+          <template>
+            <li>
+              <span class="legenda__sim" aria-hidden="true" data-simbolo></span>
+              <h3 class="dr-h4"><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg><span data-c="titulo"></span></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona (C6) -->
+    <section data-secao="como-funciona" id="como-funciona">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div><span class="cabeca__n" data-n></span><p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p></div>
+          <div><h2 class="dr-h2" data-c="comoFunciona.titulo"></h2></div>
+        </header>
+        <ol class="cards" data-entra data-c-lista="comoFunciona.passos">
+          <template>
+            <li class="card passo" data-tilt>
+              <span class="dr-data passo__numero" data-c="numero"></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <div class="passo__foto"><img data-c-src="imagem" data-c-alt="alt" alt="" width="393" height="869"></div>
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem (C6) -->
+    <section data-secao="para-quem" id="para-quem">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div><span class="cabeca__n" data-n></span><p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p></div>
+          <div><h2 class="dr-h2" data-c="paraQuem.titulo"></h2></div>
+        </header>
+        <ul class="cards" data-entra data-c-lista="paraQuem.perfis">
+          <template>
+            <li class="card" data-tilt>
+              <h3 class="dr-h3" data-c="titulo"></h3>
+              <p class="dr-body-lg" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia (a série da tabela, em legenda) -->
+    <section data-secao="tecnologia" id="tecnologia">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div><span class="cabeca__n" data-n></span><p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p></div>
+          <div><h2 class="dr-h2" data-c="tecnologia.titulo"></h2></div>
+        </header>
+        <p class="tec-texto" data-c="tecnologia.texto"></p>
+        <ul class="legenda legenda--tec" data-entra data-c-lista="tecnologia.pilares">
+          <template>
+            <li>
+              <span class="legenda__sim" aria-hidden="true" data-simbolo></span>
+              <h3 class="dr-h4"><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg><span data-c="titulo"></span></h3>
+              <p class="dr-body" data-c="texto"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe (C6) -->
+    <section data-secao="equipe" id="equipe">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div><span class="cabeca__n" data-n></span><p class="dr-eyebrow" data-c="equipe.eyebrow"></p></div>
+          <div><h2 class="dr-h2" data-c="equipe.titulo"></h2></div>
+        </header>
+        <p class="dr-body-lg origem" data-c="equipe.origem"></p>
+        <ul class="cards" data-entra data-c-lista="equipe.pessoas">
+          <template>
+            <li class="card pessoa" data-tilt>
+              <img data-c-src="foto" data-c-alt="alt" alt="" width="320" height="200">
+              <div>
+                <h3 class="dr-h4" data-c="nome"></h3>
+                <p class="pessoa__cargo" data-c="cargo"></p>
+              </div>
+            </li>
+          </template>
+        </ul>
+        <!-- Centelha só funciona no escuro: célula grafite -->
+        <ul class="apoios" data-c-lista="equipe.apoios">
+          <template>
+            <li class="apoio">
+              <img data-c-src="logo" data-c-alt="alt" alt="">
+              <span class="apoio__nome" data-c="nome"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento -->
+    <section data-secao="depoimento">
+      <div class="dr-container">
+        <figure class="citacao" data-entra>
+          <span class="citacao__aspas" aria-hidden="true">&ldquo;</span>
+          <div class="citacao__corpo">
+            <blockquote><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+            <figcaption>
+              <img data-c-src="depoimento.foto" alt="" width="56" height="56">
+              <span>
+                <span class="citacao__nome" data-c="depoimento.nome"></span><br>
+                <span class="citacao__local" data-c="depoimento.local"></span>
+              </span>
+            </figcaption>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" id="contato">
+      <div class="dr-container">
+        <header class="cabeca">
+          <div><span class="cabeca__n" data-n></span><p class="dr-eyebrow" data-c="contato.eyebrow"></p></div>
+          <div>
+            <h2 class="dr-h2" data-c="contato.titulo"></h2>
+            <p class="dr-body-lg" data-c="contato.texto"></p>
+          </div>
+        </header>
+        <div class="contato">
+          <form class="form" method="post" data-form-contato>
+            <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+            <div class="campo">
+              <label for="f-nome" data-c="contato.form.nome"></label>
+              <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+            </div>
+            <div class="campo">
+              <label for="f-email" data-c="contato.form.email"></label>
+              <input id="f-email" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="campo">
+              <label for="f-msg" data-c="contato.form.mensagem"></label>
+              <textarea id="f-msg" name="mensagem" required></textarea>
+            </div>
+            <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+          </form>
+          <div>
+            <ul class="canais">
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <a data-mailto data-c="contato.email"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+              </li>
+              <li>
+                <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+              </li>
+            </ul>
+            <div class="contato__acoes">
+              <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+              <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '../img/icones/sprite-icones.svg#';
+      var VAZIAS = ['a', 'o', 'as', 'os', 'e', 'de', 'da', 'do', 'das', 'dos', 'em', 'no', 'na', 'nos', 'nas',
+        'por', 'com', 'sem', 'seu', 'seus', 'sua', 'suas', 'um', 'uma', 'que', 'para'];
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+      function semAcento(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+
+      /* Símbolo de "elemento" a partir do título: inicial da primeira palavra
+         significativa + inicial da última (minúscula); se repetir, troca. */
+      function simbolos(titulos) {
+        var usados = {};
+        return titulos.map(function (t) {
+          var ps = semAcento(String(t)).toLowerCase().split(/[^a-z]+/).filter(function (p) {
+            return p.length > 2 && VAZIAS.indexOf(p) === -1;
+          });
+          if (!ps.length) ps = [semAcento(String(t)).toLowerCase()];
+          var a = ps[0].charAt(0).toUpperCase();
+          var candidatos = [];
+          if (ps.length > 1) candidatos.push(ps[ps.length - 1].charAt(0));
+          for (var i = 1; i < ps[0].length; i++) candidatos.push(ps[0].charAt(i));
+          var s = a + (candidatos[0] || '');
+          for (var j = 0; j < candidatos.length; j++) {
+            var tentativa = a + candidatos[j];
+            if (candidatos[j] !== a.toLowerCase() && !usados[tentativa]) { s = tentativa; break; }
+          }
+          usados[s] = true;
+          return s;
+        });
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            el.querySelectorAll('use[data-icone]').forEach(function (use) {
+              if (item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            });
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) {
+          if (email) a.setAttribute('href', 'mailto:' + email.v);
+        });
+        document.querySelectorAll('[data-ano]').forEach(function (el) {
+          el.textContent = '© ' + new Date().getFullYear();
+        });
+        document.querySelectorAll('[data-n]').forEach(function (el, i) {
+          el.textContent = String(i + 1).padStart(2, '0');
+          el.setAttribute('aria-hidden', 'true');
+        });
+
+        // Símbolos: um conjunto único para funcionalidades + pilares, em todas as listas.
+        var func = (DR.valor('funcionalidades.itens') || { v: [] }).v;
+        var tec = (DR.valor('tecnologia.pilares') || { v: [] }).v;
+        var sims = simbolos(func.map(function (i) { return v(i.titulo); }).concat(tec.map(function (i) { return v(i.titulo); })));
+        function preencher(seletor, desloc) {
+          document.querySelectorAll(seletor).forEach(function (lista) {
+            lista.querySelectorAll(':scope > [data-gerado]').forEach(function (li, i) {
+              var s = li.querySelector('[data-simbolo]');
+              if (s) s.textContent = sims[desloc + i];
+              var n = li.querySelector('[data-num]');
+              if (n) n.textContent = String(desloc + i + 1).padStart(2, '0');
+            });
+          });
+        }
+        preencher('[data-c-lista="funcionalidades.itens"]', 0);
+        preencher('[data-c-lista="tecnologia.pilares"]', func.length);
+
+        /* ---- Células: virar + tooltip (hover, foco, Enter/Espaço, toque) ---- */
+        var animar = false; // ligado só dentro do matchMedia sem movimento reduzido
+        var celulas = Array.prototype.slice.call(document.querySelectorAll('[data-tabela] .el'));
+        celulas.forEach(function (el, i) {
+          var botao = el.querySelector('.el__botao');
+          var dica = el.querySelector('.el__dica');
+          var nome = el.querySelector('.el__verso .el__nome');
+          var id = 'dica-' + i;
+          dica.id = id;
+          botao.setAttribute('aria-describedby', id);
+          botao.setAttribute('aria-label', nome ? nome.textContent : '');
+          el.setAttribute('data-virada', 'false');
+          el.setAttribute('data-dica', 'false');
+        });
+        function posicionarDica(el) {
+          var r = el.getBoundingClientRect();
+          el.classList.toggle('el--direita', r.left + r.width / 2 > window.innerWidth / 2);
+          el.classList.toggle('el--acima', r.bottom + 160 > window.innerHeight && r.top > 180);
+        }
+        function virar(el, sim) {
+          el.setAttribute('data-virada', sim ? 'true' : 'false');
+          var miolo = el.querySelector('.el__miolo');
+          if (animar && window.gsap) {
+            gsap.to(miolo, { rotationY: sim ? 180 : 0, duration: 0.55, ease: 'power3.inOut', overwrite: true });
+          } else {
+            miolo.style.transform = sim ? 'rotateY(180deg)' : '';
+          }
+        }
+        function dica(el, sim) {
+          if (sim) posicionarDica(el);
+          el.setAttribute('data-dica', sim ? 'true' : 'false');
+        }
+        var toque = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+        celulas.forEach(function (el) {
+          var botao = el.querySelector('.el__botao');
+          function fixada() { return botao.getAttribute('aria-pressed') === 'true'; }
+          function alternar() {
+            var sim = !fixada();
+            botao.setAttribute('aria-pressed', sim ? 'true' : 'false');
+            virar(el, sim);
+            dica(el, sim || document.activeElement === botao);
+          }
+          if (!toque) {
+            el.addEventListener('mouseenter', function () { virar(el, true); dica(el, true); });
+            el.addEventListener('mouseleave', function () {
+              if (!fixada()) virar(el, false);
+              if (document.activeElement !== botao) dica(el, false);
+            });
+          }
+          botao.addEventListener('click', alternar);
+          botao.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); alternar(); }
+            if (e.key === 'Escape') { dica(el, false); }
+          });
+          botao.addEventListener('focus', function () { dica(el, true); });
+          botao.addEventListener('blur', function () { dica(el, false); });
+        });
+
+        // N2: a pílula marca a seção visível.
+        var links = Array.prototype.slice.call(document.querySelectorAll('.pilula a[href^="#"]'));
+        if ('IntersectionObserver' in window) {
+          var io = new IntersectionObserver(function (entradas) {
+            entradas.forEach(function (e) {
+              if (!e.isIntersecting) return;
+              links.forEach(function (a) { a.setAttribute('aria-current', a.getAttribute('href') === '#' + e.target.id ? 'true' : 'false'); });
+            });
+          }, { rootMargin: '-45% 0px -50% 0px' });
+          links.forEach(function (a) { var s = document.querySelector(a.getAttribute('href')); if (s) io.observe(s); });
+        }
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          animar = true;
+          var miolos = celulas.map(function (el) { return el.querySelector('.el__miolo'); });
+
+          // A tabela se monta: cada elemento gira para a frente em sequência (≈1s);
+          // em seguida um elemento vira sozinho para mostrar o verso, e volta.
+          var tl = gsap.timeline();
+          tl.from(miolos, { rotationY: -90, duration: 0.45, ease: 'power2.out', stagger: 0.05 })
+            .from('.t-titulo > *, .t-sub, .t-serie', { y: 16, autoAlpha: 0, duration: 0.5, ease: 'power2.out', stagger: 0.06 }, 0.1)
+            .from('.fantasma', { scale: 0.8, duration: 0.4, ease: 'power2.out' }, 0.4);
+          var demo = celulas[3];
+          if (demo) {
+            tl.add(function () { if (demo.getAttribute('data-virada') === 'false') virar(demo, true); }, 0.75);
+            tl.add(function () { if (demo.querySelector('.el__botao').getAttribute('aria-pressed') !== 'true' && !demo.matches(':hover')) virar(demo, false); }, 3.4);
+          }
+
+          // Blocos das seções entram em linha, como linhas de tabela sendo preenchidas.
+          gsap.utils.toArray('[data-entra]').forEach(function (bloco) {
+            var filhos = bloco.matches('ul, ol') ? bloco.querySelectorAll(':scope > [data-gerado]') : [bloco];
+            gsap.from(filhos, {
+              y: 18, autoAlpha: 0, duration: 0.5, ease: 'power2.out', stagger: 0.07,
+              scrollTrigger: { trigger: bloco, start: 'top 85%', once: true }
+            });
+          });
+
+          // C6: tilt 3D sutil seguindo o ponteiro (só com mouse).
+          var tilts = [];
+          if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+            document.querySelectorAll('[data-tilt]').forEach(function (card) {
+              function mover(e) {
+                var r = card.getBoundingClientRect();
+                var x = (e.clientX - r.left) / r.width - 0.5;
+                var y = (e.clientY - r.top) / r.height - 0.5;
+                gsap.to(card, { rotationY: x * 7, rotationX: -y * 7, duration: 0.4, ease: 'power2.out' });
+              }
+              function sair() { gsap.to(card, { rotationY: 0, rotationX: 0, duration: 0.6, ease: 'power3.out' }); }
+              card.addEventListener('mousemove', mover);
+              card.addEventListener('mouseleave', sair);
+              tilts.push([card, mover, sair]);
+            });
+          }
+
+          return function () {
+            animar = false;
+            tilts.forEach(function (t) {
+              t[0].removeEventListener('mousemove', t[1]);
+              t[0].removeEventListener('mouseleave', t[2]);
+            });
+            celulas.forEach(function (el) {
+              el.querySelector('.el__miolo').style.transform = el.getAttribute('data-virada') === 'true' ? 'rotateY(180deg)' : '';
+            });
+          };
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

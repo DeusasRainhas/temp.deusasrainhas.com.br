@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="pt-BR" data-template="50">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 50 Arquivo</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       50 Arquivo · estrutural · N3 / C8 / R1
+       O site é um arquivo de aço... de madeira: cada seção é uma gaveta
+       com etiqueta, título e puxador. As gavetas abrem em acordeão com a
+       altura animada pelo GSAP (botão com aria-expanded / aria-controls).
+       Sem JS ou com movimento reduzido, todas ficam abertas e paradas;
+       com movimento, só a primeira (o hero) começa aberta.
+       - nada de opacity < 1 fora do gsap.matchMedia;
+       - canto inferior direito livre (pílula do switcher).
+       ================================================================= */
+
+    :root {
+      --nav-h: 72px;
+      --madeira: var(--terra);
+      --fio: 2px solid var(--terra-escura);
+      --vao: 10px;
+    }
+    @media (max-width: 767px) { :root { --nav-h: 64px; --vao: 6px; } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    img { height: auto; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
+    body { background: var(--creme-papel); }
+
+    /* ---------- N3: barra que se oculta ao descer e volta ao subir ---------- */
+    .barra {
+      position: fixed; inset: 0 0 auto 0; z-index: 60; height: var(--nav-h);
+      background: var(--creme); border-bottom: 3px solid var(--terra-escura);
+      transition: transform .32s ease;
+    }
+    .barra.oculta { transform: translateY(-100%); }
+    .barra__in { display: flex; align-items: center; gap: var(--sp-5); height: 100%; }
+    .marca img { width: 64px; height: 64px; }
+    .barra__links { display: flex; gap: var(--sp-2); margin-inline: auto; }
+    .barra__links a {
+      display: flex; align-items: center; gap: var(--sp-2); padding: 6px 10px;
+      font-family: var(--mono); font-size: var(--fs-eyebrow); font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--terra-escura); text-decoration: none; border: 1.5px solid transparent;
+    }
+    .barra__links a::before { content: ""; width: 10px; height: 6px; border: 1.5px solid currentColor; border-radius: 2px; }
+    .barra__links a:hover { border-color: var(--linha-forte); background: var(--branco); }
+    .barra .dr-btn { margin-left: auto; padding: 10px 18px; font-size: var(--fs-small); }
+    @media (max-width: 1099px) { .barra__links { display: none; } }
+    @media (max-width: 767px) { .marca img { width: 54px; height: 54px; } }
+    main { padding-top: calc(var(--nav-h) + var(--sp-5)); }
+
+    /* ---------- O gaveteiro ---------- */
+    .gaveteiro {
+      display: grid; gap: var(--vao); padding: var(--vao); background: var(--madeira);
+      border: 3px solid var(--terra-escura); border-bottom: 0; border-radius: 6px 6px 0 0;
+      counter-reset: gaveta;
+      box-shadow: inset 0 8px 0 var(--terra-escura);
+      padding-top: calc(var(--vao) + 8px);
+    }
+    .gaveta { counter-increment: gaveta; scroll-margin-top: calc(var(--nav-h) + var(--sp-3)); border: var(--fio); }
+    /* R1: faixas alternando creme e papel */
+    .gaveta:nth-child(odd) { background: var(--creme); }
+    .gaveta:nth-child(even) { background: var(--creme-papel); }
+
+    .gaveta__cabeca { font: inherit; }
+    .gaveta__frente {
+      all: unset; box-sizing: border-box; cursor: pointer; width: 100%;
+      display: grid; grid-template-columns: minmax(0, 280px) minmax(0, 1fr) auto; gap: var(--sp-5); align-items: center;
+      padding: var(--sp-4) var(--sp-5); min-height: 84px;
+      background: inherit; border-bottom: 2px solid transparent;
+    }
+    .gaveta__frente:hover { background: var(--mel-veu); }
+    .gaveta__frente:focus-visible { outline: 3px solid var(--petroleo); outline-offset: -5px; }
+    .gaveta__frente[aria-expanded="true"] { border-bottom-color: var(--terra-escura); }
+    /* porta-etiqueta: moldura com cartão branco */
+    .etiqueta {
+      display: flex; align-items: center; gap: var(--sp-3); padding: 6px 12px; min-height: 44px;
+      background: var(--branco); border: 2px solid var(--terra-escura); border-radius: 3px;
+      box-shadow: inset 0 0 0 3px var(--creme-papel), inset 0 0 0 4px var(--linha-forte);
+      font-family: var(--mono); font-size: var(--fs-eyebrow); font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--terra-escura);
+    }
+    .etiqueta::before { content: counter(gaveta, decimal-leading-zero); font-weight: 700; color: var(--petroleo); padding-right: var(--sp-3); border-right: 1px solid var(--linha-forte); }
+    .gaveta__titulo { font-family: var(--serif); font-weight: 500; font-size: clamp(20px, 2.1vw, 28px); line-height: 1.15; color: var(--terra-escura); letter-spacing: -.01em; }
+    .puxador { display: flex; align-items: center; gap: var(--sp-4); }
+    .puxador__barra {
+      width: 96px; height: 18px; border-radius: 9px; background: var(--grafite-suave);
+      box-shadow: inset 0 3px 0 rgba(255,255,255,.18), 0 2px 0 var(--terra-escura);
+      position: relative;
+    }
+    .puxador__barra::before, .puxador__barra::after { content: ""; position: absolute; top: -6px; width: 8px; height: 10px; background: var(--grafite); border-radius: 2px; }
+    .puxador__barra::before { left: 10px; } .puxador__barra::after { right: 10px; }
+    .puxador .dr-icone { color: var(--terra-escura); transition: transform .3s ease; }
+    .gaveta__frente[aria-expanded="true"] .puxador .dr-icone { transform: rotate(180deg); }
+    @media (max-width: 767px) {
+      .gaveta__frente { grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-2) var(--sp-3); padding: var(--sp-3); min-height: 0; }
+      .etiqueta { grid-column: 1; justify-self: start; min-height: 34px; }
+      .gaveta__titulo { grid-column: 1; font-size: 20px; }
+      .puxador { grid-column: 2; grid-row: 1 / 3; flex-direction: column; gap: var(--sp-2); }
+      .puxador__barra { width: 14px; height: 52px; }
+      .puxador__barra::before, .puxador__barra::after { display: none; }
+    }
+
+    .gaveta__corpo { overflow: hidden; }
+    .gaveta__conteudo { padding: var(--sp-7) var(--sp-6); }
+    @media (max-width: 767px) { .gaveta__conteudo { padding: var(--sp-5) var(--sp-4) var(--sp-6); } }
+    .intro { max-width: 60ch; margin-bottom: var(--sp-6); }
+
+    /* ---------- C8: fichas brancas com eyebrow e dado em destaque ---------- */
+    .fichas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-4); }
+    .ficha {
+      position: relative; background: var(--branco); border: 1px solid var(--linha-forte); border-radius: 2px;
+      padding: var(--sp-4) var(--sp-5) var(--sp-5); box-shadow: 0 2px 0 var(--linha);
+      background-image: repeating-linear-gradient(transparent 0 27px, var(--petroleo-veu) 27px 28px);
+      background-position: 0 58px; background-clip: padding-box;
+    }
+    .ficha::before { content: ""; position: absolute; left: 0; right: 0; top: 44px; height: 2px; background: var(--erro); opacity: 1; }
+    .ficha__olho { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); height: 28px; margin-bottom: var(--sp-5); }
+    .ficha__olho .dr-eyebrow { color: var(--terra); }
+    .ficha__olho .dr-icone { color: var(--petroleo); width: 22px; height: 22px; }
+    .ficha__dado { display: block; font-family: var(--sans); font-weight: 800; font-size: 22px; line-height: 1.25; color: var(--ink); margin-bottom: var(--sp-2); }
+    .ficha__dado--num { font-family: var(--mono); font-weight: 700; font-size: clamp(36px, 4vw, 54px); line-height: 1; color: var(--terra-escura); letter-spacing: -.04em; }
+    .ficha .dr-body { line-height: 28px; }
+    @media (max-width: 899px) { .fichas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 599px) { .fichas { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Hero (gaveta 01, aberta) ---------- */
+    .hero { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: var(--sp-7); align-items: center; }
+    .gaveta:first-child .gaveta__conteudo { padding-block: var(--sp-6); }
+    .hero .dr-display { font-size: clamp(40px, 4.4vw, 64px); line-height: .98; letter-spacing: -.03em; margin-bottom: var(--sp-5); }
+    .hero__sub { max-width: 44ch; margin-bottom: var(--sp-5); }
+    .hero__acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+    .hero__foto { position: relative; padding: var(--sp-3) var(--sp-3) var(--sp-5); background: var(--branco); border: 1px solid var(--linha-forte); transform: rotate(1.2deg); box-shadow: var(--sh-md); }
+    .hero__foto img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+    .hero__foto figcaption { margin-top: var(--sp-3); }
+    .hero__foto::before { content: ""; position: absolute; top: -10px; left: 50%; width: 90px; height: 22px; transform: translateX(-50%) rotate(-2deg); background: var(--mel-claro); border: 1px solid var(--mel-escuro); }
+    .placar { margin-top: var(--sp-6); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .placar .ficha { padding-bottom: var(--sp-4); }
+    .placar .ficha__olho { margin-bottom: var(--sp-3); }
+    .placar .ficha__dado--num { font-size: clamp(32px, 3.4vw, 44px); margin: 0; }
+    @media (max-width: 899px) {
+      .hero { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); }
+      .hero__foto { transform: none; }
+      .placar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 599px) { .placar { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); } .placar .ficha { padding-inline: var(--sp-3); } .placar .ficha__dado--num { font-size: 34px; } }
+
+    /* ---------- Problema ---------- */
+    .problema { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--sp-6); align-items: start; }
+    .problema .ficha__dado--num { font-size: clamp(72px, 8vw, 112px); }
+    .consequencias > li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--sp-4); padding-block: var(--sp-4); border-top: 1px dashed var(--linha-forte); }
+    .consequencias > li:first-child { border-top: 0; padding-top: 0; }
+    .consequencias .dr-icone { color: var(--erro); margin-top: 3px; }
+    @media (max-width: 899px) { .problema { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Como funciona ---------- */
+    .passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+    .passo { display: flex; flex-direction: column; }
+    .passo__foto { margin-top: auto; padding-top: var(--sp-4); height: 280px; overflow: hidden; display: flex; justify-content: center; }
+    .passo__foto img { width: 180px; height: auto; align-self: flex-start; border: 1px solid var(--linha-forte); border-bottom: 0; border-radius: 10px 10px 0 0; }
+    @media (max-width: 899px) { .passos { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Tecnologia ---------- */
+    .tec-texto { font-family: var(--serif); font-size: clamp(22px, 2.3vw, 28px); line-height: 1.35; color: var(--terra-escura); max-width: 44ch; margin-bottom: var(--sp-6); }
+    .fichas--quatro { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    @media (max-width: 1023px) { .fichas--quatro { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 599px) { .fichas--quatro { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Equipe ---------- */
+    .origem { font-size: var(--fs-body-lg); max-width: 60ch; margin-bottom: var(--sp-6); }
+    .pessoa img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 1px solid var(--linha-forte); margin-bottom: var(--sp-3); }
+    .pessoa .ficha__olho { margin-bottom: var(--sp-4); }
+    .apoios { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin-top: var(--sp-6); }
+    .apoio { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); border: 1px solid var(--linha-forte); background: var(--branco); }
+    .apoio[data-fundo="escuro"] { background: var(--grafite); border-color: var(--grafite); }
+    .apoio img { max-height: 44px; width: auto; max-width: 140px; }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .18em; text-transform: uppercase; color: var(--terra); }
+    .apoio[data-fundo="escuro"] .apoio__nome { color: var(--mel-claro); }
+
+    /* ---------- Depoimento ---------- */
+    .citacao { max-width: 880px; }
+    .citacao .dr-quote { font-size: clamp(24px, 3vw, 38px); line-height: 1.28; color: var(--terra-escura); }
+    .citacao figcaption { display: flex; align-items: center; gap: var(--sp-4); margin-top: var(--sp-5); }
+    .citacao figcaption img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 1px solid var(--linha-forte); }
+    .citacao__nome { font-weight: 700; color: var(--ink); }
+    .citacao__local { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); }
+
+    /* ---------- Contato ---------- */
+    .contato { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-6); align-items: start; }
+    .form { display: grid; gap: var(--sp-4); background-image: none; }
+    .form.ficha::before { display: none; }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo input, .campo textarea {
+      font: inherit; font-size: var(--fs-body); color: var(--ink); background: var(--creme);
+      border: 0; border-bottom: 2px solid var(--terra-escura); border-radius: 0; padding: var(--sp-3) var(--sp-2); width: 100%;
+    }
+    .campo textarea { min-height: 120px; resize: vertical; }
+    .form .dr-btn { justify-self: start; }
+    .canais > li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-3); align-items: center; padding-block: var(--sp-4); border-bottom: 1px dashed var(--linha-forte); }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-weight: 600; font-size: var(--fs-body-lg); text-underline-offset: 4px; overflow-wrap: anywhere; }
+    .contato__acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+    @media (max-width: 899px) { .contato { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Rodapé: o rodapé do móvel ---------- */
+    footer[data-secao="rodape"] { color: var(--tenue); padding-bottom: 96px; }
+    .rodape {
+      display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start;
+      background: var(--grafite); padding: var(--sp-6) var(--sp-6); border: 3px solid var(--terra-escura); border-top: 10px solid var(--terra-escura);
+    }
+    .rodape__wrap { padding-inline: 16px; max-width: 1200px; margin-inline: auto; }
+    @media (min-width: 768px) { .rodape__wrap { padding-inline: 32px; } }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    .pes { display: flex; justify-content: space-between; padding-inline: var(--sp-6); }
+    .pes i { width: 56px; height: 18px; background: var(--terra-escura); border-radius: 0 0 6px 6px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-4) auto 0; padding-inline: 32px; color: var(--suave); }
+    @media (max-width: 767px) {
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); padding: var(--sp-5) var(--sp-4); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N3 · barra que se oculta ao descer e reaparece ao subir) -->
+  <nav data-secao="nav" class="barra" data-barra>
+    <div class="dr-container barra__in">
+      <a class="marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+      <div class="barra__links">
+        <a href="#problema" data-c="problema.eyebrow"></a>
+        <a href="#funcionalidades" data-c="funcionalidades.eyebrow"></a>
+        <a href="#como-funciona" data-c="comoFunciona.eyebrow"></a>
+        <a href="#para-quem" data-c="paraQuem.eyebrow"></a>
+        <a href="#equipe" data-c="equipe.eyebrow"></a>
+        <a href="#contato" data-c="contato.eyebrow"></a>
+      </div>
+      <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="dr-container">
+      <div class="gaveteiro">
+
+        <!-- SEÇÃO: hero (gaveta 01, aberta por padrão; a prova vem dentro dela) -->
+        <section data-secao="hero" id="inicio" class="gaveta" data-gaveta>
+          <h2 class="gaveta__cabeca">
+            <button class="gaveta__frente" type="button" aria-expanded="true" aria-controls="g-hero" id="b-hero">
+              <span class="etiqueta" data-c="hero.eyebrow"></span>
+              <span class="gaveta__titulo" data-c="marca.nome"></span>
+              <span class="puxador" aria-hidden="true"><span class="puxador__barra"></span><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+            </button>
+          </h2>
+          <div class="gaveta__corpo" id="g-hero" role="region" aria-labelledby="b-hero">
+            <div class="gaveta__conteudo">
+              <div class="hero">
+                <div>
+                  <h1 class="dr-display" data-c="hero.titulo"></h1>
+                  <p class="dr-body-lg hero__sub" data-c="hero.subtitulo"></p>
+                  <div class="hero__acoes">
+                    <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+                    <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+                    <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+                  </div>
+                </div>
+                <figure class="hero__foto">
+                  <img data-c-src="hero.imagem" data-c-alt="hero.imagemAlt" alt="" width="1600" height="1000">
+                  <figcaption class="dr-caption" data-c="hero.imagemAlt"></figcaption>
+                </figure>
+              </div>
+              <!-- SEÇÃO: prova (fichas de números, guardadas na gaveta do hero) -->
+              <div data-secao="prova">
+                <ul class="fichas placar" data-c-lista="prova.stats">
+                  <template>
+                    <li class="ficha">
+                      <div class="ficha__olho"><span class="dr-eyebrow" data-c="rotulo"></span></div>
+                      <span class="ficha__dado ficha__dado--num" data-c="valor"></span>
+                    </li>
+                  </template>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SEÇÃO: problema -->
+        <section data-secao="problema" id="problema" class="gaveta" data-gaveta>
+          <h2 class="gaveta__cabeca">
+            <button class="gaveta__frente" type="button" aria-expanded="true" aria-controls="g-problema" id="b-problema">
+              <span class="etiqueta" data-c="problema.eyebrow"></span>
+              <span class="gaveta__titulo" data-c="problema.titulo"></span>
+              <span class="puxador" aria-hidden="true"><span class="puxador__barra"></span><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+            </button>
+          </h2>
+          <div class="gaveta__corpo" id="g-problema" role="region" aria-labelledby="b-problema">
+            <div class="gaveta__conteudo problema">
+              <div class="ficha">
+                <div class="ficha__olho"><span class="dr-eyebrow" data-c="problema.eyebrow"></span></div>
+                <span class="ficha__dado ficha__dado--num" data-c="problema.estatistica.valor"></span>
+                <p class="dr-body" data-c="problema.estatistica.texto"></p>
+              </div>
+              <ul class="consequencias" data-c-lista="problema.consequencias">
+                <template>
+                  <li>
+                    <svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg>
+                    <p class="dr-body-lg" data-c="texto"></p>
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- SEÇÃO: funcionalidades (C8) -->
+        <section data-secao="funcionalidades" id="funcionalidades" class="gaveta" data-gaveta>
+          <h2 class="gaveta__cabeca">
+            <button class="gaveta__frente" type="button" aria-expanded="true" aria-controls="g-func" id="b-func">
+              <span class="etiqueta" data-c="funcionalidades.eyebrow"></span>
+              <span class="gaveta__titulo" data-c="funcionalidades.titulo"></span>
+              <span class="puxador" aria-hidden="true"><span class="puxador__barra"></span><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+            </button>
+          </h2>
+          <div class="gaveta__corpo" id="g-func" role="region" aria-labelledby="b-func">
+            <div class="gaveta__conteudo">
+              <ul class="fichas" data-c-lista="funcionalidades.itens">
+                <template>
+                  <li class="ficha">
+                    <div class="ficha__olho"><span class="dr-eyebrow" data-indice></span><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg></div>
+                    <h3 class="ficha__dado" data-c="titulo"></h3>
+                    <p class="dr-body" data-c="texto"></p>
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- SEÇÃO: como-funciona -->
+        <section data-secao="como-funciona" id="como-funciona" class="gaveta" data-gaveta>
+          <h2 class="gaveta__cabeca">
+            <button class="gaveta__frente" type="button" aria-expanded="true" aria-controls="g-como" id="b-como">
+              <span class="etiqueta" data-c="comoFunciona.eyebrow"></span>
+              <span class="gaveta__titulo" data-c="comoFunciona.titulo"></span>
+              <span class="puxador" aria-hidden="true"><span class="puxador__barra"></span><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+            </button>
+          </h2>
+          <div class="gaveta__corpo" id="g-como" role="region" aria-labelledby="b-como">
+            <div class="gaveta__conteudo">
+              <ol class="passos" data-c-lista="comoFunciona.passos">
+                <template>
+                  <li class="ficha passo">
+                    <div class="ficha__olho"><span class="dr-eyebrow" data-c="numero"></span></div>
+                    <h3 class="ficha__dado" data-c="titulo"></h3>
+                    <p class="dr-body" data-c="texto"></p>
+                    <div class="passo__foto"><img data-c-src="imagem" data-c-alt="alt" alt="" width="393" height="869"></div>
+                  </li>
+                </template>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- SEÇÃO: para-quem -->
+        <section data-secao="para-quem" id="para-quem" class="gaveta" data-gaveta>
+          <h2 class="gaveta__cabeca">
+            <button class="gaveta__frente" type="button" aria-expanded="true" aria-controls="g-quem" id="b-quem">
+              <span class="etiqueta" data-c="paraQuem.eyebrow"></span>
+              <span class="gaveta__titulo" data-c="paraQuem.titulo"></span>
+              <span class="puxador" aria-hidden="true"><span class="puxador__barra"></span><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+            </button>
+          </h2>
+          <div class="gaveta__corpo" id="g-quem" role="region" aria-labelledby="b-quem">
+            <div class="gaveta__conteudo">
+              <ul class="fichas" data-c-lista="paraQuem.perfis">
+                <template>
+                  <li class="ficha">
+                    <div class="ficha__olho"><span class="dr-eyebrow" data-indice></span></div>
+                    <h3 class="ficha__dado" data-c="titulo"></h3>
+                    <p class="dr-body" data-c="texto"></p>
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- SEÇÃO: tecnologia -->
+        <section data-secao="tecnologia" id="tecnologia" class="gaveta" data-gaveta>
+          <h2 class="gaveta__cabeca">
+            <button class="gaveta__frente" type="button" aria-expanded="true" aria-controls="g-tec" id="b-tec">
+              <span class="etiqueta" data-c="tecnologia.eyebrow"></span>
+              <span class="gaveta__titulo" data-c="tecnologia.titulo"></span>
+              <span class="puxador" aria-hidden="true"><span class="puxador__barra"></span><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+            </button>
+          </h2>
+          <div class="gaveta__corpo" id="g-tec" role="region" aria-labelledby="b-tec">
+            <div class="gaveta__conteudo">
+              <p class="tec-texto" data-c="tecnologia.texto"></p>
+              <ul class="fichas fichas--quatro" data-c-lista="tecnologia.pilares">
+                <template>
+                  <li class="ficha">
+                    <div class="ficha__olho"><span class="dr-eyebrow" data-indice></span><svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg></div>
+                    <h3 class="ficha__dado" data-c="titulo"></h3>
+                    <p class="dr-body" data-c="texto"></p>
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- SEÇÃO: equipe -->
+        <section data-secao="equipe" id="equipe" class="gaveta" data-gaveta>
+          <h2 class="gaveta__cabeca">
+            <button class="gaveta__frente" type="button" aria-expanded="true" aria-controls="g-equipe" id="b-equipe">
+              <span class="etiqueta" data-c="equipe.eyebrow"></span>
+              <span class="gaveta__titulo" data-c="equipe.titulo"></span>
+              <span class="puxador" aria-hidden="true"><span class="puxador__barra"></span><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+            </button>
+          </h2>
+          <div class="gaveta__corpo" id="g-equipe" role="region" aria-labelledby="b-equipe">
+            <div class="gaveta__conteudo">
+              <p class="dr-body-lg origem" data-c="equipe.origem"></p>
+              <ul class="fichas" data-c-lista="equipe.pessoas">
+                <template>
+                  <li class="ficha pessoa">
+                    <div class="ficha__olho"><span class="dr-eyebrow" data-c="cargo"></span></div>
+                    <img data-c-src="foto" data-c-alt="alt" alt="" width="72" height="72">
+                    <h3 class="ficha__dado" data-c="nome"></h3>
+                  </li>
+                </template>
+              </ul>
+              <!-- Centelha só funciona no escuro: chip grafite -->
+              <ul class="apoios" data-c-lista="equipe.apoios">
+                <template>
+                  <li class="apoio">
+                    <img data-c-src="logo" data-c-alt="alt" alt="">
+                    <span class="apoio__nome" data-c="nome"></span>
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- SEÇÃO: depoimento -->
+        <section data-secao="depoimento" id="depoimento" class="gaveta" data-gaveta>
+          <h2 class="gaveta__cabeca">
+            <button class="gaveta__frente" type="button" aria-expanded="true" aria-controls="g-depo" id="b-depo">
+              <span class="etiqueta" data-c="depoimento.nome"></span>
+              <span class="gaveta__titulo" data-c="depoimento.local"></span>
+              <span class="puxador" aria-hidden="true"><span class="puxador__barra"></span><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+            </button>
+          </h2>
+          <div class="gaveta__corpo" id="g-depo" role="region" aria-labelledby="b-depo">
+            <div class="gaveta__conteudo">
+              <figure class="citacao">
+                <blockquote><p class="dr-quote" data-c="depoimento.citacao"></p></blockquote>
+                <figcaption>
+                  <img data-c-src="depoimento.foto" alt="" width="56" height="56">
+                  <span>
+                    <span class="citacao__nome" data-c="depoimento.nome"></span><br>
+                    <span class="citacao__local" data-c="depoimento.local"></span>
+                  </span>
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+        </section>
+
+        <!-- SEÇÃO: contato -->
+        <section data-secao="contato" id="contato" class="gaveta" data-gaveta>
+          <h2 class="gaveta__cabeca">
+            <button class="gaveta__frente" type="button" aria-expanded="true" aria-controls="g-contato" id="b-contato">
+              <span class="etiqueta" data-c="contato.eyebrow"></span>
+              <span class="gaveta__titulo" data-c="contato.titulo"></span>
+              <span class="puxador" aria-hidden="true"><span class="puxador__barra"></span><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+            </button>
+          </h2>
+          <div class="gaveta__corpo" id="g-contato" role="region" aria-labelledby="b-contato">
+            <div class="gaveta__conteudo">
+              <p class="dr-body-lg intro" data-c="contato.texto"></p>
+              <div class="contato">
+                <form class="form ficha" method="post" data-form-contato>
+                  <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+                  <div class="campo">
+                    <label for="f-nome" data-c="contato.form.nome"></label>
+                    <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+                  </div>
+                  <div class="campo">
+                    <label for="f-email" data-c="contato.form.email"></label>
+                    <input id="f-email" name="email" type="email" autocomplete="email" required>
+                  </div>
+                  <div class="campo">
+                    <label for="f-msg" data-c="contato.form.mensagem"></label>
+                    <textarea id="f-msg" name="mensagem" required></textarea>
+                  </div>
+                  <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+                </form>
+                <div>
+                  <ul class="canais">
+                    <li>
+                      <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                      <a data-mailto data-c="contato.email"></a>
+                    </li>
+                    <li>
+                      <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                      <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+                    </li>
+                    <li>
+                      <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                      <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+                    </li>
+                  </ul>
+                  <div class="contato__acoes">
+                    <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+                    <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- SEÇÃO: rodape (base do móvel; hidratar.js acrescenta o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="rodape__wrap">
+      <div class="rodape">
+        <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+        <div>
+          <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+          <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+          <p data-c="rodape.endereco"></p>
+        </div>
+        <div>
+          <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+          <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+        </div>
+      </div>
+      <div class="pes" aria-hidden="true"><i></i><i></i></div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '../img/icones/sprite-icones.svg#';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+            var ind = el.querySelector('[data-indice]');
+            if (ind) ind.textContent = String(i + 1).padStart(2, '0');
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) {
+          if (email) a.setAttribute('href', 'mailto:' + email.v);
+        });
+        document.querySelectorAll('[data-ano]').forEach(function (el) {
+          el.textContent = '© ' + new Date().getFullYear();
+        });
+
+        // N3: a barra some ao descer e volta ao subir (troca de estado).
+        var barra = document.querySelector('[data-barra]');
+        var ultimo = window.scrollY;
+        window.addEventListener('scroll', function () {
+          var y = window.scrollY;
+          if (Math.abs(y - ultimo) < 6) return;
+          barra.classList.toggle('oculta', y > ultimo && y > 120);
+          ultimo = y;
+        }, { passive: true });
+        barra.addEventListener('focusin', function () { barra.classList.remove('oculta'); });
+
+        /* ---- Gavetas ---- */
+        var animar = false;
+        var gavetas = Array.prototype.slice.call(document.querySelectorAll('[data-gaveta]')).map(function (sec) {
+          return { sec: sec, botao: sec.querySelector('.gaveta__frente'), corpo: sec.querySelector('.gaveta__corpo'), miolo: sec.querySelector('.gaveta__conteudo') };
+        });
+        function definir(g, aberta, instantaneo) {
+          g.botao.setAttribute('aria-expanded', aberta ? 'true' : 'false');
+          if (!animar || instantaneo || !window.gsap) {
+            if (window.gsap) gsap.killTweensOf([g.corpo, g.miolo]);
+            g.corpo.style.height = aberta ? '' : '0px';
+            g.corpo.style.visibility = aberta ? '' : 'hidden';
+            g.miolo.style.transform = '';
+            return;
+          }
+          gsap.killTweensOf([g.corpo, g.miolo]);
+          if (aberta) {
+            g.corpo.style.visibility = '';
+            gsap.fromTo(g.corpo, { height: g.corpo.offsetHeight }, {
+              height: 'auto', duration: 0.65, ease: 'power3.inOut',
+              onComplete: function () { g.corpo.style.height = ''; ScrollTrigger.refresh(); }
+            });
+            // o conteúdo "desliza para fora" como uma gaveta puxada
+            gsap.fromTo(g.miolo, { y: -28 }, { y: 0, duration: 0.65, ease: 'power3.out' });
+          } else {
+            gsap.to(g.corpo, {
+              height: 0, duration: 0.5, ease: 'power3.inOut',
+              onComplete: function () { g.corpo.style.visibility = 'hidden'; ScrollTrigger.refresh(); }
+            });
+            gsap.to(g.miolo, { y: -28, duration: 0.5, ease: 'power3.in' });
+          }
+        }
+        gavetas.forEach(function (g) {
+          g.botao.addEventListener('click', function () {
+            definir(g, g.botao.getAttribute('aria-expanded') !== 'true');
+          });
+        });
+        // Chegada com #ancora (galeria, outra página) ou troca de hash: abre a gaveta e rola até ela.
+        function abrirHash(instantaneo) {
+          var id = decodeURIComponent((location.hash || '').slice(1));
+          if (!id) return;
+          var g = gavetas.filter(function (x) { return x.sec.id === id; })[0];
+          if (!g) return;
+          if (g.botao.getAttribute('aria-expanded') !== 'true') definir(g, true, instantaneo);
+          requestAnimationFrame(function () { g.sec.scrollIntoView({ block: 'start' }); });
+        }
+        window.addEventListener('hashchange', function () { abrirHash(false); });
+        // Links para uma seção abrem a gaveta correspondente antes de rolar até ela.
+        document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+          a.addEventListener('click', function () {
+            var alvo = document.querySelector(a.getAttribute('href'));
+            var g = gavetas.filter(function (x) { return x.sec === alvo; })[0];
+            if (g && g.botao.getAttribute('aria-expanded') !== 'true') definir(g, true);
+          });
+        });
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          // Com movimento: o arquivo começa fechado, exceto a gaveta do hero.
+          animar = true;
+          gavetas.forEach(function (g, i) { definir(g, i === 0, true); });
+          abrirHash(true);
+
+          // As frentes das gavetas entram encaixando, de cima para baixo (≈0,9s).
+          gsap.from(gavetas.map(function (g) { return g.botao; }), {
+            x: -24, duration: 0.5, ease: 'power3.out', stagger: 0.05
+          });
+          gsap.from('.gaveta:first-child .gaveta__conteudo > *', { y: 18, autoAlpha: 0, duration: 0.6, ease: 'power2.out', stagger: 0.1, delay: 0.15 });
+
+          return function () {
+            animar = false;
+            gavetas.forEach(function (g) { definir(g, true, true); });
+          };
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

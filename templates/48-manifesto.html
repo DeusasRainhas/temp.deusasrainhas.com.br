@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="pt-BR" data-template="48">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deusas Rainhas · 48 Manifesto</title>
+  <link rel="icon" href="../img/logos/coroa-cor.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    /* =================================================================
+       48 Manifesto · estrutural · N1 / C4 / R5
+       O manifesto da marca em frases curtas (títulos de conteudo.js),
+       grandes e numerados. Ao rolar, as palavras acendem uma a uma, como
+       karaokê. A palavra "apagada" usa COR (terra clara), nunca opacidade,
+       e só existe dentro do gsap.matchMedia: sem movimento, tudo aceso.
+       - canto inferior direito livre (pílula do switcher).
+       ================================================================= */
+
+    :root {
+      --trilho-w: 88px;
+      --respiro: var(--sp-9);
+      --fio: 3px solid var(--terra-escura);
+      --hex-w: 340px;
+      --hex-h: calc(var(--hex-w) * .866);
+    }
+    @media (max-width: 899px) { :root { --trilho-w: 0px; --respiro: var(--sp-8); } }
+
+    h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    img { height: auto; }
+    a { color: var(--petroleo); }
+    a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--petroleo); outline-offset: 2px; }
+
+    /* ---------- N1: trilho lateral vertical com ícones do sprite ---------- */
+    .trilho {
+      position: fixed; z-index: 60; left: 0; top: 0; bottom: 0; width: var(--trilho-w);
+      background: var(--creme-papel); border-right: var(--fio);
+      display: flex; flex-direction: column; align-items: center; padding-block: var(--sp-4);
+    }
+    .trilho__marca img { width: 64px; height: 64px; }
+    .trilho__links { display: flex; flex-direction: column; gap: var(--sp-2); margin-block: auto; }
+    .trilho__links a, .trilho__cta {
+      position: relative; display: grid; place-items: center; width: 52px; height: 52px;
+      color: var(--terra-escura); text-decoration: none; border: 2px solid transparent;
+    }
+    .trilho__links a:hover, .trilho__links a:focus-visible { border-color: var(--terra-escura); background: var(--creme); }
+    .trilho__links a[aria-current="true"] { background: var(--mel); border-color: var(--terra-escura); }
+    .trilho__dica {
+      display: none; position: absolute; left: calc(100% + 14px); top: 50%; transform: translateY(-50%);
+      white-space: nowrap; padding: 6px 10px; background: var(--grafite); color: var(--creme);
+      font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase;
+    }
+    .trilho__links a:hover .trilho__dica, .trilho__links a:focus-visible .trilho__dica { display: block; }
+    .trilho__cta { background: var(--mel); border-color: var(--terra-escura); }
+    .trilho__cta:hover { background: var(--mel-escuro); }
+    @media (max-width: 899px) {
+      .trilho {
+        position: sticky; top: 0; bottom: auto; width: 100%; height: 64px; flex-direction: row;
+        padding: 0 var(--sp-3); gap: var(--sp-2); border-right: 0; border-bottom: var(--fio);
+      }
+      .trilho__marca img { width: 52px; height: 52px; }
+      .trilho__links { flex-direction: row; margin: 0 0 0 auto; gap: 0; }
+      .trilho__links a, .trilho__cta { width: 40px; height: 40px; }
+      .trilho__cta { display: none; }
+      .trilho__dica { display: none !important; }
+    }
+
+    main, footer[data-secao="rodape"] { margin-left: var(--trilho-w); }
+    main > section { padding-block: var(--respiro); scroll-margin-top: 72px; }
+
+    /* ---------- R5: favo claro em seções alternadas (texto sempre sobre placa creme) ---------- */
+    .favo { background: var(--creme) url(../img/padroes/favo-claro.svg); }
+    .placa { background: var(--creme); border: var(--fio); padding: var(--sp-7); }
+    @media (max-width: 767px) { .placa { padding: var(--sp-5) var(--sp-4); } }
+
+    /* ---------- Karaokê: as palavras ---------- */
+    .k-palavra { transition: none; }
+    .k-palavra.k-atual { box-shadow: inset 0 -.14em 0 var(--mel); }
+
+    /* ---------- Hero: o manifesto ---------- */
+    main > section[data-secao="hero"] { padding-block: var(--sp-7) var(--sp-8); min-height: 100vh; display: flex; align-items: center; }
+    .hero { width: 100%; }
+    .hero__topo { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--sp-3); padding-bottom: var(--sp-4); border-bottom: var(--fio); margin-bottom: var(--sp-6); }
+    .hero__topo span { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .18em; text-transform: uppercase; color: var(--terra); }
+    .manifesto { counter-reset: verso; display: grid; gap: var(--sp-3); }
+    .verso {
+      counter-increment: verso; display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: baseline;
+      font-family: var(--serif); font-weight: 500; color: var(--terra-escura);
+      font-size: clamp(34px, 4.9vw, 74px); line-height: 1.02; letter-spacing: -.025em;
+    }
+    .verso::before {
+      content: counter(verso, decimal-leading-zero); font-family: var(--mono); font-size: 13px; font-weight: 500;
+      letter-spacing: .1em; color: var(--petroleo); transform: translateY(-.4em);
+    }
+    .verso > span::after { content: ""; display: inline-block; width: .22em; height: .22em; margin-left: .12em; background: var(--mel); }
+    .hero__pe { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 0 var(--sp-6); align-items: center; margin-top: var(--sp-7); padding-top: var(--sp-5); border-top: var(--fio); }
+    .hero__pe p { grid-column: 2; max-width: 48ch; }
+    .hero__acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+    .hero__acoes .dr-btn { border-radius: 0; border: 2px solid var(--terra-escura); }
+    @media (max-width: 899px) {
+      main > section[data-secao="hero"] { min-height: 0; padding-top: var(--sp-6); }
+      .verso { grid-template-columns: 32px minmax(0, 1fr); }
+      .hero__pe { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+      .hero__pe p { grid-column: 1; }
+    }
+
+    /* ---------- Cabeça de seção ---------- */
+    .cabeca { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: var(--sp-6); align-items: baseline; margin-bottom: var(--sp-7); }
+    .cabeca .dr-eyebrow { padding-top: var(--sp-2); border-top: var(--fio); }
+    .cabeca .dr-h2 { font-size: clamp(32px, 4vw, 54px); line-height: 1.05; letter-spacing: -.02em; }
+    .cabeca .dr-body-lg { margin-top: var(--sp-3); max-width: 56ch; }
+    @media (max-width: 767px) { .cabeca { grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); } }
+
+    /* ---------- Prova ---------- */
+    .placar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: var(--fio); }
+    .placar > li { padding: var(--sp-5); border-left: var(--fio); }
+    .placar > li:first-child { border-left: 0; }
+    .placar__valor { display: block; font-family: var(--serif); font-weight: 500; font-size: clamp(48px, 5vw, 72px); line-height: 1; color: var(--terra-escura); letter-spacing: -.03em; }
+    .placar__rotulo { display: block; margin-top: var(--sp-3); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .14em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    @media (max-width: 767px) {
+      .placar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .placar > li:nth-child(3) { border-left: 0; }
+      .placar > li:nth-child(n+3) { border-top: var(--fio); }
+      .placar > li { padding: var(--sp-4); }
+    }
+
+    /* ---------- Problema ---------- */
+    .problema { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--sp-7); align-items: start; }
+    .problema__valor { display: block; font-family: var(--mono); font-weight: 700; font-size: clamp(80px, 9vw, 132px); line-height: .85; color: var(--terra-escura); letter-spacing: -.06em; }
+    .problema__texto { margin-top: var(--sp-4); }
+    .consequencias { counter-reset: c; }
+    .consequencias > li { counter-increment: c; display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: var(--sp-4); padding-block: var(--sp-4); border-top: 1px solid var(--linha-forte); }
+    .consequencias > li::before { content: counter(c, lower-roman) "."; font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--erro); }
+    .consequencias p { font-family: var(--serif); font-size: clamp(20px, 2vw, 26px); line-height: 1.3; color: var(--ink); }
+    @media (max-width: 899px) { .problema { grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); } }
+
+    /* ---------- C4: hexágonos (clip-path), conteúdo centralizado ---------- */
+    .hexes { display: grid; grid-template-columns: repeat(3, calc(var(--hex-w) * .75)); grid-auto-rows: var(--hex-h); padding-right: calc(var(--hex-w) * .25); padding-bottom: calc(var(--hex-h) / 2); justify-content: center; }
+    .hex { position: relative; width: var(--hex-w); height: var(--hex-h); background: var(--terra-escura); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+    .hexes > .hex:nth-child(3n+2) { transform: translateY(50%); }
+    .hex__in {
+      position: absolute; inset: 4px; background: var(--creme-papel);
+      clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+      padding: var(--sp-4) 62px; gap: var(--sp-2);
+    }
+    .hexes > .hex:nth-child(4n+1) .hex__in { background: var(--mel-veu); }
+    .hex .dr-icone { color: var(--petroleo); width: 30px; height: 30px; }
+    .hex .dr-h4 { font-size: 18px; line-height: 1.2; }
+    .hex .dr-body { font-size: 14px; line-height: 1.45; }
+    .hexes--quatro { grid-template-columns: repeat(4, calc(var(--hex-w) * .75)); }
+    .hexes--quatro > .hex:nth-child(3n+2) { transform: none; }
+    .hexes--quatro > .hex:nth-child(even) { transform: translateY(50%); }
+    .hexes--quatro .hex__in { background: var(--creme-papel); }
+    .hexes--quatro > .hex:nth-child(odd) .hex__in { background: var(--creme); }
+    @media (max-width: 1279px) { .hexes--quatro { --hex-w: 300px; } }
+    @media (max-width: 1099px) {
+      .hexes, .hexes--quatro { grid-template-columns: repeat(2, calc(var(--hex-w) * .75)); }
+      .hexes > .hex:nth-child(n) { transform: none; }
+      .hexes > .hex:nth-child(even) { transform: translateY(50%); }
+    }
+    @media (max-width: 767px) {
+      .hexes, .hexes--quatro { --hex-w: min(100%, 340px); grid-template-columns: minmax(0, 1fr); grid-auto-rows: auto; padding: 0; justify-items: center; gap: var(--sp-2); }
+      .hexes > .hex:nth-child(n) { transform: none; width: min(100%, 340px); height: auto; aspect-ratio: 1 / .866; }
+    }
+
+    /* ---------- Como funciona ---------- */
+    .passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-6); }
+    .passo__numero { display: block; font-family: var(--serif); font-size: 56px; line-height: 1; color: var(--mel-escuro); }
+    .passo .dr-h4 { margin-block: var(--sp-3) var(--sp-2); }
+    .passo img { margin-top: var(--sp-5); width: 100%; max-width: 220px; max-height: 340px; object-fit: cover; object-position: top; border: var(--fio); background: var(--creme-papel); }
+    @media (max-width: 899px) { .passos { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Para quem: três versos ---------- */
+    .perfis > li { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--sp-6); padding-block: var(--sp-5); border-top: var(--fio); align-items: baseline; }
+    .perfis > li:last-child { border-bottom: var(--fio); }
+    .perfil .dr-h3 { font-family: var(--serif); font-weight: 500; font-size: clamp(28px, 3vw, 40px); color: var(--terra-escura); letter-spacing: -.02em; }
+    @media (max-width: 767px) { .perfis > li { grid-template-columns: minmax(0, 1fr); gap: var(--sp-2); } }
+
+    /* ---------- Tecnologia ---------- */
+    .tec-texto { font-family: var(--serif); font-size: clamp(22px, 2.4vw, 30px); line-height: 1.35; color: var(--terra-escura); max-width: 40ch; margin: 0 auto var(--sp-7); text-align: center; }
+
+    /* ---------- Equipe ---------- */
+    .origem { font-size: var(--fs-body-lg); max-width: 60ch; margin-bottom: var(--sp-7); }
+    .pessoas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-6); }
+    .pessoa { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
+    .pessoa img { width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: var(--fio); }
+    .pessoa__cargo { margin-top: var(--sp-1); font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .1em; text-transform: uppercase; color: var(--terra); line-height: 1.5; }
+    .apoios { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin-top: var(--sp-7); padding-top: var(--sp-6); border-top: var(--fio); }
+    .apoio { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); border: 2px solid var(--linha-forte); background: var(--branco); }
+    .apoio[data-fundo="escuro"] { background: var(--grafite); border-color: var(--grafite); }
+    .apoio img { max-height: 44px; width: auto; max-width: 140px; }
+    .apoio__nome { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .18em; text-transform: uppercase; color: var(--terra); }
+    .apoio[data-fundo="escuro"] .apoio__nome { color: var(--mel-claro); }
+    @media (max-width: 899px) { .pessoas { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); } }
+
+    /* ---------- Depoimento: mais um verso do manifesto ---------- */
+    .citacao { max-width: 960px; }
+    .citacao .dr-quote { font-size: clamp(30px, 4vw, 56px); line-height: 1.15; color: var(--terra-escura); letter-spacing: -.015em; }
+    .citacao figcaption { display: flex; align-items: center; gap: var(--sp-4); margin-top: var(--sp-6); }
+    .citacao figcaption img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: var(--fio); }
+    .citacao__nome { font-weight: 700; color: var(--ink); }
+    .citacao__local { font-family: var(--mono); font-size: var(--fs-eyebrow); letter-spacing: .12em; text-transform: uppercase; color: var(--terra); }
+
+    /* ---------- Contato ---------- */
+    .contato { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-7); }
+    .form { display: grid; gap: var(--sp-4); }
+    .campo { display: grid; gap: var(--sp-2); }
+    .campo label { font-weight: 600; font-size: var(--fs-small); color: var(--ink); }
+    .campo input, .campo textarea {
+      font: inherit; font-size: var(--fs-body); color: var(--ink); background: var(--branco);
+      border: 2px solid var(--terra-escura); border-radius: 0; padding: var(--sp-3) var(--sp-4); width: 100%;
+    }
+    .campo textarea { min-height: 140px; resize: vertical; }
+    .form .dr-btn { justify-self: start; border-radius: 0; border: 2px solid var(--terra-escura); }
+    .canais > li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-3); align-items: center; padding-block: var(--sp-4); border-top: 1px solid var(--linha-forte); }
+    .canais .dr-icone { color: var(--petroleo); }
+    .canais a { font-weight: 600; font-size: var(--fs-body-lg); text-underline-offset: 4px; overflow-wrap: anywhere; }
+    .contato__acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+    .contato__acoes .dr-btn { border-radius: 0; border: 2px solid var(--terra-escura); }
+    @media (max-width: 899px) { .contato { grid-template-columns: minmax(0, 1fr); } }
+
+    /* ---------- Rodapé ---------- */
+    footer[data-secao="rodape"] { background: var(--grafite); color: var(--tenue); padding-block: var(--sp-7) 96px; }
+    .rodape { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-6); align-items: start; }
+    .rodape img { width: 72px; height: 72px; }
+    .rodape p { font-size: var(--fs-small); line-height: 1.7; }
+    .rodape__razao { color: var(--creme); font-weight: 600; }
+    .rodape a { color: var(--creme); text-underline-offset: 3px; }
+    footer > [data-aviso-provisorio] { max-width: 1200px; margin: var(--sp-5) auto 0; padding-inline: 32px; color: var(--tenue); }
+    @media (max-width: 767px) {
+      .rodape { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+      footer > [data-aviso-provisorio] { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SEÇÃO: nav (N1 · trilho lateral vertical com ícones do sprite) -->
+  <nav data-secao="nav" class="trilho">
+    <a class="trilho__marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
+    <div class="trilho__links">
+      <a href="#problema"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-alerta"></use></svg><span class="dr-sr-only" data-c="problema.eyebrow"></span><span class="trilho__dica" aria-hidden="true" data-c="problema.eyebrow"></span></a>
+      <a href="#funcionalidades"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-favo"></use></svg><span class="dr-sr-only" data-c="funcionalidades.eyebrow"></span><span class="trilho__dica" aria-hidden="true" data-c="funcionalidades.eyebrow"></span></a>
+      <a href="#como-funciona"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-revisao"></use></svg><span class="dr-sr-only" data-c="comoFunciona.eyebrow"></span><span class="trilho__dica" aria-hidden="true" data-c="comoFunciona.eyebrow"></span></a>
+      <a href="#para-quem"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-abelha"></use></svg><span class="dr-sr-only" data-c="paraQuem.eyebrow"></span><span class="trilho__dica" aria-hidden="true" data-c="paraQuem.eyebrow"></span></a>
+      <a href="#tecnologia"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-drone"></use></svg><span class="dr-sr-only" data-c="tecnologia.eyebrow"></span><span class="trilho__dica" aria-hidden="true" data-c="tecnologia.eyebrow"></span></a>
+      <a href="#equipe"><svg class="dr-icone" aria-hidden="true"><use href="../img/icones/sprite-icones.svg#dr-rainha"></use></svg><span class="dr-sr-only" data-c="equipe.eyebrow"></span><span class="trilho__dica" aria-hidden="true" data-c="equipe.eyebrow"></span></a>
+      <a href="#contato"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="dr-sr-only" data-c="contato.eyebrow"></span><span class="trilho__dica" aria-hidden="true" data-c="contato.eyebrow"></span></a>
+    </div>
+    <a class="trilho__cta" data-c-href="cta.baixar.url"><svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg><span class="dr-sr-only" data-c="cta.baixar.texto"></span></a>
+  </nav>
+
+  <main>
+
+    <!-- SEÇÃO: hero (o manifesto da marca em frases curtas, palavra a palavra) -->
+    <section data-secao="hero" id="inicio" data-hero>
+      <div class="dr-container hero">
+        <div class="hero__topo">
+          <p class="dr-eyebrow" data-c="hero.eyebrow"></p>
+          <span data-c="rodape.endereco"></span>
+        </div>
+        <div class="manifesto">
+          <h1 class="verso" data-karaoke><span data-c="hero.titulo"></span></h1>
+          <p class="verso" data-karaoke><span data-c="problema.titulo"></span></p>
+          <p class="verso" data-karaoke><span data-c="tecnologia.titulo"></span></p>
+          <p class="verso" data-karaoke><span data-c="equipe.titulo"></span></p>
+        </div>
+        <div class="hero__pe">
+          <p class="dr-body-lg" data-c="hero.subtitulo"></p>
+          <div class="hero__acoes">
+            <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+            <a class="dr-btn dr-btn--secundario" target="_blank" rel="noopener" data-c="cta.falar.texto" data-c-href="cta.falar.url"></a>
+            <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: prova (sobre favo, numa placa creme) -->
+    <section data-secao="prova" class="favo">
+      <div class="dr-container">
+        <div class="placa">
+          <ul class="placar" data-c-lista="prova.stats">
+            <template>
+              <li>
+                <span class="placar__valor" data-c="valor"></span>
+                <span class="placar__rotulo" data-c="rotulo"></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: problema -->
+    <section data-secao="problema" id="problema">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="problema.eyebrow"></p>
+          <h2 class="dr-h2" data-karaoke data-c="problema.titulo"></h2>
+        </header>
+        <div class="problema">
+          <div>
+            <span class="problema__valor" data-c="problema.estatistica.valor"></span>
+            <p class="dr-body-lg problema__texto" data-c="problema.estatistica.texto"></p>
+          </div>
+          <ul class="consequencias" data-c-lista="problema.consequencias">
+            <template>
+              <li><p data-c="texto"></p></li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: funcionalidades (C4 · favo de hexágonos) -->
+    <section data-secao="funcionalidades" id="funcionalidades" class="favo">
+      <div class="dr-container">
+        <div class="placa">
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="funcionalidades.eyebrow"></p>
+            <h2 class="dr-h2" data-karaoke data-c="funcionalidades.titulo"></h2>
+          </header>
+          <ul class="hexes" data-c-lista="funcionalidades.itens">
+            <template>
+              <li class="hex">
+                <div class="hex__in">
+                  <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+                  <h3 class="dr-h4" data-c="titulo"></h3>
+                  <p class="dr-body" data-c="texto"></p>
+                </div>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: como-funciona -->
+    <section data-secao="como-funciona" id="como-funciona">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="comoFunciona.eyebrow"></p>
+          <h2 class="dr-h2" data-karaoke data-c="comoFunciona.titulo"></h2>
+        </header>
+        <ol class="passos" data-c-lista="comoFunciona.passos">
+          <template>
+            <li class="passo">
+              <span class="passo__numero" data-c="numero"></span>
+              <h3 class="dr-h4" data-c="titulo"></h3>
+              <p class="dr-body" data-c="texto"></p>
+              <img data-c-src="imagem" data-c-alt="alt" alt="" width="393" height="869">
+            </li>
+          </template>
+        </ol>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: para-quem -->
+    <section data-secao="para-quem" id="para-quem" class="favo">
+      <div class="dr-container">
+        <div class="placa">
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="paraQuem.eyebrow"></p>
+            <h2 class="dr-h2" data-karaoke data-c="paraQuem.titulo"></h2>
+          </header>
+          <ul class="perfis" data-c-lista="paraQuem.perfis">
+            <template>
+              <li class="perfil">
+                <h3 class="dr-h3" data-c="titulo"></h3>
+                <p class="dr-body-lg" data-c="texto"></p>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: tecnologia (C4 · quatro hexágonos em zigue-zague) -->
+    <section data-secao="tecnologia" id="tecnologia">
+      <div class="dr-container">
+        <header class="cabeca">
+          <p class="dr-eyebrow" data-c="tecnologia.eyebrow"></p>
+          <h2 class="dr-h2" data-karaoke data-c="tecnologia.titulo"></h2>
+        </header>
+        <p class="tec-texto" data-c="tecnologia.texto"></p>
+        <ul class="hexes hexes--quatro" data-c-lista="tecnologia.pilares">
+          <template>
+            <li class="hex">
+              <div class="hex__in">
+                <svg class="dr-icone" aria-hidden="true"><use data-icone></use></svg>
+                <h3 class="dr-h4" data-c="titulo"></h3>
+                <p class="dr-body" data-c="texto"></p>
+              </div>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: equipe -->
+    <section data-secao="equipe" id="equipe" class="favo">
+      <div class="dr-container">
+        <div class="placa">
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
+            <h2 class="dr-h2" data-karaoke data-c="equipe.titulo"></h2>
+          </header>
+          <p class="dr-body-lg origem" data-c="equipe.origem"></p>
+          <ul class="pessoas" data-c-lista="equipe.pessoas">
+            <template>
+              <li class="pessoa">
+                <img data-c-src="foto" data-c-alt="alt" alt="" width="80" height="80">
+                <div>
+                  <h3 class="dr-h4" data-c="nome"></h3>
+                  <p class="pessoa__cargo" data-c="cargo"></p>
+                </div>
+              </li>
+            </template>
+          </ul>
+          <!-- Centelha só funciona no escuro: chip grafite -->
+          <ul class="apoios" data-c-lista="equipe.apoios">
+            <template>
+              <li class="apoio">
+                <img data-c-src="logo" data-c-alt="alt" alt="">
+                <span class="apoio__nome" data-c="nome"></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: depoimento (a voz do campo como mais um verso) -->
+    <section data-secao="depoimento">
+      <div class="dr-container">
+        <figure class="citacao">
+          <blockquote><p class="dr-quote" data-karaoke data-c="depoimento.citacao"></p></blockquote>
+          <figcaption>
+            <img data-c-src="depoimento.foto" alt="" width="56" height="56">
+            <span>
+              <span class="citacao__nome" data-c="depoimento.nome"></span><br>
+              <span class="citacao__local" data-c="depoimento.local"></span>
+            </span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: contato -->
+    <section data-secao="contato" id="contato" class="favo">
+      <div class="dr-container">
+        <div class="placa">
+          <header class="cabeca">
+            <p class="dr-eyebrow" data-c="contato.eyebrow"></p>
+            <div>
+              <h2 class="dr-h2" data-karaoke data-c="contato.titulo"></h2>
+              <p class="dr-body-lg" data-c="contato.texto"></p>
+            </div>
+          </header>
+          <div class="contato">
+            <form class="form" method="post" data-form-contato>
+              <span class="dr-sr-only" data-c="contato.formEndpoint"></span>
+              <div class="campo">
+                <label for="f-nome" data-c="contato.form.nome"></label>
+                <input id="f-nome" name="nome" type="text" autocomplete="name" required>
+              </div>
+              <div class="campo">
+                <label for="f-email" data-c="contato.form.email"></label>
+                <input id="f-email" name="email" type="email" autocomplete="email" required>
+              </div>
+              <div class="campo">
+                <label for="f-msg" data-c="contato.form.mensagem"></label>
+                <textarea id="f-msg" name="mensagem" required></textarea>
+              </div>
+              <button class="dr-btn dr-btn--primario" type="submit" data-c="contato.form.enviar"></button>
+            </form>
+            <div>
+              <ul class="canais">
+                <li>
+                  <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  <a data-mailto data-c="contato.email"></a>
+                </li>
+                <li>
+                  <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                  <a target="_blank" rel="noopener" data-c="contato.whatsapp" data-c-href="contato.whatsappUrl"></a>
+                </li>
+                <li>
+                  <svg class="dr-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                  <a target="_blank" rel="noopener" data-c="contato.instagram" data-c-href="contato.instagramUrl"></a>
+                </li>
+              </ul>
+              <div class="contato__acoes">
+                <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
+                <a class="dr-btn dr-btn--secundario" hidden data-c="cta.ios.texto" data-c-href="cta.ios.url"></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
+  <footer data-secao="rodape">
+    <div class="dr-container rodape">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
+      <div>
+        <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
+        <p data-c="rodape.endereco"></p>
+      </div>
+      <div>
+        <p><a data-c="rodape.privacidade.texto" data-c-href="rodape.privacidade.url"></a></p>
+        <p><span data-ano></span> <span data-c="rodape.direitos"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="../js/conteudo.js"></script>
+  <script src="../js/hidratar.js"></script>
+  <script src="../js/catalogo.js"></script>
+  <script src="../js/switcher.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var SPRITE = '../img/icones/sprite-icones.svg#';
+      function v(x) { return x && typeof x === 'object' && 'v' in x ? x.v : x; }
+
+      /* Quebra o texto de um elemento em <span class="k-palavra">, preservando espaços.
+         Estrutura apenas: sem cor nem movimento aqui. */
+      function dividirPalavras(el) {
+        var alvo = el.querySelector(':scope > span') || el;
+        var texto = alvo.textContent;
+        alvo.textContent = '';
+        var palavras = [];
+        texto.split(/(\s+)/).forEach(function (p) {
+          if (!p) return;
+          if (/^\s+$/.test(p)) { alvo.appendChild(document.createTextNode(' ')); return; }
+          var s = document.createElement('span');
+          s.className = 'k-palavra';
+          s.textContent = p;
+          alvo.appendChild(s);
+          palavras.push(s);
+        });
+        return palavras;
+      }
+
+      document.addEventListener('conteudo:pronto', function () {
+        /* ---- Ligações que não são movimento (rodam sempre) ---- */
+        document.querySelectorAll('[data-c-lista]').forEach(function (lista) {
+          var r = DR.valor(lista.getAttribute('data-c-lista'));
+          var itens = r && Array.isArray(r.v) ? r.v : [];
+          lista.querySelectorAll(':scope > [data-gerado]').forEach(function (el, i) {
+            var item = itens[i] || {};
+            var use = el.querySelector('use[data-icone]');
+            if (use && item.icone) use.setAttribute('href', SPRITE + v(item.icone));
+            if (item.fundo) el.setAttribute('data-fundo', v(item.fundo));
+          });
+        });
+        var form = document.querySelector('[data-form-contato]');
+        var endpoint = DR.valor('contato.formEndpoint');
+        if (form && endpoint) form.setAttribute('action', endpoint.v);
+        var email = DR.valor('contato.email');
+        document.querySelectorAll('[data-mailto]').forEach(function (a) {
+          if (email) a.setAttribute('href', 'mailto:' + email.v);
+        });
+        document.querySelectorAll('[data-ano]').forEach(function (el) {
+          el.textContent = '© ' + new Date().getFullYear();
+        });
+
+        // N1: o ícone da seção visível fica aceso no trilho.
+        var links = Array.prototype.slice.call(document.querySelectorAll('.trilho__links a'));
+        if ('IntersectionObserver' in window) {
+          var io = new IntersectionObserver(function (entradas) {
+            entradas.forEach(function (e) {
+              if (!e.isIntersecting) return;
+              links.forEach(function (a) {
+                a.setAttribute('aria-current', a.getAttribute('href') === '#' + e.target.id ? 'true' : 'false');
+              });
+            });
+          }, { rootMargin: '-45% 0px -50% 0px' });
+          links.forEach(function (a) {
+            var alvo = document.querySelector(a.getAttribute('href'));
+            if (alvo) io.observe(alvo);
+          });
+        }
+
+        // Estrutura do karaokê: palavra por palavra (sempre; a cor só muda com movimento).
+        var grupos = Array.prototype.map.call(document.querySelectorAll('[data-karaoke]'), function (el) {
+          return { el: el, palavras: dividirPalavras(el) };
+        });
+
+        /* ---- Movimento: só com GSAP e sem pedido de movimento reduzido ---- */
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var mm = gsap.matchMedia();
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+          var APAGADA = getComputedStyle(document.documentElement).getPropertyValue('--terra-clara').trim() || '#A1887F';
+          var ACESA = getComputedStyle(document.documentElement).getPropertyValue('--terra-escura').trim() || '#4E342E';
+
+          function acender(tl, palavras, passo, inicio) {
+            palavras.forEach(function (p, i) {
+              var t = (inicio || 0) + i * passo;
+              tl.set(p, { className: 'k-palavra k-atual' }, t)
+                .to(p, { color: ACESA, duration: passo, ease: 'none' }, t)
+                .set(p, { className: 'k-palavra' }, t + passo * 1.6);
+            });
+          }
+
+          var hero = grupos.filter(function (g) { return g.el.closest('[data-hero]'); });
+          var resto = grupos.filter(function (g) { return !g.el.closest('[data-hero]'); });
+          var todas = [];
+          grupos.forEach(function (g) { todas = todas.concat(g.palavras); });
+          gsap.set(todas, { color: APAGADA });
+
+          // Verso 1 (o h1) acende sozinho na chegada, palavra a palavra (≈1s).
+          var primeiro = gsap.timeline({ delay: 0.15 });
+          acender(primeiro, hero[0].palavras, 0.14);
+
+          // Versos 2–4 acendem com a rolagem (início em 0,05: em repouso nenhuma palavra fica marcada), com o hero preso na tela enquanto isso.
+          var demais = [];
+          hero.slice(1).forEach(function (g) { demais = demais.concat(g.palavras); });
+          var tlHero = gsap.timeline({
+            scrollTrigger: { trigger: '[data-hero]', start: 'top top', end: '+=' + Math.round(window.innerHeight * 1.1), scrub: 0.4, pin: true }
+          });
+          acender(tlHero, demais, 0.2, 0.05);
+
+          // Nas seções, cada título e a citação acendem no próprio ritmo de leitura.
+          resto.forEach(function (g) {
+            var tl = gsap.timeline({ scrollTrigger: { trigger: g.el, start: 'top 85%', end: 'top 45%', scrub: 0.4 } });
+            acender(tl, g.palavras, 0.2, 0.05);
+          });
+
+          // C4: os hexágonos assentam um a um.
+          gsap.utils.toArray('.hexes').forEach(function (h) {
+            gsap.from(h.querySelectorAll('.hex__in'), {
+              scale: 0.6, autoAlpha: 0, duration: 0.5, ease: 'back.out(1.6)', stagger: 0.07,
+              scrollTrigger: { trigger: h, start: 'top 80%', once: true }
+            });
+          });
+
+          return function () {
+            todas.forEach(function (p) { p.style.color = ''; p.className = 'k-palavra'; });
+          };
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
