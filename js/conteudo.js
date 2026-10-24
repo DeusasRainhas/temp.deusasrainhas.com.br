@@ -12,6 +12,8 @@ window.DR_CONTEUDO = (function () {
   var whatsappUrl = { v: 'https://wa.me/5562999990000', provisorio: 'whatsapp' };
 
   return {
+    marca: { nome: 'Deusas Rainhas', alt: 'Deusas Rainhas' },
+
     hero: {
       eyebrow: 'Gestão apícola no celular',
       titulo: 'Cuidar das abelhas ficou mais simples',
@@ -251,6 +253,7 @@ window.DR_CONTEUDO = (function () {
     rodape: {
       razaoSocial: { v: 'Deusas Rainhas Tecnologia Apícola Ltda.', provisorio: 'razao-social' },
       cnpj: { v: '00.000.000/0001-00', provisorio: 'cnpj' },
+      cnpjRotulo: 'CNPJ',
       endereco: { v: 'Cocalzinho de Goiás · GO', provisorio: 'endereco' },
       privacidade: { texto: 'Política de privacidade', url: '../privacidade.html' },
       avisoProvisorio: 'Site em construção. Dados de contato e números são provisórios.',

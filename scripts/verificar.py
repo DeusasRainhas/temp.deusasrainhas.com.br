@@ -92,6 +92,7 @@ def verificar_template(page, url, viewport_nome="desktop", thumb=None):
         if thumb is not None:
             page.evaluate("window.scrollTo({top: 0, behavior: 'instant'})")
             page.wait_for_timeout(200)
+            page.wait_for_timeout(1500)  # movimento de carga assenta antes da captura
             thumb.parent.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(thumb), type="webp", quality=80)
     except Exception as e:  # noqa: BLE001 - timeouts etc. viram motivo, não crash

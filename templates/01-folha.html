@@ -17,15 +17,12 @@
        com capitular, linhas reveladas ao rolar.
        Regras que todo template segue:
        - nada de opacity < 1 fora do gsap.matchMedia (texto "apagado" usa cor);
-       - [hidden] precisa vencer o display dos botões (.dr-btn é inline-flex);
        - canto inferior direito livre (pílula do switcher).
+       Strings geradas por JS que não são cópia, como o ano do © e a data de hoje, são permitidas; qualquer outro texto vem de conteudo.js.
        ================================================================= */
-    [hidden] { display: none !important; }
 
     :root { --nav-h: 80px; --respiro: var(--sp-7); }
     @media (max-width: 767px) { :root { --nav-h: 68px; --respiro: 40px; } }
-
-    @media (min-width: 768px) { .dr-container { padding-inline: var(--sp-6); } }
 
     h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
     ul, ol { padding: 0; list-style: none; }
@@ -303,7 +300,7 @@
   <!-- SEÇÃO: nav (N0 · barra fixa, logo à esquerda, CTA à direita) -->
   <nav data-secao="nav" class="masthead">
     <div class="dr-container masthead__barra">
-      <a class="marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="Deusas Rainhas" width="64" height="64"></a>
+      <a class="marca" href="#inicio"><img src="../img/logos/logo-abelha-cor.png" alt="" data-c-alt="marca.alt" width="64" height="64"></a>
       <div class="masthead__links">
         <a href="#funcionalidades" data-c="funcionalidades.eyebrow"></a>
         <a href="#como-funciona" data-c="comoFunciona.eyebrow"></a>
@@ -330,6 +327,7 @@
         <div class="regra"></div>
         <div class="lede">
           <p class="lede-capitular" data-linhas data-c="hero.subtitulo"></p>
+          <!-- equipe.origem no lide é escolha específica do 01; as cópias mantêm equipe.origem na seção equipe por padrão. -->
           <p data-linhas data-c="equipe.origem"></p>
           <div class="lede-acoes">
             <a class="dr-btn dr-btn--primario" data-c="cta.baixar.texto" data-c-href="cta.baixar.url"></a>
@@ -482,6 +480,7 @@
 
     <!-- SEÇÃO: equipe (assinaturas + faixa grafite de apoios) -->
     <section data-secao="equipe" id="equipe">
+      <!-- No 01, equipe.origem foi para o lide do hero (escolha específica deste template); as cópias mantêm equipe.origem aqui, abaixo do título, por padrão. -->
       <div class="dr-container">
         <header class="cabeca">
           <p class="dr-eyebrow" data-c="equipe.eyebrow"></p>
@@ -589,10 +588,10 @@
   <!-- SEÇÃO: rodape (hidratar.js acrescenta aqui o aviso de dados provisórios) -->
   <footer data-secao="rodape">
     <div class="dr-container rodape">
-      <img src="../img/logos/logo-negativa.png" alt="Deusas Rainhas" width="72" height="72">
+      <img src="../img/logos/logo-negativa.png" alt="" data-c-alt="marca.alt" width="72" height="72">
       <div>
         <p class="rodape__razao" data-c="rodape.razaoSocial"></p>
-        <p>CNPJ <span data-c="rodape.cnpj"></span></p>
+        <p><span data-c="rodape.cnpjRotulo"></span> <span data-c="rodape.cnpj"></span></p>
         <p data-c="rodape.endereco"></p>
       </div>
       <div>
